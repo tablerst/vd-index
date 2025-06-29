@@ -1,0 +1,186 @@
+// 导入 map 模块
+@use "sass:map";
+
+// VD 官网首页「Nebula Linear」主题色彩体系
+// 基于 DESIGN.md 中的最终确认方案
+
+:root {
+  // 主题色彩
+  --primary: #AA83FF;
+  --secondary: #D4DEC7;
+  --base-dark: #0E1016;
+  --glass-layer: rgba(255, 255, 255, 0.08);
+  --accent-blue: #3F7DFB;
+  --error-alert: #FF4150;
+  
+  // 渐变基准
+  --primary-gradient: linear-gradient(135deg, #B99AFD 0%, #AA83FF 33%, #8F6BFF 66%);
+  --secondary-gradient: linear-gradient(135deg, #E8F2DB 0%, #D4DEC7 50%, #C0CA9F 100%);
+  --mixed-gradient: linear-gradient(135deg, #AA83FF 0%, #D4DEC7 50%, #AA83FF 100%);
+
+  // 文本颜色
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.5);
+  --text-accent: var(--secondary);
+  
+  // 玻璃态效果
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-blur: blur(14px);
+  
+  // 阴影
+  --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --shadow-glow: 0 0 20px rgba(170, 131, 255, 0.3);
+  --shadow-green-glow: 0 0 16px rgba(212, 222, 199, 0.4);
+  --shadow-mixed-glow: 0 0 24px rgba(170, 131, 255, 0.2), 0 0 12px rgba(212, 222, 199, 0.3);
+  
+  // 边框
+  --border-glass: 1px solid var(--glass-border);
+  --border-primary: 1px solid var(--primary);
+  --border-secondary: 1px solid var(--secondary);
+  --border-mixed: 1px solid transparent;
+  
+  // 间距
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  --spacing-3xl: 4rem;
+  
+  // 圆角
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 50%;
+  
+  // 字体
+  --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-family-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  
+  // 字体大小
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+  --font-size-5xl: 3rem;
+  --font-size-6xl: 3.75rem;
+  
+  // 行高
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+  
+  // 字重
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  // Z-index 层级
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+  --z-toast: 1080;
+  
+  // 过渡动画
+  --transition-fast: 0.15s ease-out;
+  --transition-base: 0.2s ease-out;
+  --transition-slow: 0.3s ease-out;
+  --transition-slower: 0.5s ease-out;
+  
+  // 缓动函数 (基于 DESIGN.md 中的动效规范)
+  --ease-pointer: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-hover: cubic-bezier(0.16, 0.84, 0.44, 1);
+  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-out-sine: cubic-bezier(0.39, 0.575, 0.565, 1);
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+// 响应式断点
+$breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  xxl: 1400px
+);
+
+// 媒体查询 mixin
+@mixin media-up($breakpoint) {
+  @if map.has-key($breakpoints, $breakpoint) {
+    $value: map.get($breakpoints, $breakpoint);
+    @if $value > 0 {
+      @media (min-width: $value) {
+        @content;
+      }
+    } @else {
+      @content;
+    }
+  }
+}
+
+@mixin media-down($breakpoint) {
+  @if map.has-key($breakpoints, $breakpoint) {
+    $value: map.get($breakpoints, $breakpoint);
+    @if $value > 0 {
+      @media (max-width: $value - 1px) {
+        @content;
+      }
+    }
+  }
+}
+
+@mixin media-between($lower, $upper) {
+  @if map.has-key($breakpoints, $lower) and map.has-key($breakpoints, $upper) {
+    $lower-value: map.get($breakpoints, $lower);
+    $upper-value: map.get($breakpoints, $upper);
+    @media (min-width: $lower-value) and (max-width: $upper-value - 1px) {
+      @content;
+    }
+  }
+}
+
+// 玻璃态效果 mixin
+@mixin glass-effect($opacity: 0.08, $blur: 14px) {
+  background: rgba(255, 255, 255, $opacity);
+  backdrop-filter: blur($blur);
+  -webkit-backdrop-filter: blur($blur);
+  border: var(--border-glass);
+}
+
+// 发光效果 mixin
+@mixin glow-effect($color: var(--primary), $intensity: 0.3) {
+  box-shadow: 0 0 20px rgba($color, $intensity);
+}
+
+// 按钮压感效果 mixin
+@mixin button-press-effect() {
+  transition: transform var(--transition-fast) var(--ease-pointer);
+  
+  &:active {
+    transform: translateY(2px);
+  }
+}
+
+// 悬停磁性吸附效果 mixin
+@mixin magnetic-hover($distance: 8px) {
+  transition: transform var(--transition-base) var(--ease-hover);
+  
+  &:hover {
+    transform: translateY(-$distance);
+  }
+}

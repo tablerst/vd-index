@@ -1,0 +1,29 @@
+[project]
+name = "vd-index"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "aiofiles>=24.1.0",
+    "aiosqlite>=0.21.0",
+    "alembic>=1.16.2",
+    "cryptography>=45.0.4",
+    "fastapi>=0.115.13",
+    "gunicorn>=23.0.0",
+    "passlib[bcrypt]>=1.7.4",
+    "pydantic-settings>=2.1.0",
+    "python-dotenv>=1.1.1",
+    "python-jose[cryptography]>=3.5.0",
+    "python-multipart>=0.0.20",
+    "slowapi>=0.1.9",
+    "sqlmodel>=0.0.24",
+    "uvicorn[standard]>=0.34.3",
+]
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "py-spy>=0.4.0",
+    "pylint>=3.3.7",
+]

@@ -1,0 +1,317 @@
+// 基础样式重置和全局样式
+@use './variables.scss' as *;
+
+// CSS Reset
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  color: var(--text-primary);
+  background: var(--base-dark);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+// 移除默认的 outline，但保留可访问性
+button,
+input,
+select,
+textarea,
+a {
+  &:focus {
+    outline: none;
+  }
+  
+  &:focus-visible {
+    outline: 3px solid var(--secondary);
+    outline-offset: 2px;
+  }
+}
+
+// 链接样式
+a {
+  color: var(--accent-blue);
+  text-decoration: none;
+  transition: color var(--transition-base);
+  
+  &:hover {
+    color: var(--primary);
+  }
+}
+
+// 按钮基础样式
+button {
+  font-family: inherit;
+  font-size: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+// 输入框基础样式
+input,
+textarea,
+select {
+  font-family: inherit;
+  font-size: inherit;
+  border: var(--border-glass);
+  background: var(--glass-bg);
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  transition: all var(--transition-base);
+  
+  &:focus {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-glow);
+  }
+  
+  &::placeholder {
+    color: var(--text-muted);
+  }
+}
+
+// 图片响应式
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+// 列表样式重置
+ul,
+ol {
+  list-style: none;
+}
+
+// 表格样式重置
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+// 隐藏元素但保留可访问性
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// 滚动条样式
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--glass-bg);
+  border-radius: var(--radius-full);
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+}
+
+// Firefox 滚动条
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--glass-bg) rgba(255, 255, 255, 0.05);
+}
+
+// 自定义光标全局样式 - 确保所有元素都不显示默认光标
+html,
+body,
+*,
+*::before,
+*::after {
+  cursor: none !important;
+}
+
+// 特别处理可能有光标样式的元素
+button,
+a,
+input,
+textarea,
+select,
+[role="button"],
+[tabindex],
+.interactive {
+  cursor: none !important;
+}
+
+// 确保在移动设备上不影响触摸交互
+@media (hover: none) and (pointer: coarse) {
+  html,
+  body,
+  *,
+  *::before,
+  *::after {
+    cursor: auto !important;
+  }
+}
+
+// 选择文本样式
+::selection {
+  background: var(--primary);
+  color: var(--base-dark);
+}
+
+::-moz-selection {
+  background: var(--primary);
+  color: var(--base-dark);
+}
+
+// 禁用用户选择（在需要的地方）
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+// 容器样式
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+  
+  @include media-up(sm) {
+    padding: 0 var(--spacing-lg);
+  }
+  
+  @include media-up(lg) {
+    padding: 0 var(--spacing-xl);
+  }
+}
+
+// 网格系统
+.grid {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+// 文本工具类
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+// 间距工具类
+.mt-auto {
+  margin-top: auto;
+}
+
+.mb-auto {
+  margin-bottom: auto;
+}
+
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+// 显示/隐藏工具类
+.hidden {
+  display: none;
+}
+
+.invisible {
+  visibility: hidden;
+}
+
+.visible {
+  visibility: visible;
+}
+
+// 位置工具类
+.relative {
+  position: relative;
+}
+
+.absolute {
+  position: absolute;
+}
+
+.fixed {
+  position: fixed;
+}
+
+.sticky {
+  position: sticky;
+}
+
+// 层级工具类
+.z-10 {
+  z-index: 10;
+}
+
+.z-20 {
+  z-index: 20;
+}
+
+.z-30 {
+  z-index: 30;
+}
+
+.z-40 {
+  z-index: 40;
+}
+
+.z-50 {
+  z-index: 50;
+}
