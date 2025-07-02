@@ -1,0 +1,58 @@
+{
+  "ec": 0,
+  "errcode": 0,
+  "em": "",
+  "cache": 0,
+  "adm_num": 0,
+  "levelname": {
+    "1": "潜水",
+    "2": "冒泡",
+    "3": "吐槽",
+    "4": "活跃",
+    "5": "话唠",
+    "6": "传说",
+    "101": "LV.1",
+    "102": "LV.2",
+    "103": "LV.3",
+    "104": "LV.4",
+    "105": "LV.5",
+    "106": "LV.6",
+    "107": "LV.7"
+  },
+  "mems": [
+    {
+      "uin": 1000000001,
+      "role": 2,
+      "g": 1,
+      "join_time": 1729351588,
+      "last_speak_time": 1750850645,
+      "lv": {
+        "point": 1234,
+        "level": 4,
+        "levelname": "活跃"
+      },
+      "card": "示例用户1",
+      "nick": "ExampleUser1",
+      "qage": 365,
+      "tags": "",
+      "role_name": "成员"
+    },
+    {
+      "uin": 1000000002,
+      "role": 1,
+      "g": 0,
+      "join_time": 1729351639,
+      "last_speak_time": 1750825982,
+      "lv": {
+        "point": 5678,
+        "level": 5,
+        "levelname": "话唠"
+      },
+      "card": "示例管理员",
+      "nick": "ExampleAdmin",
+      "qage": 500,
+      "tags": "",
+      "role_name": "管理员"
+    }
+  ]
+}

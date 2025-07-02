@@ -1,0 +1,365 @@
+// 通用组件样式
+@use './variables.scss' as *;
+
+// 按钮组件样式
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-md);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  transition: all var(--transition-base) var(--ease-pointer);
+  cursor: pointer;
+  border: none;
+  position: relative;
+  overflow: hidden;
+  
+  @include button-press-effect();
+  
+  // 主要按钮样式
+  &--primary {
+    background: var(--primary-gradient);
+    color: white;
+    box-shadow: var(--shadow-glow);
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 30px rgba(170, 131, 255, 0.5);
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
+  }
+  
+  // 次要按钮样式
+  &--secondary {
+    background: var(--secondary-gradient);
+    color: var(--base-dark);
+    border: none;
+
+    &:hover {
+      background: var(--mixed-gradient);
+      color: white;
+      box-shadow: var(--shadow-mixed-glow);
+      transform: translateY(-2px);
+    }
+  }
+  
+  // 幽灵按钮样式
+  &--ghost {
+    background: transparent;
+    border: var(--border-primary);
+    color: var(--primary);
+    
+    &:hover {
+      background: var(--primary);
+      color: white;
+      box-shadow: var(--shadow-glow);
+    }
+  }
+  
+  // 按钮大小变体
+  &--sm {
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: var(--font-size-sm);
+  }
+  
+  &--lg {
+    padding: var(--spacing-md) var(--spacing-2xl);
+    font-size: var(--font-size-lg);
+  }
+  
+  // 禁用状态
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+  
+  // 波纹效果
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease-out, height 0.6s ease-out;
+  }
+  
+  &:active::before {
+    width: 300px;
+    height: 300px;
+  }
+}
+
+// 卡片组件样式
+.card {
+  @include glass-effect();
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-soft);
+  transition: all var(--transition-base) var(--ease-hover);
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-soft), var(--shadow-glow);
+  }
+  
+  &--interactive {
+    cursor: pointer;
+    
+    &:hover {
+      transform: scale(1.02) translateY(-4px);
+    }
+  }
+}
+
+// 输入框组件样式
+.input-group {
+  position: relative;
+  margin-bottom: var(--spacing-md);
+  
+  .input {
+    width: 100%;
+    @include glass-effect();
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    color: var(--text-primary);
+    transition: all var(--transition-base);
+    
+    &:focus {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-glow);
+    }
+    
+    &::placeholder {
+      color: var(--text-muted);
+    }
+  }
+  
+  .label {
+    position: absolute;
+    top: -8px;
+    left: var(--spacing-md);
+    background: var(--base-dark);
+    padding: 0 var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    transition: all var(--transition-base);
+  }
+  
+  .input:focus + .label {
+    color: var(--primary);
+  }
+}
+
+// 加载动画
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: var(--primary);
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// 脉冲动画
+.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+// 呼吸动画
+.breathe {
+  animation: breathe 3s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+// 浮动动画
+.float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+// 渐入动画
+.fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// 滑入动画
+.slide-in-left {
+  animation: slideInLeft 0.5s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slide-in-right {
+  animation: slideInRight 0.5s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// 缩放进入动画
+.scale-in {
+  animation: scaleIn 0.3s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// 工具提示样式
+.tooltip {
+  position: relative;
+  
+  &::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--base-dark);
+    color: var(--text-primary);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-base);
+    z-index: var(--z-tooltip);
+    margin-bottom: 5px;
+    border: var(--border-glass);
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--base-dark);
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-base);
+    z-index: var(--z-tooltip);
+  }
+  
+  &:hover::before,
+  &:hover::after {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+// 徽章样式
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  
+  &--primary {
+    background: var(--primary);
+    color: white;
+  }
+  
+  &--secondary {
+    background: var(--secondary);
+    color: var(--base-dark);
+  }
+  
+  &--success {
+    background: #10B981;
+    color: white;
+  }
+  
+  &--warning {
+    background: #F59E0B;
+    color: white;
+  }
+  
+  &--error {
+    background: var(--error-alert);
+    color: white;
+  }
+}

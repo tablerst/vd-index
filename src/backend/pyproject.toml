@@ -1,0 +1,54 @@
+[project]
+name = "vd-index"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "aiofiles>=24.1.0",
+    "aiosqlite>=0.21.0",
+    "alembic>=1.16.2",
+    "asyncpg>=0.30.0",
+    "cryptography>=45.0.4",
+    "fastapi>=0.115.13",
+    "gunicorn>=23.0.0",
+    "loguru>=0.7.2",
+    "orjson>=3.10.18",
+    "passlib[bcrypt]>=1.7.4",
+    "pydantic-settings>=2.1.0",
+    "python-dotenv>=1.1.1",
+    "python-jose[cryptography]>=3.5.0",
+    "python-multipart>=0.0.20",
+    "slowapi>=0.1.9",
+    "sqlalchemy[asyncio]>=2.0.41",
+    "sqlmodel>=0.0.24",
+    "tenacity>=9.0.0",
+    "uvicorn[standard]>=0.34.3",
+]
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "py-spy>=0.4.0",
+    "pylint>=3.3.7",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.0.0",
+]
+
+[[tool.uv.index]]
+url = "https://mirrors.aliyun.com/pypi/simple/"
+default = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = ["tests", "integration"]
+console_output_style = "progress"
+filterwarnings = ["ignore::DeprecationWarning", "ignore::ResourceWarning"]
+log_cli = true
+log_cli_level = "DEBUG"
+log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+markers = ["async_test", "api_key_required"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["../../src", "..//backend"]

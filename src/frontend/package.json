@@ -1,0 +1,31 @@
+{
+  "name": "vd-index-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5173",
+    "build": "vue-tsc -b && vite build",
+    "build:prod": "vue-tsc -b && vite build --mode production",
+    "preview": "vite preview --host 0.0.0.0 --port 5173"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.53.1",
+    "@types/three": "^0.177.0",
+    "gsap": "^3.13.0",
+    "pinia": "^3.0.3",
+    "sass": "^1.89.2",
+    "swiper": "^11.2.8",
+    "three": "^0.177.0",
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@vitejs/plugin-vue": "^5.2.3",
+    "@vue/tsconfig": "^0.7.0",
+    "terser": "^5.0.0",
+    "typescript": "~5.8.3",
+    "vite": "^6.3.5",
+    "vue-tsc": "^2.2.8"
+  }
+}

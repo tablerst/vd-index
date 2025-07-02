@@ -1,0 +1,134 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies
+node_modules
+dist
+dist-ssr
+*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Backend security files
+backend/secret_key
+backend/.env
+backend/data/*.db
+backend/data/avatars/*
+!backend/data/avatars/.gitkeep
+
+# Deployment files
+nginx_temp.conf
+*.pid
+logs/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj*
+*.sln
+*.sw?
+*.zip
+
+# Project specific - User data (sensitive)
+public/avatars/mems/*
+public/qq*
+src/backend/data/members.db
+src/backend/data/avatars/*.webp
+src/backend/data/avatars/*.jpg
+src/backend/data/avatars/*.png
+src/backend/secret_key
+src/backend/.env
+
+# QQ group member data (sensitive)
+src/backend/static/qq_group_*_members.json
+src/backend/static/avatars.json
+
+# Static build files (generated)
+src/backend/static/index.html
+src/backend/static/assets/
+src/backend/static/*.svg
+src/backend/static/*.png
+src/backend/static/*.jpg
+
+# Member avatars (sensitive)
+src/backend/static/avatars/mems/*.webp
+src/backend/static/avatars/mems/*.jpg
+src/backend/static/avatars/mems/*.png
+src/frontend/public/avatars/mems/*.webp
+src/frontend/public/avatars/mems/*.jpg
+src/frontend/public/avatars/mems/*.png
+src/frontend/public/qq_group_*_members.json
+
+# SSL certificates and keys
+*.pem
+*.key
+*.crt
+*.csr
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# OS generated files
+Thumbs.db
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+.augment

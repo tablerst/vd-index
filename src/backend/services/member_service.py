@@ -1,0 +1,161 @@
+"""
+业务逻辑服务层
+"""
+import os
+import shutil
+from datetime import datetime
+from pathlib import Path
+from typing import List, Optional, Tuple
+from sqlmodel import Session, select
+from fastapi import HTTPException
+
+from models.models import Member
+from core.database import get_session
+from schema.schemas import MemberResponse, MemberDetailResponse, ImportMemberRequest
+from core.crypto import encrypt_uin, generate_avatar_hash, generate_secure_filename
+from core.config import settings
+
+
+class MemberService:
+    """成员服务"""
+    
+    @staticmethod
+    def get_role_text(role: int) -> str:
+        """获取群权限显示文本"""
+        role_map = {0: "群主", 1: "管理员", 2: "群员"}
+        return role_map.get(role, "未知")
+    
+    @staticmethod
+    def format_datetime(dt: Optional[datetime]) -> Optional[str]:
+        """格式化日期时间"""
+        if dt is None:
+            return None
+        return dt.strftime("%Y-%m-%d")
+    
+    @staticmethod
+    def create_member_response(member: Member, base_url: str = "") -> MemberResponse:
+        """创建成员响应对象"""
+        # 生成头像URL
+        avatar_url = f"{base_url}/api/avatar/{member.avatar_hash}"
+        
+        # 生成简介
+        join_date_str = MemberService.format_datetime(member.join_time)
+        bio = f"加入于 {join_date_str}"
+        
+        return MemberResponse(
+            id=member.id,
+            name=member.display_name,
+            avatar_url=avatar_url,
+            bio=bio,
+            join_date=join_date_str,
+            role=member.role,
+            group_nick=member.group_nick,
+            qq_nick=member.qq_nick
+        )
+    
+    @staticmethod
+    def create_member_detail_response(member: Member, base_url: str = "") -> MemberDetailResponse:
+        """创建成员详情响应对象"""
+        # 生成头像URL
+        avatar_url = f"{base_url}/api/avatar/{member.avatar_hash}"
+        
+        # 生成简介
+        join_date_str = MemberService.format_datetime(member.join_time)
+        bio = f"加入于 {join_date_str}"
+        
+        return MemberDetailResponse(
+            id=member.id,
+            name=member.display_name,
+            avatar_url=avatar_url,
+            bio=bio,
+            join_date=join_date_str,
+            role=member.role,
+            group_nick=member.group_nick,
+            qq_nick=member.qq_nick,
+            level_point=member.level_point,
+            level_value=member.level_value,
+            q_age=member.q_age,
+            last_speak_time=MemberService.format_datetime(member.last_speak_time)
+        )
+    
+    @staticmethod
+    def get_members_paginated(
+        session: Session,
+        page: int = 1,
+        page_size: int = 50,
+        base_url: str = ""
+    ) -> Tuple[List[MemberResponse], int]:
+        """分页获取成员列表"""
+        # 计算偏移量
+        offset = (page - 1) * page_size
+        
+        # 查询成员
+        statement = select(Member).offset(offset).limit(page_size).order_by(Member.id)
+        members = session.exec(statement).all()
+        
+        # 查询总数
+        count_statement = select(Member)
+        total = len(session.exec(count_statement).all())
+        
+        # 转换为响应对象
+        member_responses = [
+            MemberService.create_member_response(member, base_url)
+            for member in members
+        ]
+        
+        return member_responses, total
+    
+    @staticmethod
+    def get_member_by_id(session: Session, member_id: int, base_url: str = "") -> Optional[MemberDetailResponse]:
+        """根据ID获取成员详情"""
+        member = session.get(Member, member_id)
+        if not member:
+            return None
+        
+        return MemberService.create_member_detail_response(member, base_url)
+    
+    @staticmethod
+    def import_member_from_json(session: Session, member_data: ImportMemberRequest) -> Member:
+        """从JSON数据导入成员"""
+        # 生成随机salt
+        salt = secrets.token_hex(8)
+
+        # 加密UIN
+        encrypted_uin = encrypt_uin(member_data.uin, salt)
+        
+        # 确定显示名称
+        display_name = member_data.card.strip() or member_data.nick.strip()
+        
+        # 创建成员对象
+        member = Member(
+            display_name=display_name,
+            group_nick=member_data.card.strip() if member_data.card.strip() else None,
+            qq_nick=member_data.nick.strip() if member_data.nick.strip() else None,
+            uin_encrypted=encrypted_uin,
+            salt=salt,
+            avatar_hash="",  # 稍后设置
+            role=member_data.role,
+            join_time=datetime.fromtimestamp(member_data.join_time),
+            last_speak_time=datetime.fromtimestamp(member_data.last_speak_time) if member_data.last_speak_time else None,
+            level_point=member_data.lv.get("point", 0),
+            level_value=member_data.lv.get("level", 1),
+            q_age=member_data.qage or 0
+        )
+        
+        # 保存到数据库获取ID
+        session.add(member)
+        session.commit()
+        session.refresh(member)
+        
+        # 生成头像哈希
+        avatar_hash = generate_avatar_hash(member_data.uin, salt)
+        member.avatar_hash = avatar_hash
+        
+        # 更新数据库
+        session.add(member)
+        session.commit()
+        
+        return member
+
+
+
