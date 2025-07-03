@@ -1,3 +1,30 @@
+#!/bin/bash
+
+# 动态生成 nginx 配置文件
+# 根据当前项目路径和域名生成正确的配置
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+NGINX_CONF="$PROJECT_ROOT/nginx.conf"
+
+# 默认配置
+DEFAULT_DOMAIN="tomo-loop.icu"
+DEFAULT_ROOT_PATH="$PROJECT_ROOT"
+
+# 获取参数
+DOMAIN="${1:-$DEFAULT_DOMAIN}"
+ROOT_PATH="${2:-$DEFAULT_ROOT_PATH}"
+
+echo "生成 nginx 配置文件..."
+echo "项目路径: $ROOT_PATH"
+echo "域名: $DOMAIN"
+echo "配置文件: $NGINX_CONF"
+
+# 创建日志目录
+mkdir -p "$ROOT_PATH/logs"
+
+# 生成配置文件
+cat > "$NGINX_CONF" << EOF
 # 独立的项目级别 nginx 配置文件
 # 可以直接使用此配置启动 nginx，不依赖系统配置
 
@@ -8,10 +35,10 @@ user root;
 worker_processes auto;
 
 # 错误日志
-error_log /root/workspace/vd-index/logs/error.log;
+error_log $ROOT_PATH/logs/error.log;
 
 # PID 文件
-pid /root/workspace/vd-index/logs/nginx.pid;
+pid $ROOT_PATH/logs/nginx.pid;
 
 events {
     worker_connections 1024;
@@ -24,12 +51,12 @@ http {
     default_type application/octet-stream;
     
     # 日志格式
-    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
-                    '$status $body_bytes_sent "$http_referer" '
-                    '"$http_user_agent" "$http_x_forwarded_for"';
+    log_format main '\$remote_addr - \$remote_user [\$time_local] "\$request" '
+                    '\$status \$body_bytes_sent "\$http_referer" '
+                    '"\$http_user_agent" "\$http_x_forwarded_for"';
     
     # 访问日志
-    access_log /root/workspace/vd-index/logs/access.log main;
+    access_log $ROOT_PATH/logs/access.log main;
     
     # 性能优化
     sendfile on;
@@ -49,26 +76,27 @@ http {
         text/css
         text/xml
         text/javascript
-        application/javascript        application/xml+rss
+        application/javascript
+        application/xml+rss
         application/json;
     
     # 服务器配置
     server {
         listen 80;
         listen [::]:80;
-        server_name tomo-loop.icu www.tomo-loop.icu;
+        server_name $DOMAIN www.$DOMAIN;
 
         # 网站根目录指向后端静态文件目录
-        root /root/workspace/vd-index/src/backend/static;
+        root $ROOT_PATH/src/backend/static;
         index index.html index.htm;
         
         # API 代理到后端服务
         location /api/ {
             proxy_pass http://localhost:8000;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto \$scheme;
 
             # 超时设置
             proxy_connect_timeout 30s;
@@ -79,19 +107,19 @@ http {
         # 健康检查代理
         location /health {
             proxy_pass http://localhost:8000;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto \$scheme;
         }
 
         # 头像文件代理
         location /avatars/ {
             proxy_pass http://localhost:8000;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto \$scheme;
 
             # 头像缓存设置
             expires 7d;
@@ -100,11 +128,11 @@ http {
 
         # 处理 Vue Router 的 history 模式
         location / {
-            try_files $uri $uri/ /index.html;
+            try_files \$uri \$uri/ /index.html;
         }
         
         # 静态资源缓存
-        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)\$ {
             expires 1y;
             add_header Cache-Control "public, immutable";
             access_log off;
@@ -125,3 +153,12 @@ http {
         add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
     }
 }
+EOF
+
+echo "✅ nginx 配置文件生成完成: $NGINX_CONF"
+echo ""
+echo "使用方法:"
+echo "  测试配置: sudo nginx -t -c $NGINX_CONF"
+echo "  启动服务: sudo nginx -c $NGINX_CONF"
+echo "  停止服务: sudo nginx -s quit"
+echo ""

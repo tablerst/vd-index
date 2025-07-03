@@ -60,6 +60,11 @@ if ! command -v nginx &> /dev/null; then
     sudo apt update && sudo apt install -y nginx
 fi
 
+# 生成 nginx 配置文件
+echo "Generating nginx configuration..."
+chmod +x "$SCRIPT_DIR/generate-nginx-conf.sh"
+"$SCRIPT_DIR/generate-nginx-conf.sh" "tomo-loop.icu" "$PROJECT_ROOT"
+
 echo "Nginx configuration ready."
 
 echo ""

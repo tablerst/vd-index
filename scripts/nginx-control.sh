@@ -42,15 +42,21 @@ check_config() {
 start_nginx() {
     echo "启动 nginx..."
     check_nginx
+
+    # 生成 nginx 配置文件
+    echo "生成 nginx 配置文件..."
+    chmod +x "$SCRIPT_DIR/generate-nginx-conf.sh"
+    "$SCRIPT_DIR/generate-nginx-conf.sh" "tomo-loop.icu" "$PROJECT_ROOT"
+
     check_config
-    
+
     # 测试配置
     sudo nginx -t -c "$NGINX_CONF"
     if [ $? -ne 0 ]; then
         echo "错误: nginx 配置测试失败"
         exit 1
     fi
-    
+
     # 启动 nginx
     sudo nginx -c "$NGINX_CONF"
     if [ $? -eq 0 ]; then
