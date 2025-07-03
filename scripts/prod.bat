@@ -6,6 +6,9 @@ echo ========================================
 echo.
 echo [1/4] Installing Dependencies...
 echo ----------------------------------------
+echo Note: This Windows script only handles backend deployment.
+echo For nginx configuration on Windows, please use WSL or manual setup.
+echo.
 call "%~dp0install-deps.bat"
 if %errorlevel% neq 0 (
     echo Error: Failed to install dependencies
@@ -60,6 +63,12 @@ echo Production Deployment Completed!
 echo ========================================
 echo Frontend: Built and deployed to static files
 echo Backend: Starting production server...
+echo ========================================
+echo.
+echo Note: For full production deployment with nginx,
+echo please use the Linux script (prod.sh) or configure nginx manually.
+echo.
+echo Backend will be available at: http://localhost:8000
 echo ========================================
 echo.
 
