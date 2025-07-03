@@ -27,10 +27,7 @@ class Member(SQLModel, table=True):
     
     # 混淆用随机salt (16字节hex)
     salt: str = Field(max_length=32)
-    
-    # 头像文件哈希（用于生成安全的头像URL）
-    avatar_hash: str = Field(max_length=64, index=True)
-    
+
     # 群权限：0=群主, 1=管理员, 2=群员
     role: int = Field(default=2)
     
@@ -61,7 +58,6 @@ class MemberCreate(SQLModel):
     qq_nick: Optional[str] = Field(default=None, max_length=100)
     uin_encrypted: str = Field(max_length=500)
     salt: str = Field(max_length=32)
-    avatar_hash: str = Field(max_length=64)
     role: int = Field(default=2)
     join_time: datetime
     last_speak_time: Optional[datetime] = None
@@ -76,7 +72,6 @@ class MemberRead(SQLModel):
     display_name: str
     group_nick: Optional[str] = None
     qq_nick: Optional[str] = None
-    avatar_hash: str
     role: int
     join_time: datetime
     last_speak_time: Optional[datetime] = None

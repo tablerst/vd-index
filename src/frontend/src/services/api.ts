@@ -99,8 +99,8 @@ class ApiClient {
   }
 
   // 获取头像URL（直接返回URL，由浏览器处理缓存）
-  getAvatarUrl(avatarHash: string): string {
-    return `${this.baseURL}/api/avatar/${avatarHash}`
+  getAvatarUrl(memberId: number): string {
+    return `${this.baseURL}/api/avatar/${memberId}`
   }
 
   // 健康检查
@@ -151,14 +151,14 @@ export const memberApi = {
   },
 
   // 获取头像URL
-  getAvatarUrl(avatarHash: string): string {
-    return apiClient.getAvatarUrl(avatarHash)
+  getAvatarUrl(memberId: number): string {
+    return apiClient.getAvatarUrl(memberId)
   },
 
-  // 从avatar_url中提取哈希
-  extractAvatarHash(avatarUrl: string): string {
-    const match = avatarUrl.match(/\/api\/avatar\/([a-f0-9]{64})/)
-    return match ? match[1] : ''
+  // 从avatar_url中提取成员ID
+  extractMemberId(avatarUrl: string): number {
+    const match = avatarUrl.match(/\/api\/avatar\/(\d+)/)
+    return match ? parseInt(match[1], 10) : 0
   }
 }
 

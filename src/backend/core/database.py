@@ -11,7 +11,7 @@ engine = create_engine(
 
 def create_db_and_tables():
     """创建数据库和表"""
-    from models.models import SQLModel  # Import here to avoid circular dependency
+    from services.database.models.member import SQLModel  # Import here to avoid circular dependency
     SQLModel.metadata.create_all(engine)
 
 def get_session():

@@ -3,10 +3,10 @@
 """
 import math
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlmodel import Session
+from sqlmodel.ext.asyncio.session import AsyncSession
 
-from core.database import get_session
-from schema.schemas import MemberListResponse, MemberDetailResponse
+from services.deps import get_session
+from schema.member_schemas import MemberListResponse, MemberDetailResponse
 from services.member_service import MemberService
 
 router = APIRouter(prefix="/api", tags=["members"])
@@ -22,7 +22,7 @@ async def get_members(
     request: Request,
     page: int = 1,
     page_size: int = 50,
-    session: Session = Depends(get_session)
+    session: AsyncSession = Depends(get_session)
 ):
     """获取成员列表"""
     # 验证分页参数
@@ -37,7 +37,7 @@ async def get_members(
         base_url = f"{request.url.scheme}://{request.url.netloc}"
         
         # 获取成员列表
-        members, total = MemberService.get_members_paginated(
+        members, total = await MemberService.get_members_paginated(
             session=session,
             page=page,
             page_size=page_size,
@@ -64,19 +64,21 @@ async def get_members(
     summary="获取成员统计信息",
     description="获取群成员的统计信息"
 )
-async def get_member_stats(session: Session = Depends(get_session)):
+async def get_member_stats(session: AsyncSession = Depends(get_session)):
     """获取成员统计信息"""
     try:
         from sqlmodel import select, func
-        from models.models import Member
+        from services.database.models.member import Member
 
         # 总成员数
         total_statement = select(func.count(Member.id))
-        total_members = session.exec(total_statement).one()
+        total_result = await session.exec(total_statement)
+        total_members = total_result.one()
 
         # 按角色统计
         role_statement = select(Member.role, func.count(Member.id)).group_by(Member.role)
-        role_stats = session.exec(role_statement).all()
+        role_result = await session.exec(role_statement)
+        role_stats = role_result.all()
 
         role_counts = {
             "群主": 0,
@@ -92,14 +94,15 @@ async def get_member_stats(session: Session = Depends(get_session)):
             elif role == 2:
                 role_counts["群员"] = count
 
-        # 按年份统计入群人数
+        # 按年份统计入群人数 (PostgreSQL兼容)
         year_statement = select(
-            func.strftime('%Y', Member.join_time).label('year'),
+            func.extract('year', Member.join_time).label('year'),
             func.count(Member.id).label('count')
-        ).group_by(func.strftime('%Y', Member.join_time))
+        ).group_by(func.extract('year', Member.join_time))
 
-        year_stats = session.exec(year_statement).all()
-        join_year_stats = {year: count for year, count in year_stats}
+        year_result = await session.exec(year_statement)
+        year_stats = year_result.all()
+        join_year_stats = {int(year): count for year, count in year_stats}
 
         return {
             "total_members": total_members,
@@ -120,7 +123,7 @@ async def get_member_stats(session: Session = Depends(get_session)):
 async def get_member_detail(
     member_id: int,
     request: Request,
-    session: Session = Depends(get_session)
+    session: AsyncSession = Depends(get_session)
 ):
     """获取成员详情"""
     if member_id < 1:
@@ -131,7 +134,7 @@ async def get_member_detail(
         base_url = f"{request.url.scheme}://{request.url.netloc}"
 
         # 获取成员详情
-        member = MemberService.get_member_by_id(
+        member = await MemberService.get_member_by_id(
             session=session,
             member_id=member_id,
             base_url=base_url

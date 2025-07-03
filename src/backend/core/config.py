@@ -1,13 +1,11 @@
 """
 应用配置模块
 """
-import os
 import secrets
 from pathlib import Path
 from typing import List
 from pydantic_settings import BaseSettings
 from pydantic import Field
-import json
 
 
 class Settings(BaseSettings):
@@ -17,7 +15,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./data/members.db"
     
     # 头像文件存储
-    avatar_root: str = "./data/avatars"
+    avatar_root: str = "./static/avatars/mems"
     
     # 加密配置
     uin_aes_key: str = ""
@@ -56,7 +54,6 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
-        json_loads = json.loads
 
 
 def get_settings() -> Settings:

@@ -1,19 +1,15 @@
 """
 业务逻辑服务层
 """
-import os
-import shutil
+import secrets
 from datetime import datetime
-from pathlib import Path
 from typing import List, Optional, Tuple
-from sqlmodel import Session, select
-from fastapi import HTTPException
+from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
-from models.models import Member
-from core.database import get_session
-from schema.schemas import MemberResponse, MemberDetailResponse, ImportMemberRequest
-from core.crypto import encrypt_uin, generate_avatar_hash, generate_secure_filename
-from core.config import settings
+from services.database.models.member import Member
+from schema.member_schemas import MemberResponse, MemberDetailResponse, ImportMemberRequest
+from core.crypto import encrypt_uin
 
 
 class MemberService:
@@ -35,13 +31,13 @@ class MemberService:
     @staticmethod
     def create_member_response(member: Member, base_url: str = "") -> MemberResponse:
         """创建成员响应对象"""
-        # 生成头像URL
-        avatar_url = f"{base_url}/api/avatar/{member.avatar_hash}"
-        
+        # 生成头像URL - 使用成员ID而不是avatar_hash
+        avatar_url = f"{base_url}/api/avatar/{member.id}"
+
         # 生成简介
         join_date_str = MemberService.format_datetime(member.join_time)
         bio = f"加入于 {join_date_str}"
-        
+
         return MemberResponse(
             id=member.id,
             name=member.display_name,
@@ -56,13 +52,13 @@ class MemberService:
     @staticmethod
     def create_member_detail_response(member: Member, base_url: str = "") -> MemberDetailResponse:
         """创建成员详情响应对象"""
-        # 生成头像URL
-        avatar_url = f"{base_url}/api/avatar/{member.avatar_hash}"
-        
+        # 生成头像URL - 使用成员ID而不是avatar_hash
+        avatar_url = f"{base_url}/api/avatar/{member.id}"
+
         # 生成简介
         join_date_str = MemberService.format_datetime(member.join_time)
         bio = f"加入于 {join_date_str}"
-        
+
         return MemberDetailResponse(
             id=member.id,
             name=member.display_name,
@@ -79,8 +75,8 @@ class MemberService:
         )
     
     @staticmethod
-    def get_members_paginated(
-        session: Session,
+    async def get_members_paginated(
+        session: AsyncSession,
         page: int = 1,
         page_size: int = 50,
         base_url: str = ""
@@ -91,11 +87,13 @@ class MemberService:
         
         # 查询成员
         statement = select(Member).offset(offset).limit(page_size).order_by(Member.id)
-        members = session.exec(statement).all()
-        
+        result = await session.exec(statement)
+        members = result.all()
+
         # 查询总数
         count_statement = select(Member)
-        total = len(session.exec(count_statement).all())
+        count_result = await session.exec(count_statement)
+        total = len(count_result.all())
         
         # 转换为响应对象
         member_responses = [
@@ -106,16 +104,16 @@ class MemberService:
         return member_responses, total
     
     @staticmethod
-    def get_member_by_id(session: Session, member_id: int, base_url: str = "") -> Optional[MemberDetailResponse]:
+    async def get_member_by_id(session: AsyncSession, member_id: int, base_url: str = "") -> Optional[MemberDetailResponse]:
         """根据ID获取成员详情"""
-        member = session.get(Member, member_id)
+        member = await session.get(Member, member_id)
         if not member:
             return None
-        
+
         return MemberService.create_member_detail_response(member, base_url)
     
     @staticmethod
-    def import_member_from_json(session: Session, member_data: ImportMemberRequest) -> Member:
+    async def import_member_from_json(session: AsyncSession, member_data: ImportMemberRequest) -> Member:
         """从JSON数据导入成员"""
         # 生成随机salt
         salt = secrets.token_hex(8)
@@ -133,7 +131,6 @@ class MemberService:
             qq_nick=member_data.nick.strip() if member_data.nick.strip() else None,
             uin_encrypted=encrypted_uin,
             salt=salt,
-            avatar_hash="",  # 稍后设置
             role=member_data.role,
             join_time=datetime.fromtimestamp(member_data.join_time),
             last_speak_time=datetime.fromtimestamp(member_data.last_speak_time) if member_data.last_speak_time else None,
@@ -141,20 +138,12 @@ class MemberService:
             level_value=member_data.lv.get("level", 1),
             q_age=member_data.qage or 0
         )
-        
-        # 保存到数据库获取ID
+
+        # 保存到数据库
         session.add(member)
-        session.commit()
-        session.refresh(member)
-        
-        # 生成头像哈希
-        avatar_hash = generate_avatar_hash(member_data.uin, salt)
-        member.avatar_hash = avatar_hash
-        
-        # 更新数据库
-        session.add(member)
-        session.commit()
-        
+        await session.commit()
+        await session.refresh(member)
+
         return member
 
 

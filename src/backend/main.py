@@ -2,7 +2,6 @@
 FastAPI主应用
 """
 import time
-import os
 from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
@@ -15,7 +14,9 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from core.config import settings
-from core.database import create_db_and_tables
+from services.database.service import DatabaseService
+from services.database.factory import DatabaseServiceFactory
+from services.deps import set_database_service
 from api import members, avatars, admin
 
 
@@ -28,21 +29,27 @@ async def lifespan(app: FastAPI):
     """应用生命周期管理"""
     # 启动时执行
     print("🚀 启动后端服务...")
-    
+
+    # 初始化数据库服务
+    factory = DatabaseServiceFactory()
+    db_service = factory.create(settings.database_url)
+    set_database_service(db_service)
+
     # 创建数据库和表
-    create_db_and_tables()
+    await db_service.create_db_and_tables()
     print("✅ 数据库初始化完成")
-    
+
     # 确保必要的目录存在
     from pathlib import Path
     Path(settings.avatar_root).mkdir(parents=True, exist_ok=True)
     Path("./data").mkdir(parents=True, exist_ok=True)
     print("✅ 目录结构初始化完成")
-    
+
     yield
-    
+
     # 关闭时执行
     print("🛑 关闭后端服务...")
+    await db_service.teardown()
 
 
 # 创建FastAPI应用
