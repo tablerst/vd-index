@@ -104,18 +104,28 @@ echo "[6/6] Starting Nginx..."
 echo "----------------------------------------"
 cd "$PROJECT_ROOT"
 
-# 停止可能运行的 nginx
-sudo nginx -s quit 2>/dev/null || true
-sleep 2
+# 使用改进的nginx控制脚本
+echo "Using nginx control script to start nginx..."
+chmod +x "$SCRIPT_DIR/nginx-control.sh"
 
-# 启动 nginx
-echo "Starting nginx with project configuration..."
-sudo nginx -c "$PROJECT_ROOT/nginx.conf"
+# 先检查端口状态
+"$SCRIPT_DIR/nginx-control.sh" check-port
 
-if [ $? -eq 0 ]; then
-    echo "Nginx started successfully!"
+# 启动nginx
+if "$SCRIPT_DIR/nginx-control.sh" start; then
+    echo "✅ Nginx started successfully!"
+
+    # 显示状态
+    echo ""
+    echo "Checking nginx status..."
+    "$SCRIPT_DIR/nginx-control.sh" status
 else
-    echo "Error: Failed to start nginx"
+    echo "❌ Failed to start nginx"
+    echo ""
+    echo "Checking nginx logs for errors..."
+    "$SCRIPT_DIR/nginx-control.sh" logs
+
+    # 清理后端进程
     kill $BACKEND_PID 2>/dev/null
     exit 1
 fi

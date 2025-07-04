@@ -12,15 +12,17 @@ LOGS_DIR="$PROJECT_ROOT/logs"
 mkdir -p "$LOGS_DIR"
 
 show_usage() {
-    echo "用法: $0 {start|stop|restart|status|test|logs}"
+    echo "用法: $0 {start|stop|restart|status|test|logs|force-stop|check-port}"
     echo ""
     echo "命令说明:"
-    echo "  start   - 启动 nginx"
-    echo "  stop    - 停止 nginx"
-    echo "  restart - 重启 nginx"
-    echo "  status  - 查看 nginx 状态"
-    echo "  test    - 测试 nginx 配置"
-    echo "  logs    - 查看 nginx 日志"
+    echo "  start      - 启动 nginx"
+    echo "  stop       - 停止 nginx"
+    echo "  force-stop - 强制停止所有 nginx 进程"
+    echo "  restart    - 重启 nginx"
+    echo "  status     - 查看 nginx 状态"
+    echo "  test       - 测试 nginx 配置"
+    echo "  logs       - 查看 nginx 日志"
+    echo "  check-port - 检查端口占用情况"
     echo ""
 }
 
@@ -39,9 +41,92 @@ check_config() {
     fi
 }
 
+# 检查端口80是否被占用
+check_port_80() {
+    echo "检查端口 80 占用情况..."
+
+    if netstat -tuln 2>/dev/null | grep -q ":80 " || ss -tuln 2>/dev/null | grep -q ":80 "; then
+        echo "⚠️  端口 80 已被占用:"
+        netstat -tuln 2>/dev/null | grep ":80 " || ss -tuln 2>/dev/null | grep ":80 "
+
+        # 显示占用端口的进程
+        if command -v lsof &> /dev/null; then
+            echo ""
+            echo "占用端口 80 的进程:"
+            lsof -i :80 2>/dev/null || echo "无法确定进程信息"
+        fi
+
+        # 检查是否是nginx进程
+        if pgrep nginx > /dev/null; then
+            echo ""
+            echo "发现 nginx 进程正在运行"
+            echo "nginx 进程 PID: $(pgrep nginx | tr '\n' ' ')"
+            return 2  # nginx占用
+        else
+            echo ""
+            echo "端口被其他进程占用，请先停止相关服务"
+            return 1  # 其他进程占用
+        fi
+    else
+        echo "✅ 端口 80 可用"
+        return 0  # 端口可用
+    fi
+}
+
+# 强制停止所有nginx进程
+force_stop_nginx() {
+    echo "强制停止所有 nginx 进程..."
+
+    # 尝试优雅停止
+    sudo nginx -s quit 2>/dev/null || true
+    sleep 2
+
+    # 检查是否还有nginx进程
+    if pgrep nginx > /dev/null; then
+        echo "发现残留的 nginx 进程，正在强制终止..."
+        sudo pkill nginx 2>/dev/null || true
+        sleep 2
+
+        # 强制杀死
+        if pgrep nginx > /dev/null; then
+            echo "使用 SIGKILL 强制终止 nginx 进程..."
+            sudo pkill -9 nginx 2>/dev/null || true
+            sleep 1
+        fi
+    fi
+
+    # 验证是否全部停止
+    if pgrep nginx > /dev/null; then
+        echo "❌ 仍有 nginx 进程运行，请手动检查"
+        ps aux | grep nginx | grep -v grep
+        return 1
+    else
+        echo "✅ 所有 nginx 进程已停止"
+        return 0
+    fi
+}
+
 start_nginx() {
     echo "启动 nginx..."
     check_nginx
+
+    # 检查端口占用情况
+    check_port_80
+    port_status=$?
+
+    if [ $port_status -eq 1 ]; then
+        echo "❌ 端口 80 被其他进程占用，无法启动 nginx"
+        echo "请先停止占用端口 80 的服务，或使用 'force-stop' 命令"
+        exit 1
+    elif [ $port_status -eq 2 ]; then
+        echo "发现已有 nginx 进程运行，尝试停止..."
+        force_stop_nginx
+        if [ $? -ne 0 ]; then
+            echo "❌ 无法停止现有 nginx 进程"
+            exit 1
+        fi
+        sleep 2
+    fi
 
     # 生成 nginx 配置文件
     echo "生成 nginx 配置文件..."
@@ -51,30 +136,69 @@ start_nginx() {
     check_config
 
     # 测试配置
+    echo "测试 nginx 配置..."
     sudo nginx -t -c "$NGINX_CONF"
     if [ $? -ne 0 ]; then
-        echo "错误: nginx 配置测试失败"
+        echo "❌ nginx 配置测试失败"
         exit 1
     fi
 
     # 启动 nginx
+    echo "启动 nginx 服务..."
     sudo nginx -c "$NGINX_CONF"
+
     if [ $? -eq 0 ]; then
-        echo "✅ nginx 启动成功"
-        echo "访问地址: http://tomo-loop.icu"
+        # 等待一下让nginx完全启动
+        sleep 2
+
+        # 验证nginx是否真的在运行
+        if pgrep nginx > /dev/null; then
+            echo "✅ nginx 启动成功"
+            echo "nginx 进程 PID: $(pgrep nginx | tr '\n' ' ')"
+            echo "访问地址: http://tomo-loop.icu"
+
+            # 检查端口监听
+            if netstat -tuln 2>/dev/null | grep -q ":80 " || ss -tuln 2>/dev/null | grep -q ":80 "; then
+                echo "✅ 端口 80 正在监听"
+            else
+                echo "⚠️  端口 80 未监听，可能启动失败"
+            fi
+        else
+            echo "❌ nginx 启动失败 - 未找到进程"
+            if [ -f "$LOGS_DIR/error.log" ]; then
+                echo "最近的错误日志:"
+                tail -5 "$LOGS_DIR/error.log"
+            fi
+            exit 1
+        fi
     else
         echo "❌ nginx 启动失败"
+        if [ -f "$LOGS_DIR/error.log" ]; then
+            echo "最近的错误日志:"
+            tail -5 "$LOGS_DIR/error.log"
+        fi
         exit 1
     fi
 }
 
 stop_nginx() {
     echo "停止 nginx..."
+
+    if ! pgrep nginx > /dev/null; then
+        echo "nginx 未运行"
+        return 0
+    fi
+
+    # 尝试优雅停止
     sudo nginx -s quit 2>/dev/null
-    if [ $? -eq 0 ]; then
-        echo "✅ nginx 已停止"
+    sleep 2
+
+    # 检查是否成功停止
+    if pgrep nginx > /dev/null; then
+        echo "⚠️  优雅停止失败，尝试强制停止..."
+        force_stop_nginx
     else
-        echo "⚠️  nginx 可能未运行或停止失败"
+        echo "✅ nginx 已停止"
     fi
 }
 
@@ -177,6 +301,9 @@ case "$1" in
     stop)
         stop_nginx
         ;;
+    force-stop)
+        force_stop_nginx
+        ;;
     restart)
         restart_nginx
         ;;
@@ -188,6 +315,9 @@ case "$1" in
         ;;
     logs)
         show_logs
+        ;;
+    check-port)
+        check_port_80
         ;;
     *)
         show_usage
