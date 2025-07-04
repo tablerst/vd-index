@@ -2,6 +2,8 @@
 FastAPI主应用
 """
 import time
+import logging
+import sys
 from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
@@ -20,6 +22,60 @@ from services.deps import set_database_service
 from api import members, avatars, admin
 
 
+def setup_logging():
+    """设置日志配置"""
+    # 创建日志目录
+    log_dir = Path("./logs")
+    log_dir.mkdir(exist_ok=True)
+
+    # 设置日志级别
+    log_level = logging.DEBUG if settings.debug else logging.INFO
+
+    # 创建格式化器
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+
+    # 设置根日志记录器
+    root_logger = logging.getLogger()
+    root_logger.setLevel(log_level)
+
+    # 清除现有的处理器
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
+
+    # 控制台处理器
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(log_level)
+    console_handler.setFormatter(formatter)
+    root_logger.addHandler(console_handler)
+
+    # 文件处理器
+    file_handler = logging.FileHandler(log_dir / "app.log", encoding='utf-8')
+    file_handler.setLevel(log_level)
+    file_handler.setFormatter(formatter)
+    root_logger.addHandler(file_handler)
+
+    # 错误日志文件处理器
+    error_handler = logging.FileHandler(log_dir / "error.log", encoding='utf-8')
+    error_handler.setLevel(logging.ERROR)
+    error_handler.setFormatter(formatter)
+    root_logger.addHandler(error_handler)
+
+    # 设置特定模块的日志级别
+    logging.getLogger("uvicorn").setLevel(logging.INFO)
+    logging.getLogger("fastapi").setLevel(logging.INFO)
+    logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+
+    print(f"✅ 日志配置完成 - 级别: {log_level}, 目录: {log_dir}")
+
+
+# 初始化日志
+setup_logging()
+logger = logging.getLogger(__name__)
+
+
 # 速率限制器
 limiter = Limiter(key_func=get_remote_address)
 
@@ -28,7 +84,10 @@ limiter = Limiter(key_func=get_remote_address)
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
     # 启动时执行
-    print("🚀 启动后端服务...")
+    logger.info("🚀 启动后端服务...")
+    logger.info(f"调试模式: {settings.debug}")
+    logger.info(f"数据库URL: {settings.database_url}")
+    logger.info(f"头像根目录: {settings.avatar_root}")
 
     # 初始化数据库服务
     factory = DatabaseServiceFactory()
@@ -37,18 +96,18 @@ async def lifespan(app: FastAPI):
 
     # 创建数据库和表
     await db_service.create_db_and_tables()
-    print("✅ 数据库初始化完成")
+    logger.info("✅ 数据库初始化完成")
 
     # 确保必要的目录存在
     from pathlib import Path
     Path(settings.avatar_root).mkdir(parents=True, exist_ok=True)
     Path("./data").mkdir(parents=True, exist_ok=True)
-    print("✅ 目录结构初始化完成")
+    logger.info("✅ 目录结构初始化完成")
 
     yield
 
     # 关闭时执行
-    print("🛑 关闭后端服务...")
+    logger.info("🛑 关闭后端服务...")
     await db_service.teardown()
 
 

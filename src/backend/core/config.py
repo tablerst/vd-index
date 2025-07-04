@@ -2,10 +2,14 @@
 应用配置模块
 """
 import secrets
+import logging
 from pathlib import Path
 from typing import List
 from pydantic_settings import BaseSettings
 from pydantic import Field
+
+# 设置日志记录器
+logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -65,34 +69,63 @@ def ensure_secret_key() -> str:
     """确保密钥文件存在，如果不存在则生成"""
     settings = get_settings()
     secret_file = Path(settings.secret_key_file)
-    
+
+    logger.debug(f"[CONFIG] 检查密钥文件: {secret_file}")
+    logger.debug(f"[CONFIG] 密钥文件存在: {secret_file.exists()}")
+
     if secret_file.exists():
-        return secret_file.read_text().strip()
-    
+        try:
+            key_content = secret_file.read_text().strip()
+            logger.debug(f"[CONFIG] 从文件读取密钥，长度: {len(key_content)}")
+            logger.debug(f"[CONFIG] 密钥前10字符: {key_content[:10]}...")
+            return key_content
+        except Exception as e:
+            logger.error(f"[CONFIG] 读取密钥文件失败: {e}")
+            raise
+
     # 生成新的密钥
+    logger.info("[CONFIG] 密钥文件不存在，生成新密钥")
     secret_key = secrets.token_urlsafe(32)
-    
+    logger.debug(f"[CONFIG] 生成的密钥长度: {len(secret_key)}")
+
     # 确保目录存在
     secret_file.parent.mkdir(parents=True, exist_ok=True)
-    
+    logger.debug(f"[CONFIG] 确保目录存在: {secret_file.parent}")
+
     # 写入密钥文件
-    secret_file.write_text(secret_key)
-    
+    try:
+        secret_file.write_text(secret_key)
+        logger.info(f"[CONFIG] 密钥文件写入成功: {secret_file}")
+    except Exception as e:
+        logger.error(f"[CONFIG] 写入密钥文件失败: {e}")
+        raise
+
     # 设置文件权限（仅所有者可读写）
-    secret_file.chmod(0o600)
-    
+    try:
+        secret_file.chmod(0o600)
+        logger.debug("[CONFIG] 密钥文件权限设置成功")
+    except Exception as e:
+        logger.warning(f"[CONFIG] 设置密钥文件权限失败: {e}")
+
     return secret_key
 
 
 def get_or_create_aes_key() -> str:
     """获取或创建AES加密密钥"""
     settings = get_settings()
-    
+
+    logger.debug("[CONFIG] 获取AES加密密钥")
+    logger.debug(f"[CONFIG] 环境变量UIN_AES_KEY是否设置: {bool(settings.uin_aes_key)}")
+
     # 优先使用环境变量
     if settings.uin_aes_key:
+        logger.info("[CONFIG] 使用环境变量中的AES密钥")
+        logger.debug(f"[CONFIG] 环境变量密钥长度: {len(settings.uin_aes_key)}")
+        logger.debug(f"[CONFIG] 环境变量密钥前10字符: {settings.uin_aes_key[:10]}...")
         return settings.uin_aes_key
-    
+
     # 否则使用密钥文件
+    logger.info("[CONFIG] 使用密钥文件中的AES密钥")
     return ensure_secret_key()
 
 
