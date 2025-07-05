@@ -45,6 +45,55 @@ export interface MemberStats {
   join_year_stats: Record<string, number>
 }
 
+// 活动接口定义
+export interface ParticipantInfo {
+  id: number
+  name: string
+  avatar_url: string
+}
+
+export interface Activity {
+  id: number
+  title: string
+  description: string
+  date: string
+  tags: string[]
+  participants: ParticipantInfo[]
+  participants_total: number
+  created_at: string
+  updated_at: string
+}
+
+export interface ActivityListResponse {
+  activities: Activity[]
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
+}
+
+export interface ActivityStats {
+  total_activities: number
+  total_participants: number
+  unique_participants: number
+}
+
+export interface ActivityCreateRequest {
+  title: string
+  description: string
+  date: string
+  tags: string[]
+  participant_ids: number[]
+}
+
+export interface ActivityUpdateRequest {
+  title?: string
+  description?: string
+  date?: string
+  tags?: string[]
+  participant_ids?: number[]
+}
+
 // HTTP客户端类
 class ApiClient {
   private baseURL: string
@@ -103,6 +152,46 @@ class ApiClient {
     return `${this.baseURL}/api/avatar/${memberId}`
   }
 
+  // 获取活动列表
+  async getActivities(page: number = 1, pageSize: number = 10): Promise<ActivityListResponse> {
+    return this.request<ActivityListResponse>(
+      `/api/star_calendar/activities?page=${page}&page_size=${pageSize}`
+    )
+  }
+
+  // 获取活动统计信息
+  async getActivityStats(): Promise<ActivityStats> {
+    return this.request<ActivityStats>('/api/star_calendar/activities/stats')
+  }
+
+  // 获取单个活动详情
+  async getActivity(activityId: number): Promise<Activity> {
+    return this.request<Activity>(`/api/star_calendar/activity/${activityId}`)
+  }
+
+  // 创建活动
+  async createActivity(activityData: ActivityCreateRequest): Promise<Activity> {
+    return this.request<Activity>('/api/star_calendar/activity/create', {
+      method: 'POST',
+      body: JSON.stringify(activityData)
+    })
+  }
+
+  // 更新活动
+  async updateActivity(activityId: number, activityData: ActivityUpdateRequest): Promise<Activity> {
+    return this.request<Activity>(`/api/star_calendar/activity/update/${activityId}`, {
+      method: 'PUT',
+      body: JSON.stringify(activityData)
+    })
+  }
+
+  // 删除活动
+  async deleteActivity(activityId: number): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>(`/api/star_calendar/activity/delete/${activityId}`, {
+      method: 'DELETE'
+    })
+  }
+
   // 健康检查
   async healthCheck(): Promise<{ status: string; timestamp: number }> {
     return this.request('/health')
@@ -159,6 +248,79 @@ export const memberApi = {
   extractMemberId(avatarUrl: string): number {
     const match = avatarUrl.match(/\/api\/avatar\/(\d+)/)
     return match ? parseInt(match[1], 10) : 0
+  }
+}
+
+// 活动API便捷函数
+export const activityApi = {
+  // 获取所有活动（自动处理分页）
+  async getAllActivities(): Promise<Activity[]> {
+    const firstPage = await apiClient.getActivities(1, 50)
+    const allActivities = [...firstPage.activities]
+
+    // 如果有多页，继续获取
+    if (firstPage.total_pages > 1) {
+      const promises = []
+      for (let page = 2; page <= firstPage.total_pages; page++) {
+        promises.push(apiClient.getActivities(page, 50))
+      }
+
+      const additionalPages = await Promise.all(promises)
+      additionalPages.forEach(pageData => {
+        allActivities.push(...pageData.activities)
+      })
+    }
+
+    return allActivities
+  },
+
+  // 获取分页活动
+  async getActivities(page: number = 1, pageSize: number = 10): Promise<ActivityListResponse> {
+    return apiClient.getActivities(page, pageSize)
+  },
+
+  // 获取活动详情
+  async getActivity(activityId: number): Promise<Activity> {
+    return apiClient.getActivity(activityId)
+  },
+
+  // 获取活动统计信息
+  async getStats(): Promise<ActivityStats> {
+    return apiClient.getActivityStats()
+  },
+
+  // 创建活动
+  async createActivity(activityData: ActivityCreateRequest): Promise<Activity> {
+    return apiClient.createActivity(activityData)
+  },
+
+  // 更新活动
+  async updateActivity(activityId: number, activityData: ActivityUpdateRequest): Promise<Activity> {
+    return apiClient.updateActivity(activityId, activityData)
+  },
+
+  // 删除活动
+  async deleteActivity(activityId: number): Promise<{ success: boolean; message: string }> {
+    return apiClient.deleteActivity(activityId)
+  },
+
+  // 格式化活动日期
+  formatDate(dateString: string): string {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  },
+
+  // 格式化活动日期（简短格式）
+  formatDateShort(dateString: string): { day: string; month: string } {
+    const date = new Date(dateString)
+    return {
+      day: date.getDate().toString().padStart(2, '0'),
+      month: date.toLocaleDateString('zh-CN', { month: 'short' })
+    }
   }
 }
 

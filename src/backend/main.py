@@ -19,7 +19,7 @@ from core.config import settings
 from services.database.service import DatabaseService
 from services.database.factory import DatabaseServiceFactory
 from services.deps import set_database_service
-from api import members, avatars, admin
+from api import members, avatars, admin, activities
 
 
 def setup_logging():
@@ -192,6 +192,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 app.include_router(members.router)
 app.include_router(avatars.router)
 app.include_router(admin.router)
+app.include_router(activities.router)
 
 
 # API根路径（仅开发环境）

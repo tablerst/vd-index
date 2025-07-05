@@ -33,7 +33,7 @@ async def get_avatar(member_id: int, session: AsyncSession = Depends(get_session
 
     try:
         # 根据ID查询成员
-        from backend.services.database.models.member.base import Member
+        from services.database.models.member.base import Member
         logger.debug(f"[GET_AVATAR] 查询数据库中的成员信息 - member_id: {member_id}")
         member = await session.get(Member, member_id)
         if not member:
@@ -102,7 +102,7 @@ async def check_avatar(member_id: int, session: AsyncSession = Depends(get_sessi
 
     try:
         # 根据ID查询成员
-        from backend.services.database.models.member.base import Member
+        from services.database.models.member.base import Member
         logger.debug(f"[CHECK_AVATAR] 查询数据库中的成员信息 - member_id: {member_id}")
         member = await session.get(Member, member_id)
         if not member:

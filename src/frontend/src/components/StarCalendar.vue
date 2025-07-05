@@ -18,8 +18,20 @@
           记录VRC Division的精彩时刻与重要里程碑
         </p>
 
+        <!-- 加载状态 -->
+        <div v-if="loading" class="loading-state">
+          <div class="loading-spinner"></div>
+          <span>正在加载活动数据...</span>
+        </div>
+
+        <!-- 错误状态 -->
+        <div v-else-if="error" class="error-state">
+          <span class="error-message">{{ error }}</span>
+          <button @click="loadActivities" class="retry-btn">重试</button>
+        </div>
+
         <!-- 统计信息 -->
-        <div class="calendar-stats">
+        <div v-else class="calendar-stats">
           <div class="stat-item">
             <span class="stat-number">{{ activities.length }}</span>
             <span class="stat-label">个活动</span>
@@ -103,15 +115,15 @@
                 <!-- 参与者头像 -->
                 <div v-if="activity.participants" class="activity-participants">
                   <div class="participants-avatars">
-                    <img 
-                      v-for="(participant, pIndex) in activity.participants.slice(0, 5)" 
+                    <img
+                      v-for="(participant, pIndex) in activity.participants.slice(0, 5)"
                       :key="participant.id"
-                      :src="participant.avatar"
+                      :src="participant.avatar_url"
                       :alt="participant.name"
                       class="participant-avatar"
                       :style="{ zIndex: 5 - pIndex }"
                     >
-                    <span 
+                    <span
                       v-if="activity.participants.length > 5"
                       class="participants-more"
                     >
@@ -119,7 +131,7 @@
                     </span>
                   </div>
                   <span class="participants-count">
-                    {{ activity.participants.length }} 人参与
+                    {{ activity.participants_total }} 人参与
                   </span>
                 </div>
               </div>
@@ -185,109 +197,26 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { activityApi, type Activity, type ActivityStats } from '@/services/api'
 
-interface Participant {
-  id: number
-  name: string
-  avatar: string
-}
-
-interface Activity {
-  id: number
-  title: string
-  description: string
-  date: string
-  tags: string[]
-  participants?: Participant[]
-  images?: string[]
-}
+// 使用API中定义的接口类型
+// Activity 和 ParticipantInfo 已在 api.ts 中定义
 
 // 响应式数据
 const currentIndex = ref(0)
 const timelineStack = ref<HTMLElement>()
-
-// 模拟活动数据
-const activities = ref<Activity[]>([
-  {
-    id: 1,
-    title: 'VRC Division成立',
-    description: '一个充满温暖与创造力的社区正式诞生，开启了我们共同的美好旅程。',
-    date: '2023-01-15',
-    tags: ['里程碑', '社区'],
-    participants: [
-      { id: 1, name: 'Alice', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=1&size=32' },
-      { id: 2, name: 'Bob', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=2&size=32' },
-      { id: 3, name: 'Charlie', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=3&size=32' }
-    ]
-  },
-  {
-    id: 2,
-    title: '首届技术分享会',
-    description: '成员们分享各自的技术心得，促进知识交流与学习成长。',
-    date: '2023-03-20',
-    tags: ['技术', '分享'],
-    participants: [
-      { id: 4, name: 'Diana', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=4&size=32' },
-      { id: 5, name: 'Eve', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=5&size=32' },
-      { id: 6, name: 'Frank', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=6&size=32' },
-      { id: 7, name: 'Grace', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=7&size=32' }
-    ]
-  },
-  {
-    id: 3,
-    title: '春季户外活动',
-    description: '走出室内，拥抱自然，增进成员间的友谊与团队凝聚力。',
-    date: '2023-04-10',
-    tags: ['户外', '团建'],
-    participants: [
-      { id: 8, name: 'Henry', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=8&size=32' },
-      { id: 9, name: 'Ivy', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=9&size=32' },
-      { id: 10, name: 'Jack', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=10&size=32' },
-      { id: 11, name: 'Kate', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=11&size=32' },
-      { id: 12, name: 'Liam', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=12&size=32' },
-      { id: 13, name: 'Mia', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=13&size=32' }
-    ]
-  },
-  {
-    id: 4,
-    title: '创意设计大赛',
-    description: '发挥创意，展示设计才华，为社区带来更多美好的视觉体验。',
-    date: '2023-06-15',
-    tags: ['设计', '比赛'],
-    participants: [
-      { id: 14, name: 'Noah', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=14&size=32' },
-      { id: 15, name: 'Olivia', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=15&size=32' }
-    ]
-  },
-  {
-    id: 5,
-    title: '夏日音乐节',
-    description: '音乐无界限，让美妙的旋律连接每一颗心，共度美好夏日时光。',
-    date: '2023-07-22',
-    tags: ['音乐', '娱乐'],
-    participants: [
-      { id: 16, name: 'Paul', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=16&size=32' },
-      { id: 17, name: 'Quinn', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=17&size=32' },
-      { id: 18, name: 'Ruby', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=18&size=32' }
-    ]
-  }
-])
+const activities = ref<Activity[]>([])
+const activityStats = ref<ActivityStats | null>(null)
+const loading = ref(true)
+const error = ref<string | null>(null)
 
 // 计算属性
 const totalParticipants = computed(() => {
-  return activities.value.reduce((total, activity) => {
-    return total + (activity.participants?.length || 0)
-  }, 0)
+  return activityStats.value?.total_participants || 0
 })
 
 const uniqueParticipants = computed(() => {
-  const participantIds = new Set()
-  activities.value.forEach(activity => {
-    activity.participants?.forEach(participant => {
-      participantIds.add(participant.id)
-    })
-  })
-  return participantIds.size
+  return activityStats.value?.unique_participants || 0
 })
 
 // 导航时间轴
@@ -326,12 +255,38 @@ const getCardStyle = (index: number) => {
 
 // 格式化日期
 const formatDay = (dateString: string): string => {
-  return new Date(dateString).getDate().toString().padStart(2, '0')
+  return activityApi.formatDateShort(dateString).day
 }
 
 const formatMonth = (dateString: string): string => {
-  const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
-  return months[new Date(dateString).getMonth()]
+  return activityApi.formatDateShort(dateString).month
+}
+
+// 加载活动数据
+const loadActivities = async () => {
+  try {
+    loading.value = true
+    error.value = null
+
+    // 并行加载活动列表和统计信息
+    const [activitiesData, statsData] = await Promise.all([
+      activityApi.getAllActivities(),
+      activityApi.getStats()
+    ])
+
+    activities.value = activitiesData
+    activityStats.value = statsData
+
+    console.log('活动数据加载成功:', {
+      activities: activitiesData.length,
+      stats: statsData
+    })
+  } catch (err) {
+    console.error('加载活动数据失败:', err)
+    error.value = err instanceof Error ? err.message : '加载活动数据失败'
+  } finally {
+    loading.value = false
+  }
 }
 
 const formatYear = (dateString: string): string => {
@@ -395,8 +350,9 @@ const handleKeyDown = (e: KeyboardEvent) => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   document.addEventListener('keydown', handleKeyDown)
+  await loadActivities()
 })
 
 onUnmounted(() => {
@@ -944,5 +900,57 @@ onUnmounted(() => {
 @keyframes trackPulse {
   0%, 100% { opacity: 0.3; }
   50% { opacity: 0.8; }
+}
+
+// 加载状态样式
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg);
+  color: var(--text-muted);
+
+  .loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-top: 2px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+}
+
+// 错误状态样式
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg);
+
+  .error-message {
+    color: var(--error-color, #ff6b6b);
+    text-align: center;
+  }
+
+  .retry-btn {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background var(--transition-base);
+
+    &:hover {
+      background: var(--primary-hover);
+    }
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>
