@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     """应用设置"""
     
     # 数据库配置
-    database_url: str = "sqlite:///./data/members.db"
+    database_url: str = "postgresql+asyncpg://username:password@localhost:5432/vd_index"
     
     # 头像文件存储
     avatar_root: str = "./static/avatars/mems"

@@ -100,15 +100,6 @@ def check_environment():
                 print(f"    ... 还有 {len(webp_files) - 3} 个文件")
     print()
     
-    # 数据库文件（如果是SQLite）
-    if settings.database_url.startswith("sqlite"):
-        db_path = settings.database_url.replace("sqlite:///", "")
-        db_file = Path(db_path)
-        print(f"数据库文件检查:")
-        print(f"  数据库文件存在: {db_file.exists()}")
-        if db_file.exists():
-            print(f"  数据库文件大小: {db_file.stat().st_size} bytes")
-            print(f"  数据库文件哈希: {get_file_hash(db_file)}")
     print()
     
     # 权限检查

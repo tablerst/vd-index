@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 def _is_async_db(url: str) -> bool:
     """判断 URL 是否使用异步驱动"""
-    return any(tok in url for tok in ("+asyncpg", "+aiosqlite", "+aiomysql", "+asyncpyodbc"))
+    return any(tok in url for tok in ("+asyncpg", "+aiomysql", "+asyncpyodbc"))
 
 
 @pytest.mark.asyncio
@@ -29,7 +29,7 @@ async def test_database_connection():
         await engine.dispose()
     else:
         logger.info("使用同步数据库驱动")
-        connect_args = {"check_same_thread": False} if "sqlite" in url else {}
+        connect_args = {}
         engine = create_engine(url, echo=False, connect_args=connect_args)
         with engine.connect() as conn:
             result = conn.execute(text("SELECT 1"))

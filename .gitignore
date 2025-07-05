@@ -60,7 +60,6 @@ coverage.xml
 # Backend security files
 backend/secret_key
 backend/.env
-backend/data/*.db
 backend/data/avatars/*
 !backend/data/avatars/.gitkeep
 
@@ -84,7 +83,6 @@ logs/
 # Project specific - User data (sensitive)
 public/avatars/mems/*
 public/qq*
-src/backend/data/members.db
 src/backend/data/avatars/*.webp
 src/backend/data/avatars/*.jpg
 src/backend/data/avatars/*.png
@@ -132,3 +130,5 @@ Thumbs.db
 ehthumbs.db
 
 .augment
+.gemini
+demand

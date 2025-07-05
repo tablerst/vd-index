@@ -5,8 +5,7 @@ from core.config import settings
 # 数据库引擎
 engine = create_engine(
     settings.database_url,
-    echo=settings.debug,
-    connect_args={"check_same_thread": False} if "sqlite" in settings.database_url else {}
+    echo=settings.debug
 )
 
 def create_db_and_tables():
