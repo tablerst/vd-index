@@ -9,7 +9,8 @@ from sqlmodel import Session
 
 from core.database import get_session
 from schema.member_schemas import ImportBatchRequest, ApiResponse, ImportMemberRequest
-from services.avatar_service import AvatarService
+from domain.avatar_service import AvatarService
+from domain.member_service import MemberService
 from core.crypto import decrypt_uin
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])

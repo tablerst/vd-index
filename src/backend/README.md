@@ -99,19 +99,31 @@ src/backend/
 │   ├── config.py              # 配置管理
 │   ├── database.py            # 数据库连接(旧版)
 │   └── crypto.py              # 加密解密工具
-├── services/                  # 业务逻辑层
+├── services/                  # 基础设施服务层
 │   ├── database/              # 数据库服务
 │   │   ├── models/           # 数据模型
-│   │   │   ├── __init__.py
-│   │   │   ├── member.py     # 成员模型
-│   │   │   └── config.py     # 配置模型
+│   │   │   ├── member/       # 成员模型和CRUD
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── base.py   # 成员模型定义
+│   │   │   │   └── crud.py   # 成员CRUD操作
+│   │   │   ├── config/       # 配置模型和CRUD
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── base.py   # 配置模型定义
+│   │   │   │   └── crud.py   # 配置CRUD操作
+│   │   │   ├── activity/     # 活动模型和CRUD
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── base.py   # 活动模型定义
+│   │   │   │   └── crud.py   # 活动CRUD操作
+│   │   │   └── __init__.py   # 统一导出
 │   │   ├── service.py        # 数据库服务类
 │   │   ├── factory.py        # 服务工厂
 │   │   └── utils.py          # 数据库工具
 │   ├── deps.py               # 依赖注入
-│   ├── member_service.py     # 成员业务逻辑
-│   ├── avatar_service.py     # 头像业务逻辑
 │   └── schema.py             # 服务注册
+├── domain/                    # 业务领域服务层
+│   ├── __init__.py
+│   ├── member_service.py      # 成员业务逻辑
+│   └── avatar_service.py      # 头像业务逻辑
 ├── schema/                    # API数据模型
 │   └── member_schemas.py      # 成员相关Schema
 ├── scripts/                   # 运维脚本

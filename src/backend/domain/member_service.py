@@ -1,12 +1,12 @@
 """
-业务逻辑服务层
+成员业务逻辑服务
 """
 import secrets
 from datetime import datetime
 from typing import List, Optional, Tuple
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from backend.services.database.models.member import Member, MemberCreate, MemberCRUD
+from services.database.models.member import Member, MemberCreate, MemberCRUD
 from schema.member_schemas import MemberResponse, MemberDetailResponse, ImportMemberRequest
 from core.crypto import encrypt_uin
 
@@ -131,6 +131,3 @@ class MemberService:
         # 使用CRUD操作创建成员
         member = await MemberCRUD.create(session, member_create)
         return member
-
-
-

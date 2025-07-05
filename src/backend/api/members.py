@@ -7,7 +7,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from services.deps import get_session
 from schema.member_schemas import MemberListResponse, MemberDetailResponse
-from services.member_service import MemberService
+from domain.member_service import MemberService
 
 router = APIRouter(prefix="/api", tags=["members"])
 
