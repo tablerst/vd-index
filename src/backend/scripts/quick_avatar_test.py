@@ -63,7 +63,7 @@ async def quick_test():
         print("✅ 数据库服务初始化成功")
         
         from services.deps import get_session
-        from services.database.models.member import Member
+        from backend.services.database.models.member.base import Member
         from sqlmodel import select
         
         async for session in get_session():

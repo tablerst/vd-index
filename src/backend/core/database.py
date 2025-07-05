@@ -10,7 +10,9 @@ engine = create_engine(
 
 def create_db_and_tables():
     """创建数据库和表"""
-    from services.database.models.member import SQLModel  # Import here to avoid circular dependency
+    from sqlmodel import SQLModel  # Import here to avoid circular dependency
+    # 导入所有模型以确保它们被注册到元数据中
+    from backend.services.database.models import Member, Config, Activity  # noqa: F401
     SQLModel.metadata.create_all(engine)
 
 def get_session():

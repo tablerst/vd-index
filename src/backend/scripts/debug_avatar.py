@@ -135,7 +135,7 @@ async def debug_database():
         
         # 获取数据库会话
         from services.deps import get_session
-        from services.database.models.member import Member
+        from backend.services.database.models.member.base import Member
         
         async for session in get_session():
             # 查询成员数量

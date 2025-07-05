@@ -9,6 +9,7 @@ from sqlmodel import SQLModel, Field
 class Config(SQLModel, table=True):
     """配置表"""
     __tablename__ = "config"
+    __table_args__ = {'extend_existing': True}
     
     key: str = Field(primary_key=True, max_length=100)
     value: str = Field(max_length=1000)

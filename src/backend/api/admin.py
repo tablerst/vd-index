@@ -126,7 +126,7 @@ async def decrypt_member_uin(
     session: Session = Depends(get_session)
 ):
     """解密成员UIN（仅用于调试）"""
-    from services.database.models.member import Member
+    from backend.services.database.models.member import Member
     
     member = session.get(Member, member_id)
     if not member:
@@ -153,7 +153,7 @@ async def get_database_stats(session: Session = Depends(get_session)):
     """获取数据库统计信息"""
     try:
         from sqlmodel import select, func
-        from services.database.models.member import Member
+        from backend.services.database.models.member import Member
         
         # 基本统计
         total_members = session.exec(select(func.count(Member.id))).one()

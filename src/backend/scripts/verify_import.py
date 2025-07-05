@@ -11,7 +11,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from sqlmodel import select
-from services.database.models.member import Member
+from backend.services.database.models.member import Member
 from services.database.factory import DatabaseServiceFactory
 from services.deps import set_database_service, session_scope
 from core.config import settings

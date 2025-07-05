@@ -68,7 +68,7 @@ async def get_member_stats(session: AsyncSession = Depends(get_session)):
     """获取成员统计信息"""
     try:
         from sqlmodel import select, func
-        from services.database.models.member import Member
+        from backend.services.database.models.member import Member
 
         # 总成员数
         total_statement = select(func.count(Member.id))

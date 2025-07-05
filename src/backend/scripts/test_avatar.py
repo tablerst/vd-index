@@ -14,7 +14,7 @@ sys.path.insert(0, str(backend_dir))
 from core.crypto import decrypt_uin
 from services.deps import set_database_service
 from services.database.service import DatabaseService
-from services.database.models.member import Member
+from backend.services.database.models.member import Member
 from core.config import settings
 
 

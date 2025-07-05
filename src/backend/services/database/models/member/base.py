@@ -9,6 +9,7 @@ from sqlmodel import SQLModel, Field
 class Member(SQLModel, table=True):
     """群成员模型"""
     __tablename__ = "members"
+    __table_args__ = {'extend_existing': True}
     
     # 主键：代理ID（对外公开的安全ID）
     id: Optional[int] = Field(default=None, primary_key=True)

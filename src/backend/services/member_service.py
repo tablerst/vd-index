@@ -4,10 +4,9 @@
 import secrets
 from datetime import datetime
 from typing import List, Optional, Tuple
-from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from services.database.models.member import Member
+from backend.services.database.models.member import Member, MemberCreate, MemberCRUD
 from schema.member_schemas import MemberResponse, MemberDetailResponse, ImportMemberRequest
 from core.crypto import encrypt_uin
 
@@ -82,31 +81,21 @@ class MemberService:
         base_url: str = ""
     ) -> Tuple[List[MemberResponse], int]:
         """分页获取成员列表"""
-        # 计算偏移量
-        offset = (page - 1) * page_size
-        
-        # 查询成员
-        statement = select(Member).offset(offset).limit(page_size).order_by(Member.id)
-        result = await session.exec(statement)
-        members = result.all()
+        # 使用CRUD操作获取分页数据
+        members, total = await MemberCRUD.get_paginated(session, page, page_size)
 
-        # 查询总数
-        count_statement = select(Member)
-        count_result = await session.exec(count_statement)
-        total = len(count_result.all())
-        
         # 转换为响应对象
         member_responses = [
             MemberService.create_member_response(member, base_url)
             for member in members
         ]
-        
+
         return member_responses, total
     
     @staticmethod
     async def get_member_by_id(session: AsyncSession, member_id: int, base_url: str = "") -> Optional[MemberDetailResponse]:
         """根据ID获取成员详情"""
-        member = await session.get(Member, member_id)
+        member = await MemberCRUD.get_by_id(session, member_id)
         if not member:
             return None
 
@@ -120,12 +109,12 @@ class MemberService:
 
         # 加密UIN
         encrypted_uin = encrypt_uin(member_data.uin, salt)
-        
+
         # 确定显示名称
         display_name = member_data.card.strip() or member_data.nick.strip()
-        
-        # 创建成员对象
-        member = Member(
+
+        # 创建成员数据对象
+        member_create = MemberCreate(
             display_name=display_name,
             group_nick=member_data.card.strip() if member_data.card.strip() else None,
             qq_nick=member_data.nick.strip() if member_data.nick.strip() else None,
@@ -139,11 +128,8 @@ class MemberService:
             q_age=member_data.qage or 0
         )
 
-        # 保存到数据库
-        session.add(member)
-        await session.commit()
-        await session.refresh(member)
-
+        # 使用CRUD操作创建成员
+        member = await MemberCRUD.create(session, member_create)
         return member
 
 

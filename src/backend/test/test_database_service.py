@@ -117,21 +117,23 @@ class TestDatabaseModels:
     
     def test_member_model_import(self):
         """测试 Member 模型导入"""
-        from services.database.models.member import Member
+        from backend.services.database.models.member import Member, MemberCRUD
         assert Member is not None
-        
+        assert MemberCRUD is not None
+
         # 检查模型字段
         assert hasattr(Member, 'id')
         assert hasattr(Member, 'display_name')
         assert hasattr(Member, 'uin_encrypted')
         assert hasattr(Member, 'role')
         assert hasattr(Member, 'join_time')
-    
+
     def test_config_model_import(self):
         """测试 Config 模型导入"""
-        from services.database.models.config import Config
+        from backend.services.database.models.config import Config, ConfigCRUD
         assert Config is not None
-        
+        assert ConfigCRUD is not None
+
         # 检查模型字段
         assert hasattr(Config, 'key')
         assert hasattr(Config, 'value')
@@ -140,8 +142,8 @@ class TestDatabaseModels:
         """测试模型元数据"""
         from sqlmodel import SQLModel
         # 导入所有模型以确保它们被注册到元数据中
-        from services.database.models.member import Member  # noqa: F401
-        from services.database.models.config import Config  # noqa: F401
+        from backend.services.database.models.member import Member  # noqa: F401
+        from backend.services.database.models.config import Config  # noqa: F401
 
         # 检查元数据中是否包含我们的表
         table_names = [table.name for table in SQLModel.metadata.tables.values()]
