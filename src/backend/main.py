@@ -21,6 +21,9 @@ from services.auth.factory import AuthServiceFactory
 from services.config.factory import ConfigServiceFactory
 from services.crypto.factory import CryptoServiceFactory
 from services.deps import set_database_service, set_auth_service, set_config_service, set_crypto_service
+from services.auth.utils import create_super_user
+from services.database.models.user import User
+from sqlmodel import select
 from api.router import main_router
 
 # 初始化全局配置服务
@@ -87,6 +90,51 @@ logger = logging.getLogger(__name__)
 limiter = Limiter(key_func=get_remote_address)
 
 
+async def ensure_admin_user_exists(db_service, auth_service, config_service, logger):
+    """
+    确保系统中存在管理员用户
+    如果不存在，则从环境变量中读取配置创建管理员用户
+    """
+    try:
+        # 获取数据库会话
+        async with db_service.with_session() as session:
+            # 检查是否已存在管理员用户
+            admin_statement = select(User).where(User.role == "admin")
+            result = await session.exec(admin_statement)
+            existing_admins = result.all()
+
+            if existing_admins:
+                logger.info(f"✅ 管理员用户已存在: {[admin.username for admin in existing_admins]}")
+                return
+
+            # 没有管理员用户，从配置创建
+            settings = config_service.get_settings()
+
+            if not settings.super_user_username or not settings.super_user_password:
+                logger.warning("⚠️  未配置超级用户信息，跳过管理员用户创建")
+                logger.warning("   请在.env文件中设置 SUPER_USER_USERNAME 和 SUPER_USER_PASSWORD")
+                return
+
+            logger.info(f"🔧 创建管理员用户: {settings.super_user_username}")
+
+            # 创建管理员用户
+            admin_user = await create_super_user(
+                session=session,
+                auth_service=auth_service,
+                username=settings.super_user_username,
+                password=settings.super_user_password,
+                email=settings.super_user_email or f"{settings.super_user_username}@example.com"
+            )
+
+            logger.info(f"✅ 管理员用户创建成功: {admin_user.username}")
+
+    except Exception as e:
+        logger.error(f"❌ 创建管理员用户失败: {str(e)}")
+        # 不抛出异常，避免影响应用启动
+        import traceback
+        logger.error(traceback.format_exc())
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
@@ -128,6 +176,9 @@ async def lifespan(app: FastAPI):
     Path(settings.avatar_root).mkdir(parents=True, exist_ok=True)
     Path("./data").mkdir(parents=True, exist_ok=True)
     logger.info("✅ 目录结构初始化完成")
+
+    # 检查并创建管理员账户
+    await ensure_admin_user_exists(db_service, auth_service, config_service, logger)
 
     yield
 

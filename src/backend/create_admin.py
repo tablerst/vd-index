@@ -9,10 +9,11 @@ from pathlib import Path
 # 添加项目根目录到Python路径
 sys.path.append(str(Path(__file__).parent))
 
-from core.database import get_async_session
+from services.deps import get_session
 from services.database.models.user import User, UserCRUD
 from services.auth.service import AuthService
 from services.config.factory import ConfigServiceFactory
+from services.database.service import DatabaseService
 
 
 async def create_admin_user():
@@ -25,9 +26,13 @@ async def create_admin_user():
 
     # 初始化认证服务
     auth_service = AuthService(settings)
-    
+
+    # 初始化数据库服务
+    db_service = DatabaseService(settings)
+    await db_service.initialize()
+
     # 获取数据库会话
-    async for session in get_async_session():
+    async with db_service.get_session() as session:
         user_crud = UserCRUD(session)
         
         # 检查是否已存在管理员用户
@@ -55,8 +60,6 @@ async def create_admin_user():
         print(f"   密码: {admin_password}")
         print(f"   角色: {created_user.role}")
         print("   请在首次登录后修改密码")
-        
-        break
 
 
 if __name__ == "__main__":

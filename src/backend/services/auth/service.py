@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from core.config import Settings
+from services.config.service import Settings
 
 
 class AuthService:
@@ -19,17 +19,17 @@ class AuthService:
     @property
     def secret_key(self) -> str:
         """获取JWT密钥"""
-        return self.settings.JWT_SECRET_KEY
+        return self.settings.jwt_secret_key
 
     @property
     def algorithm(self) -> str:
         """获取JWT算法"""
-        return self.settings.JWT_ALGORITHM
+        return self.settings.jwt_algorithm
     
     @property
     def access_token_expire_minutes(self) -> int:
         """获取token过期时间"""
-        return self.settings_service.jwt_access_token_expire_minutes
+        return self.settings.jwt_access_token_expire_minutes
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """验证密码"""

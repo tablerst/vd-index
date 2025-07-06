@@ -54,7 +54,12 @@ class Settings(BaseSettings):
     # 速率限制
     rate_limit_requests: int = 100
     rate_limit_window: int = 60
-    
+
+    # 超级用户配置
+    super_user_username: str = "admin"
+    super_user_password: str = "admin123"
+    super_user_email: str = ""
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

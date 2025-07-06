@@ -7,7 +7,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlmodel import Session
 
-from core.database import get_session
+from services.deps import get_session
 from schema.member_schemas import ImportBatchRequest, ApiResponse, ImportMemberRequest
 from domain.avatar_service import AvatarService
 from domain.member_service import MemberService

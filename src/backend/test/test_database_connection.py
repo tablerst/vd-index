@@ -2,7 +2,8 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.engine import create_engine
 from sqlalchemy.ext.asyncio import create_async_engine
-from core.config import settings
+from services.config.service import Settings
+settings = Settings()
 import logging
 
 logger = logging.getLogger(__name__)
