@@ -15,11 +15,18 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
-from core.config import settings
 from services.database.service import DatabaseService
 from services.database.factory import DatabaseServiceFactory
-from services.deps import set_database_service
+from services.auth.factory import AuthServiceFactory
+from services.config.factory import ConfigServiceFactory
+from services.crypto.factory import CryptoServiceFactory
+from services.deps import set_database_service, set_auth_service, set_config_service, set_crypto_service
 from api.router import main_router
+
+# 初始化全局配置服务
+config_factory = ConfigServiceFactory()
+config_service = config_factory.create()
+settings = config_service.get_settings()
 
 
 def setup_logging():
@@ -85,18 +92,36 @@ async def lifespan(app: FastAPI):
     """应用生命周期管理"""
     # 启动时执行
     logger.info("🚀 启动后端服务...")
+
+    # 初始化配置服务
+    config_factory = ConfigServiceFactory()
+    config_service = config_factory.create()
+    set_config_service(config_service)
+    settings = config_service.get_settings()
+
     logger.info(f"调试模式: {settings.debug}")
     logger.info(f"数据库URL: {settings.database_url}")
     logger.info(f"头像根目录: {settings.avatar_root}")
 
+    # 初始化加密服务
+    crypto_factory = CryptoServiceFactory()
+    crypto_service = crypto_factory.create(config_service)
+    set_crypto_service(crypto_service)
+
     # 初始化数据库服务
-    factory = DatabaseServiceFactory()
-    db_service = factory.create(settings.database_url)
+    db_factory = DatabaseServiceFactory()
+    db_service = db_factory.create(settings.database_url)
     set_database_service(db_service)
+
+    # 初始化认证服务
+    auth_factory = AuthServiceFactory()
+    auth_service = auth_factory.create()
+    set_auth_service(auth_service)
 
     # 创建数据库和表
     await db_service.create_db_and_tables()
     logger.info("✅ 数据库初始化完成")
+    logger.info("✅ 认证服务初始化完成")
 
     # 确保必要的目录存在
     from pathlib import Path

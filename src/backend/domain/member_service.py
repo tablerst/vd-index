@@ -8,7 +8,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from services.database.models.member import Member, MemberCreate, MemberCRUD
 from schema.member_schemas import MemberResponse, MemberDetailResponse, ImportMemberRequest
-from core.crypto import encrypt_uin
+from services.deps import get_crypto_service
 
 
 class MemberService:
@@ -108,7 +108,8 @@ class MemberService:
         salt = secrets.token_hex(8)
 
         # 加密UIN
-        encrypted_uin = encrypt_uin(member_data.uin, salt)
+        crypto_service = get_crypto_service()
+        encrypted_uin = crypto_service.encrypt_uin(member_data.uin, salt)
 
         # 确定显示名称
         display_name = member_data.card.strip() or member_data.nick.strip()

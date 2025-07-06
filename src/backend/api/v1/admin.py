@@ -11,7 +11,7 @@ from core.database import get_session
 from schema.member_schemas import ImportBatchRequest, ApiResponse, ImportMemberRequest
 from domain.avatar_service import AvatarService
 from domain.member_service import MemberService
-from core.crypto import decrypt_uin
+from services.deps import get_crypto_service
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -134,7 +134,8 @@ async def decrypt_member_uin(
         raise HTTPException(status_code=404, detail="成员不存在")
     
     try:
-        decrypted_uin = decrypt_uin(member.uin_encrypted, member.salt)
+        crypto_service = get_crypto_service()
+        decrypted_uin = crypto_service.decrypt_uin(member.uin_encrypted, member.salt)
         return {
             "member_id": member_id,
             "display_name": member.display_name,

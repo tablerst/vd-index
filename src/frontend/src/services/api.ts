@@ -107,10 +107,14 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`
-    
+
+    // 获取认证token
+    const token = localStorage.getItem('access_token')
+
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
         ...options.headers,
       },
       ...options,
@@ -118,9 +122,10 @@ class ApiClient {
 
     try {
       const response = await fetch(url, config)
-      
+
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`)
       }
 
       return await response.json()
@@ -128,6 +133,31 @@ class ApiClient {
       console.error(`API请求失败: ${endpoint}`, error)
       throw error
     }
+  }
+
+  // 认证相关方法
+  async login(credentials: { username: string; password: string }): Promise<any> {
+    const formData = new FormData()
+    formData.append('username', credentials.username)
+    formData.append('password', credentials.password)
+
+    return this.request('/api/v1/auth/login', {
+      method: 'POST',
+      headers: {
+        // 移除Content-Type，让浏览器自动设置multipart/form-data
+      },
+      body: formData
+    })
+  }
+
+  async getCurrentUser(): Promise<any> {
+    return this.request('/api/v1/auth/me')
+  }
+
+  async logout(): Promise<any> {
+    return this.request('/api/v1/auth/logout', {
+      method: 'POST'
+    })
   }
 
   // 获取成员列表
@@ -200,6 +230,24 @@ class ApiClient {
 
 // 创建全局API客户端实例
 export const apiClient = new ApiClient()
+
+// 简化的API接口，用于auth store
+export const api = {
+  post: async <T>(endpoint: string, data: any): Promise<{ data: T }> => {
+    if (endpoint === '/api/v1/auth/login') {
+      const result = await apiClient.login(data)
+      return { data: result }
+    }
+    throw new Error(`Unsupported endpoint: ${endpoint}`)
+  },
+  get: async <T>(endpoint: string): Promise<{ data: T }> => {
+    if (endpoint === '/api/v1/auth/me') {
+      const result = await apiClient.getCurrentUser()
+      return { data: result }
+    }
+    throw new Error(`Unsupported endpoint: ${endpoint}`)
+  }
+}
 
 // 便捷函数
 export const memberApi = {

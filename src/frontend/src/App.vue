@@ -1,38 +1,27 @@
 <template>
   <div id="app" class="app">
-    <!-- 顶部导航 -->
-    <GlassNavigation />
-
-    <!-- 主要内容区域 -->
-    <main class="main-content">
-      <!-- Hero 首屏 -->
-      <HeroSection />
-
-      <!-- Members Circle 成员圆形展示 -->
-      <MembersCircle />
-
-      <!-- 星历活动板 -->
-      <StarCalendar />
-    </main>
-
-    <!-- Footer -->
-    <AppFooter />
-
-    <!-- 自定义光标 -->
-    <CustomPointer />
-    <!-- 全局背景粒子 -->
-    <GlobalParticles />
+    <n-config-provider :theme="null">
+      <n-message-provider>
+        <n-dialog-provider>
+          <n-notification-provider>
+            <!-- 路由视图 -->
+            <router-view />
+          </n-notification-provider>
+        </n-dialog-provider>
+      </n-message-provider>
+    </n-config-provider>
   </div>
 </template>
 
 <script setup lang="ts">
-import GlassNavigation from './components/GlassNavigation.vue'
-import HeroSection from './components/HeroSection.vue'
-import MembersCircle from './components/MembersCircle.vue'
-import StarCalendar from './components/StarCalendar.vue'
-import AppFooter from './components/AppFooter.vue'
-import CustomPointer from './components/CustomPointer.vue'
-import GlobalParticles from './components/GlobalParticles.vue'
+import {
+  NConfigProvider,
+  NMessageProvider,
+  NDialogProvider,
+  NNotificationProvider
+} from 'naive-ui'
+
+// 应用入口，所有页面通过路由渲染
 </script>
 
 <style scoped>
