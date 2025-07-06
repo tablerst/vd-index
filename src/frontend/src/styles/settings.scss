@@ -1,0 +1,608 @@
+// 设置页面专用样式
+// 避免与首页样式冲突，使用独立的样式作用域
+
+.settings-layout {
+  min-height: 100vh;
+  background: #0E1016;
+  display: flex;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  // 星空背景效果
+  &::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+      radial-gradient(circle at 20% 80%, rgba(170, 131, 255, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(212, 222, 199, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(63, 125, 251, 0.03) 0%, transparent 50%);
+    z-index: 0;
+    pointer-events: none;
+  }
+}
+
+.sidebar {
+  width: 280px;
+  background: rgba(255, 255, 255, 0.08);
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.sidebar-header {
+  padding: 32px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+
+  h2 {
+    margin: 0 0 16px 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #FFFFFF;
+    background: linear-gradient(135deg, #B99AFD 0%, #AA83FF 33%, #8F6BFF 66%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .username {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+  }
+}
+
+.sidebar-footer {
+  padding: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  margin-top: auto;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.02);
+  position: relative;
+  z-index: 1;
+}
+
+.content-header {
+  padding: 24px 32px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.content-body {
+  flex: 1;
+  padding: 32px;
+  overflow-y: auto;
+}
+
+// NaiveUI 组件样式覆盖 - 使用更具体的选择器避免污染
+.settings-layout {
+  // 菜单样式
+  :deep(.n-menu) {
+    flex: 1;
+    padding: 16px 0;
+    background: transparent;
+
+    .n-menu-item {
+      border-radius: 12px;
+      margin: 2px 16px;
+      transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+      position: relative;
+      overflow: hidden;
+      color: #FFFFFF !important;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.05) !important;
+      }
+
+      &.n-menu-item--selected {
+        background: linear-gradient(135deg, rgba(170, 131, 255, 0.3) 0%, rgba(170, 131, 255, 0.1) 100%) !important;
+        color: #FFFFFF !important;
+        font-weight: 500;
+        box-shadow: 0 0 20px rgba(170, 131, 255, 0.2);
+
+        .n-menu-item-content-header {
+          color: #FFFFFF !important;
+        }
+      }
+
+      .n-menu-item-content {
+        font-size: 16px;
+        color: #FFFFFF !important;
+      }
+
+      .n-menu-item-content-header {
+        color: #FFFFFF !important;
+      }
+    }
+  }
+
+  // 面包屑样式
+  :deep(.n-breadcrumb) {
+    .n-breadcrumb-item {
+      .n-breadcrumb-item__link {
+        color: rgba(255, 255, 255, 0.7) !important;
+        
+        &:hover {
+          color: #FFFFFF !important;
+        }
+      }
+
+      .n-breadcrumb-item__separator {
+        color: rgba(255, 255, 255, 0.5) !important;
+      }
+    }
+  }
+
+  // 按钮样式
+  :deep(.n-button) {
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+
+    &.n-button--primary-type {
+      background: linear-gradient(135deg, #B99AFD 0%, #AA83FF 33%, #8F6BFF 66%) !important;
+      border: none !important;
+      color: #FFFFFF !important;
+      box-shadow: 0 0 20px rgba(170, 131, 255, 0.3);
+
+      &:hover {
+        box-shadow: 
+          0 0 20px rgba(170, 131, 255, 0.3),
+          0 4px 20px rgba(170, 131, 255, 0.4);
+        transform: translateY(-1px);
+      }
+    }
+
+    &.n-button--secondary-type {
+      background: rgba(255, 255, 255, 0.08) !important;
+      border: 1px solid rgba(255, 255, 255, 0.15) !important;
+      color: #FFFFFF !important;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.12) !important;
+        border-color: #AA83FF !important;
+      }
+    }
+  }
+
+  // 输入框样式
+  :deep(.n-input) {
+    .n-input-wrapper {
+      background-color: rgba(255, 255, 255, 0.08) !important;
+      border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    }
+
+    .n-input__input-el {
+      color: #FFFFFF !important;
+      background: transparent !important;
+    }
+
+    .n-input__placeholder {
+      color: rgba(255, 255, 255, 0.6) !important;
+    }
+
+    &:hover .n-input-wrapper {
+      border-color: #AA83FF !important;
+    }
+
+    &:focus-within .n-input-wrapper {
+      border-color: #AA83FF !important;
+      box-shadow: 0 0 0 2px rgba(170, 131, 255, 0.3) !important;
+    }
+  }
+
+  // 选择器样式
+  :deep(.n-select) {
+    .n-base-selection {
+      background-color: rgba(255, 255, 255, 0.08) !important;
+      border: 1px solid rgba(255, 255, 255, 0.15) !important;
+
+      .n-base-selection-label {
+        color: #FFFFFF !important;
+      }
+
+      .n-base-selection-placeholder {
+        color: rgba(255, 255, 255, 0.6) !important;
+      }
+    }
+
+    &:hover .n-base-selection {
+      border-color: #AA83FF !important;
+    }
+
+    &.n-select--focused .n-base-selection {
+      border-color: #AA83FF !important;
+      box-shadow: 0 0 0 2px rgba(170, 131, 255, 0.3) !important;
+    }
+  }
+
+  // 表格样式
+  :deep(.n-data-table) {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 12px;
+
+    .n-data-table-th {
+      background: rgba(255, 255, 255, 0.08) !important;
+      color: #FFFFFF !important;
+      font-weight: 600;
+    }
+
+    .n-data-table-td {
+      color: rgba(255, 255, 255, 0.9) !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .n-data-table-tr:hover .n-data-table-td {
+      background: rgba(255, 255, 255, 0.05) !important;
+    }
+  }
+
+  // 分页样式
+  :deep(.n-pagination) {
+    .n-pagination-item {
+      color: rgba(255, 255, 255, 0.7) !important;
+      background: rgba(255, 255, 255, 0.05) !important;
+      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: #FFFFFF !important;
+      }
+
+      &.n-pagination-item--active {
+        background: #AA83FF !important;
+        color: #FFFFFF !important;
+        border-color: #AA83FF !important;
+      }
+    }
+
+    .n-pagination-quick-jumper {
+      color: rgba(255, 255, 255, 0.7) !important;
+    }
+
+    .n-pagination-size-picker {
+      color: rgba(255, 255, 255, 0.7) !important;
+    }
+  }
+
+  // 卡片样式
+  :deep(.n-card) {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #FFFFFF !important;
+
+    .n-card-header {
+      color: #FFFFFF !important;
+      font-weight: 600;
+    }
+  }
+}
+
+// 全局强制样式覆盖 - 确保在设置页面生效
+.settings-layout {
+  // 数据表格样式覆盖
+  :deep(.n-data-table) {
+    background-color: rgba(14, 16, 22, 0.8) !important;
+
+    .n-data-table-wrapper {
+      background-color: transparent !important;
+    }
+
+    .n-data-table-table {
+      background-color: transparent !important;
+    }
+
+    .n-data-table-thead {
+      background-color: rgba(255, 255, 255, 0.05) !important;
+
+      .n-data-table-th {
+        background-color: transparent !important;
+        color: #FFFFFF !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+      }
+    }
+
+    .n-data-table-tbody {
+      .n-data-table-tr {
+        background-color: transparent !important;
+
+        &:hover {
+          background-color: rgba(170, 131, 255, 0.1) !important;
+        }
+
+        .n-data-table-td {
+          background-color: transparent !important;
+          color: #FFFFFF !important;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        }
+      }
+    }
+  }
+
+  // 卡片组件样式覆盖
+  :deep(.n-card) {
+    background-color: rgba(14, 16, 22, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+
+    .n-card-header {
+      color: #FFFFFF !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .n-card__content {
+      color: #FFFFFF !important;
+    }
+  }
+
+  // 强制覆盖所有白色背景容器
+  :deep(.n-card),
+  :deep(.n-card .n-card__content),
+  :deep(.content-card),
+  :deep(.data-table-container),
+  :deep(.table-container),
+  :deep(.table-card),
+  :deep(.stat-card),
+  :deep(.management-card),
+  :deep(.toolbar) {
+    background-color: rgba(14, 16, 22, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  // 修复表格容器背景
+  :deep(.n-data-table-wrapper),
+  :deep(.n-data-table-base-table-wrapper) {
+    background-color: transparent !important;
+  }
+
+  // 特别处理活动管理和成员管理页面的卡片
+  :deep(.activity-management .table-card),
+  :deep(.member-management .table-card),
+  :deep(.config-management .table-card),
+  :deep(.activity-management .management-card),
+  :deep(.member-management .management-card),
+  :deep(.config-management .management-card) {
+    background-color: rgba(14, 16, 22, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+
+    .n-card__content {
+      background-color: transparent !important;
+    }
+  }
+
+  // 通用白色背景覆盖 - 最高优先级
+  :deep([style*="background-color: rgb(255, 255, 255)"]),
+  :deep([style*="background-color: white"]),
+  :deep([style*="background: rgb(255, 255, 255)"]),
+  :deep([style*="background: white"]) {
+    background-color: rgba(14, 16, 22, 0.8) !important;
+    background: rgba(14, 16, 22, 0.8) !important;
+  }
+
+  // 分页组件样式覆盖
+  :deep(.n-pagination) {
+    .n-pagination-item {
+      background-color: rgba(255, 255, 255, 0.05) !important;
+      color: #FFFFFF !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+
+      &:hover {
+        background-color: rgba(170, 131, 255, 0.2) !important;
+        border-color: #AA83FF !important;
+      }
+
+      &.n-pagination-item--active {
+        background-color: #AA83FF !important;
+        border-color: #AA83FF !important;
+        color: #FFFFFF !important;
+      }
+    }
+
+    .n-pagination-prefix,
+    .n-pagination-suffix {
+      color: rgba(255, 255, 255, 0.7) !important;
+    }
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .settings-layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+  }
+
+  .content-body {
+    padding: 16px;
+  }
+}
+
+// 全局文字和输入框修复 - 应用到整个设置页面
+.settings-layout {
+  // 页面标题和文字颜色修复
+  .page-header {
+    h1 {
+      color: #FFFFFF !important;
+      font-size: 32px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    p {
+      color: rgba(255, 255, 255, 0.8) !important;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+  }
+
+  // 强制覆盖所有标题颜色
+  h1, h2, h3, h4, h5, h6 {
+    color: #FFFFFF !important;
+  }
+
+  // 强制覆盖所有段落文字颜色
+  p {
+    color: rgba(255, 255, 255, 0.8) !important;
+  }
+}
+
+// 全局输入框和选择框修复 - 不限制在 settings-layout 内
+:deep(.n-input) {
+  .n-input-wrapper {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  }
+
+  .n-input__input-el {
+    color: #FFFFFF !important;
+    background-color: transparent !important;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.5) !important;
+    }
+  }
+
+  .n-input__prefix,
+  .n-input__suffix {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+}
+
+// 全局选择框修复
+:deep(.n-select) {
+  .n-base-selection {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+
+    .n-base-selection-label {
+      color: #FFFFFF !important;
+    }
+
+    .n-base-selection-placeholder {
+      color: rgba(255, 255, 255, 0.5) !important;
+    }
+  }
+}
+
+// 全局标题和文字颜色修复 - 覆盖所有设置页面
+.main-content {
+  h1, h2, h3, h4, h5, h6 {
+    color: #FFFFFF !important;
+  }
+
+  p {
+    color: rgba(255, 255, 255, 0.8) !important;
+  }
+
+  .page-header {
+    h1 {
+      color: #FFFFFF !important;
+    }
+
+    p {
+      color: rgba(255, 255, 255, 0.8) !important;
+    }
+  }
+
+  // 覆盖仪表板标题
+  .dashboard-header {
+    h1 {
+      color: #FFFFFF !important;
+    }
+
+    p {
+      color: rgba(255, 255, 255, 0.8) !important;
+    }
+  }
+}
+
+// 强制覆盖所有页面组件的标题样式 - 最高优先级
+.dashboard,
+.member-management,
+.activity-management,
+.config-management {
+  h1, h2, h3, h4, h5, h6 {
+    color: #FFFFFF !important;
+  }
+
+  p {
+    color: rgba(255, 255, 255, 0.8) !important;
+  }
+
+  .page-header,
+  .dashboard-header {
+    h1 {
+      color: #FFFFFF !important;
+    }
+
+    p {
+      color: rgba(255, 255, 255, 0.8) !important;
+    }
+  }
+}
+
+// 全局输入框修复 - 最高优先级，覆盖所有组件
+.n-input {
+  .n-input-wrapper {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  }
+
+  .n-input__input-el {
+    color: #FFFFFF !important;
+    background-color: transparent !important;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.5) !important;
+    }
+  }
+
+  .n-input__prefix,
+  .n-input__suffix {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+}
+
+// 全局选择框修复 - 最高优先级
+.n-select {
+  .n-base-selection {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+
+    .n-base-selection-label {
+      color: #FFFFFF !important;
+    }
+
+    .n-base-selection-placeholder {
+      color: rgba(255, 255, 255, 0.5) !important;
+    }
+  }
+}

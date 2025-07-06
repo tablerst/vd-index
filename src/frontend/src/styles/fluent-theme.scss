@@ -375,3 +375,136 @@ body {
   outline: 2px solid var(--fluent-primary);
   outline-offset: 2px;
 }
+
+// 修复 NaiveUI 输入框文字颜色问题
+.n-input .n-input__input-el {
+  color: #FFFFFF !important; // 改为白色确保在深色背景下可见
+  background-color: transparent !important;
+}
+
+.n-input input {
+  color: #FFFFFF !important; // 改为白色确保在深色背景下可见
+  background-color: transparent !important;
+}
+
+.n-input input::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important; // 改为半透明白色
+}
+
+.n-input .n-input__placeholder {
+  color: rgba(255, 255, 255, 0.6) !important; // 改为半透明白色
+}
+
+// 确保输入框有合适的背景色和边框
+.n-input .n-input-wrapper {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.n-input:hover .n-input-wrapper {
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.n-input:focus-within .n-input-wrapper {
+  border-color: #AA83FF !important;
+  box-shadow: 0 0 0 2px rgba(170, 131, 255, 0.3) !important;
+}
+
+// 修复文本域的文字颜色
+.n-input .n-input__textarea-el {
+  color: #FFFFFF !important;
+  background-color: transparent !important;
+}
+
+// 修复选择器的文字颜色
+.n-select .n-base-selection .n-base-selection-label {
+  color: #FFFFFF !important;
+}
+
+.n-select .n-base-selection .n-base-selection-placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+// 专门针对settings页面的输入框样式修复 - 最高优先级
+.settings-layout,
+.main-content,
+.activity-management,
+.member-management,
+.config-management,
+.dashboard {
+  // 强制覆盖所有输入框样式
+  .n-input,
+  :deep(.n-input) {
+    .n-input-wrapper {
+      background-color: rgba(255, 255, 255, 0.1) !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    }
+
+    .n-input__input-el,
+    input {
+      color: #FFFFFF !important;
+      background-color: transparent !important;
+      caret-color: #FFFFFF !important;
+
+      &::placeholder {
+        color: rgba(255, 255, 255, 0.6) !important;
+      }
+    }
+
+    .n-input__placeholder {
+      color: rgba(255, 255, 255, 0.6) !important;
+    }
+
+    .n-input__prefix,
+    .n-input__suffix {
+      color: rgba(255, 255, 255, 0.6) !important;
+    }
+
+    &:hover .n-input-wrapper {
+      border-color: rgba(255, 255, 255, 0.4) !important;
+    }
+
+    &:focus-within .n-input-wrapper {
+      border-color: #AA83FF !important;
+      box-shadow: 0 0 0 2px rgba(170, 131, 255, 0.3) !important;
+    }
+  }
+
+  // 强制覆盖文本域样式
+  .n-input .n-input__textarea-el,
+  :deep(.n-input .n-input__textarea-el) {
+    color: #FFFFFF !important;
+    background-color: transparent !important;
+    caret-color: #FFFFFF !important;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.6) !important;
+    }
+  }
+
+  // 强制覆盖选择器样式
+  .n-select,
+  :deep(.n-select) {
+    .n-base-selection {
+      background-color: rgba(255, 255, 255, 0.1) !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+
+      .n-base-selection-label {
+        color: #FFFFFF !important;
+      }
+
+      .n-base-selection-placeholder {
+        color: rgba(255, 255, 255, 0.6) !important;
+      }
+    }
+
+    &:hover .n-base-selection {
+      border-color: rgba(255, 255, 255, 0.4) !important;
+    }
+
+    &.n-select--focused .n-base-selection {
+      border-color: #AA83FF !important;
+      box-shadow: 0 0 0 2px rgba(170, 131, 255, 0.3) !important;
+    }
+  }
+}

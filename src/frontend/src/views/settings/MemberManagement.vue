@@ -1,6 +1,6 @@
 <template>
   <div class="member-management">
-    <div class="page-header">
+    <div class="dashboard-header">
       <h1>成员管理</h1>
       <p>管理群成员信息、权限和状态</p>
     </div>
@@ -497,27 +497,23 @@ onMounted(() => {
 @import '@/styles/fluent-theme.scss';
 
 .member-management {
-  max-width: 1200px;
-  padding: 0;
-}
+  padding: 24px;
 
-.page-header {
-  margin-bottom: 32px;
-  padding: 24px 0;
+  .dashboard-header {
+    margin-bottom: 24px;
 
-  h1 {
-    margin: 0 0 8px 0;
-    font-size: 32px;
-    font-weight: 600;
-    color: $fluent-text-primary;
-    font-family: $fluent-font-family;
-  }
+    h1 {
+      margin: 0 0 8px 0;
+      font-size: 28px;
+      font-weight: 600;
+      color: #FFFFFF;
+    }
 
-  p {
-    margin: 0;
-    color: $fluent-text-secondary;
-    font-size: 16px;
-    line-height: 1.5;
+    p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 16px;
+    }
   }
 }
 
@@ -544,7 +540,7 @@ onMounted(() => {
     margin: 0;
     font-size: 24px;
     font-weight: 600;
-    color: $fluent-text-primary;
+    color: #FFFFFF; // 修复深色主题下的文字颜色
     font-family: $fluent-font-family;
   }
 }
@@ -580,7 +576,7 @@ onMounted(() => {
 
   .n-data-table-th {
     background: $fluent-fill-subtle;
-    color: $fluent-text-primary;
+    color: #FFFFFF; // 修复表头文字颜色
     font-weight: 600;
     border-bottom: 1px solid $fluent-stroke-surface;
   }
@@ -612,6 +608,17 @@ onMounted(() => {
 
   &:active {
     transform: translateY(0);
+  }
+
+  // 表格操作按钮样式优化
+  &.n-button--small-type {
+    min-width: 60px; // 增加最小宽度
+    padding: 0 12px; // 增加内边距
+
+    &.n-button--text-type {
+      min-width: 50px;
+      padding: 0 8px;
+    }
   }
 }
 

@@ -1,0 +1,257 @@
+// 登录页面专用样式
+// 避免与首页样式冲突，使用独立的样式作用域
+
+.login-container {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0E1016;
+  overflow: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  // 星空背景效果
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+      radial-gradient(circle at 20% 80%, rgba(170, 131, 255, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(212, 222, 199, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(63, 125, 251, 0.05) 0%, transparent 50%);
+    z-index: 0;
+  }
+}
+
+.particles-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+
+  canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+}
+
+.login-form-wrapper {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 420px;
+  padding: 32px;
+}
+
+.login-form {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(170, 131, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+
+  &:hover {
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      0 0 30px rgba(170, 131, 255, 0.2);
+    border-color: rgba(170, 131, 255, 0.3);
+    transform: translateY(-2px);
+  }
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 32px;
+
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #FFFFFF;
+    margin: 0 0 8px 0;
+    background: linear-gradient(135deg, #B99AFD 0%, #AA83FF 33%, #8F6BFF 66%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  p {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+  }
+}
+
+// NaiveUI 组件样式覆盖 - 使用全局选择器确保样式生效
+.login-container {
+  // 输入框样式 - 使用更强的选择器
+  :deep(.n-input) {
+    border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+
+    .n-input-wrapper {
+      background-color: rgba(14, 16, 22, 0.8) !important; // 深色背景确保对比度
+      border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    }
+
+    .n-input__input-el {
+      font-size: 16px !important;
+      color: #FFFFFF !important;
+      background: transparent !important;
+      caret-color: #FFFFFF !important; // 光标颜色
+    }
+
+    .n-input__placeholder {
+      color: rgba(255, 255, 255, 0.6) !important;
+    }
+
+    .n-input__prefix {
+      color: rgba(255, 255, 255, 0.6) !important;
+    }
+
+    &:hover .n-input-wrapper {
+      border-color: #AA83FF !important;
+      box-shadow: 0 4px 12px rgba(170, 131, 255, 0.1) !important;
+    }
+
+    &:focus-within .n-input-wrapper {
+      border-color: #AA83FF !important;
+      box-shadow: 0 0 0 2px rgba(170, 131, 255, 0.3) !important;
+    }
+  }
+
+  // 表单项标签样式
+  :deep(.n-form-item-label) {
+    color: #FFFFFF !important;
+    font-weight: 500 !important;
+  }
+
+  // 按钮样式
+  :deep(.n-button) {
+    border-radius: 8px;
+    height: 44px;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    width: 100%;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(170, 131, 255, 0.2);
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    &.n-button--primary-type {
+      background: linear-gradient(135deg, #B99AFD 0%, #AA83FF 33%, #8F6BFF 66%) !important;
+      border: none !important;
+      color: #FFFFFF !important;
+      box-shadow: 0 0 20px rgba(170, 131, 255, 0.3);
+
+      .n-button__content {
+        color: #FFFFFF !important;
+      }
+
+      &:hover {
+        box-shadow:
+          0 0 20px rgba(170, 131, 255, 0.3),
+          0 4px 20px rgba(170, 131, 255, 0.4);
+      }
+    }
+  }
+
+  // 表单项样式
+  :deep(.n-form-item) {
+    margin-bottom: 24px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .n-form-item-label {
+      color: #FFFFFF !important;
+      font-weight: 500;
+    }
+
+    .n-form-item-feedback-wrapper {
+      .n-form-item-feedback {
+        color: rgba(255, 255, 255, 0.7) !important;
+      }
+    }
+  }
+
+  // 图标样式
+  :deep(.n-icon) {
+    color: rgba(255, 255, 255, 0.6) !important;
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  // 警告框样式
+  :deep(.n-alert) {
+    border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    background-color: rgba(255, 107, 107, 0.1) !important;
+    border: 1px solid rgba(255, 107, 107, 0.3) !important;
+    color: #FFFFFF !important;
+  }
+}
+
+// 全局强制样式覆盖 - 确保在登录页面生效
+.login-container {
+  // 强制所有输入框文字为白色
+  input {
+    color: #FFFFFF !important;
+    background: transparent !important;
+  }
+
+  // 强制所有文字为白色
+  .n-input__input-el,
+  .n-input input {
+    color: #FFFFFF !important;
+    background: transparent !important;
+  }
+
+  // 强制占位符文字
+  .n-input__placeholder,
+  input::placeholder {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+
+  // 强制按钮文字
+  .n-button__content,
+  button {
+    color: #FFFFFF !important;
+  }
+
+  // 强制表单标签
+  .n-form-item-label__text {
+    color: #FFFFFF !important;
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .login-form-wrapper {
+    padding: 16px;
+  }
+
+  .login-form {
+    padding: 24px;
+  }
+
+  .login-header h1 {
+    font-size: 24px;
+  }
+}

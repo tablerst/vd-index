@@ -1,51 +1,55 @@
 <template>
   <div class="config-management">
-    <div class="page-header">
+    <div class="dashboard-header">
       <h1>配置管理</h1>
       <p>管理系统配置参数和设置</p>
     </div>
 
-    <div class="toolbar">
-      <div class="search-section">
-        <n-input
-          v-model:value="searchQuery"
-          placeholder="搜索配置项..."
-          clearable
-          @input="handleSearch"
-        >
-          <template #prefix>
-            <n-icon :component="SearchOutline" />
-          </template>
-        </n-input>
+    <div class="management-card">
+      <div class="card-header">
+        <h3>配置列表</h3>
+        <div class="actions">
+          <n-button @click="handleExportConfigs">
+            <template #icon>
+              <n-icon :component="DownloadOutline" />
+            </template>
+            导出配置
+          </n-button>
+          <n-button @click="loadConfigs">
+            <template #icon>
+              <n-icon :component="RefreshOutline" />
+            </template>
+            刷新
+          </n-button>
+          <n-button
+            v-if="canCreate"
+            type="primary"
+            @click="handleCreateConfig"
+          >
+            <template #icon>
+              <n-icon :component="AddOutline" />
+            </template>
+            新建配置
+          </n-button>
+        </div>
       </div>
 
-      <div class="action-section">
-        <n-button @click="handleExportConfigs">
-          <template #icon>
-            <n-icon :component="DownloadOutline" />
-          </template>
-          导出配置
-        </n-button>
-        <n-button @click="loadConfigs">
-          <template #icon>
-            <n-icon :component="RefreshOutline" />
-          </template>
-          刷新
-        </n-button>
-        <n-button
-          v-if="canCreate"
-          type="primary"
-          @click="handleCreateConfig"
-        >
-          <template #icon>
-            <n-icon :component="AddOutline" />
-          </template>
-          新建配置
-        </n-button>
+      <div class="filters">
+        <n-space>
+          <n-input
+            v-model:value="searchQuery"
+            placeholder="搜索配置项..."
+            clearable
+            style="width: 200px;"
+            @input="handleSearch"
+          >
+            <template #prefix>
+              <n-icon :component="SearchOutline" />
+            </template>
+          </n-input>
+        </n-space>
       </div>
-    </div>
 
-    <n-card class="table-card">
       <n-data-table
         :columns="columns"
         :data="filteredConfigs"
@@ -53,9 +57,10 @@
         :pagination="pagination"
         :row-key="(row) => row.id"
         remote
+        size="small"
         striped
       />
-    </n-card>
+    </div>
 
     <!-- 创建配置模态框 -->
     <n-modal
@@ -610,64 +615,30 @@ onMounted(() => {
 @import '@/styles/fluent-theme.scss';
 
 .config-management {
-  max-width: 1600px;
-  padding: 0;
+  padding: 24px;
 }
 
-.page-header {
-  margin-bottom: 32px;
-  padding: 24px 0;
+.dashboard-header {
+  margin-bottom: 24px;
 
   h1 {
     margin: 0 0 8px 0;
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 600;
-    color: $fluent-text-primary;
-    font-family: $fluent-font-family;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    &::before {
-      content: '⚙️';
-      font-size: 28px;
-    }
+    color: #FFFFFF;
   }
 
   p {
     margin: 0;
-    color: $fluent-text-secondary;
+    color: rgba(255, 255, 255, 0.7);
     font-size: 16px;
-    line-height: 1.5;
   }
 }
 
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  gap: 24px;
-  padding: 20px 24px;
-  @include fluent-acrylic(0.9, 20px);
-  border-radius: $fluent-border-radius-medium;
-  border: 1px solid $fluent-stroke-surface;
-
-  .search-section {
-    flex: 1;
-    max-width: 400px;
-  }
-
-  .action-section {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-  }
-}
-
-.table-card {
+.management-card {
   @include fluent-acrylic(0.9, 30px);
   border-radius: $fluent-border-radius-large;
+  padding: 32px;
   border: 1px solid $fluent-stroke-surface;
   @include fluent-depth-shadow(8);
   transition: all $fluent-duration-normal $fluent-easing-standard;
@@ -675,48 +646,70 @@ onMounted(() => {
   &:hover {
     @include fluent-depth-shadow(16);
   }
+}
 
-  :deep(.n-card__content) {
-    padding: 0;
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+
+  h3 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #FFFFFF; // 修复深色主题下的文字颜色
+    font-family: $fluent-font-family;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.filters {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid $fluent-stroke-surface;
+}
+
+// Fluent Design 组件样式覆盖
+:deep(.n-data-table) {
+  border-radius: $fluent-border-radius-medium;
+  overflow: hidden;
+
+  .n-data-table-wrapper {
+    border-radius: $fluent-border-radius-medium;
   }
 
-  :deep(.n-data-table) {
-    border-radius: $fluent-border-radius-large;
-    overflow: hidden;
+  .n-data-table-thead {
+    background: $fluent-fill-subtle;
+  }
 
-    .n-data-table-wrapper {
-      border-radius: $fluent-border-radius-large;
-    }
+  .n-data-table-th {
+    background: $fluent-fill-subtle;
+    color: $fluent-text-primary;
+    font-weight: 600;
+    border-bottom: 1px solid $fluent-stroke-surface;
+  }
 
-    .n-data-table-thead {
+  .n-data-table-td {
+    border-bottom: 1px solid $fluent-stroke-surface;
+
+    &:hover {
       background: $fluent-fill-subtle;
     }
+  }
 
-    .n-data-table-th {
-      background: $fluent-fill-subtle;
-      color: $fluent-text-primary;
-      font-weight: 600;
-      border-bottom: 1px solid $fluent-stroke-surface;
-      font-family: $fluent-font-family;
-    }
-
+  .n-data-table-tr:hover {
     .n-data-table-td {
-      border-bottom: 1px solid $fluent-stroke-surface;
-
-      &:hover {
-        background: $fluent-fill-subtle;
-      }
-    }
-
-    .n-data-table-tr:hover {
-      .n-data-table-td {
-        background: $fluent-fill-subtle;
-      }
+      background: $fluent-fill-subtle;
     }
   }
 }
 
-// Fluent Design 组件样式覆盖
 :deep(.n-button) {
   border-radius: $fluent-border-radius-small;
   font-weight: 500;
@@ -729,6 +722,17 @@ onMounted(() => {
 
   &:active {
     transform: translateY(0);
+  }
+
+  // 表格操作按钮样式优化
+  &.n-button--small-type {
+    min-width: 60px; // 增加最小宽度
+    padding: 0 12px; // 增加内边距
+
+    &.n-button--text-type {
+      min-width: 50px;
+      padding: 0 8px;
+    }
   }
 }
 

@@ -9,7 +9,7 @@
       <n-card class="stat-card" hoverable>
         <div class="stat-content">
           <div class="stat-icon">
-            <n-icon size="32" color="#0078D4">
+            <n-icon size="32" color="#AA83FF">
               <People />
             </n-icon>
           </div>
@@ -23,7 +23,7 @@
       <n-card class="stat-card" hoverable>
         <div class="stat-content">
           <div class="stat-icon">
-            <n-icon size="32" color="#107C10">
+            <n-icon size="32" color="#D4DEC7">
               <Calendar />
             </n-icon>
           </div>
@@ -37,7 +37,7 @@
       <n-card class="stat-card" hoverable>
         <div class="stat-content">
           <div class="stat-icon">
-            <n-icon size="32" color="#FF8C00">
+            <n-icon size="32" color="#3F7DFB">
               <Settings />
             </n-icon>
           </div>
@@ -185,12 +185,12 @@ onMounted(() => {
       margin: 0 0 8px 0;
       font-size: 28px;
       font-weight: 600;
-      color: #1f2937;
+      color: #FFFFFF;
     }
-    
+
     p {
       margin: 0;
-      color: #6b7280;
+      color: rgba(255, 255, 255, 0.7);
       font-size: 16px;
     }
   }
@@ -222,12 +222,12 @@ onMounted(() => {
         margin: 0 0 4px 0;
         font-size: 24px;
         font-weight: 600;
-        color: #1f2937;
+        color: #FFFFFF;
       }
-      
+
       p {
         margin: 0;
-        color: #6b7280;
+        color: rgba(255, 255, 255, 0.7);
         font-size: 14px;
       }
     }
@@ -247,18 +247,18 @@ onMounted(() => {
       margin: 0 0 4px 0;
       font-size: 16px;
       font-weight: 500;
-      color: #1f2937;
+      color: #FFFFFF;
     }
-    
+
     p {
       margin: 0;
-      color: #6b7280;
+      color: rgba(255, 255, 255, 0.7);
       font-size: 14px;
     }
   }
   
   .activity-date {
-    color: #9ca3af;
+    color: rgba(255, 255, 255, 0.5);
     font-size: 12px;
     white-space: nowrap;
     margin-left: 16px;
@@ -279,7 +279,7 @@ onMounted(() => {
     
     .status-label {
       font-weight: 500;
-      color: #374151;
+      color: #FFFFFF;
     }
   }
 }
