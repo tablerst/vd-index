@@ -31,7 +31,7 @@ class MemberService:
     def create_member_response(member: Member, base_url: str = "") -> MemberResponse:
         """创建成员响应对象"""
         # 生成头像URL - 使用成员ID而不是avatar_hash
-        avatar_url = f"{base_url}/api/avatar/{member.id}"
+        avatar_url = f"{base_url}/api/v1/avatar/{member.id}"
 
         # 生成简介
         join_date_str = MemberService.format_datetime(member.join_time)
@@ -52,7 +52,7 @@ class MemberService:
     def create_member_detail_response(member: Member, base_url: str = "") -> MemberDetailResponse:
         """创建成员详情响应对象"""
         # 生成头像URL - 使用成员ID而不是avatar_hash
-        avatar_url = f"{base_url}/api/avatar/{member.id}"
+        avatar_url = f"{base_url}/api/v1/avatar/{member.id}"
 
         # 生成简介
         join_date_str = MemberService.format_datetime(member.join_time)

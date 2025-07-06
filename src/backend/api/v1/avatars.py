@@ -14,7 +14,7 @@ from core.crypto import decrypt_uin
 # 设置日志记录器
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api", tags=["avatars"])
+router = APIRouter(tags=["avatars"])
 
 
 @router.get(

@@ -18,7 +18,7 @@ from schema.activity_schemas import (
 # 设置日志记录器
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api", tags=["activities"])
+router = APIRouter(tags=["activities"])
 
 
 async def build_activity_response(activity, session: AsyncSession) -> ActivityResponse:
@@ -32,7 +32,7 @@ async def build_activity_response(activity, session: AsyncSession) -> ActivityRe
             participants.append(ParticipantInfo(
                 id=member.id,
                 name=member.display_name,
-                avatar_url=f"/api/avatar/{member.id}"
+                avatar_url=f"/api/v1/avatar/{member.id}"
             ))
     
     return ActivityResponse(

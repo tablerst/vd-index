@@ -133,45 +133,45 @@ class ApiClient {
   // 获取成员列表
   async getMembers(page: number = 1, pageSize: number = 50): Promise<MemberListResponse> {
     return this.request<MemberListResponse>(
-      `/api/members?page=${page}&page_size=${pageSize}`
+      `/api/v1/members?page=${page}&page_size=${pageSize}`
     )
   }
 
   // 获取成员详情
   async getMemberDetail(memberId: number): Promise<MemberDetail> {
-    return this.request<MemberDetail>(`/api/members/${memberId}`)
+    return this.request<MemberDetail>(`/api/v1/members/${memberId}`)
   }
 
   // 获取成员统计信息
   async getMemberStats(): Promise<MemberStats> {
-    return this.request<MemberStats>('/api/members/stats')
+    return this.request<MemberStats>('/api/v1/members/stats')
   }
 
   // 获取头像URL（直接返回URL，由浏览器处理缓存）
   getAvatarUrl(memberId: number): string {
-    return `${this.baseURL}/api/avatar/${memberId}`
+    return `${this.baseURL}/api/v1/avatar/${memberId}`
   }
 
   // 获取活动列表
   async getActivities(page: number = 1, pageSize: number = 10): Promise<ActivityListResponse> {
     return this.request<ActivityListResponse>(
-      `/api/star_calendar/activities?page=${page}&page_size=${pageSize}`
+      `/api/v1/star_calendar/activities?page=${page}&page_size=${pageSize}`
     )
   }
 
   // 获取活动统计信息
   async getActivityStats(): Promise<ActivityStats> {
-    return this.request<ActivityStats>('/api/star_calendar/activities/stats')
+    return this.request<ActivityStats>('/api/v1/star_calendar/activities/stats')
   }
 
   // 获取单个活动详情
   async getActivity(activityId: number): Promise<Activity> {
-    return this.request<Activity>(`/api/star_calendar/activity/${activityId}`)
+    return this.request<Activity>(`/api/v1/star_calendar/activity/${activityId}`)
   }
 
   // 创建活动
   async createActivity(activityData: ActivityCreateRequest): Promise<Activity> {
-    return this.request<Activity>('/api/star_calendar/activity/create', {
+    return this.request<Activity>('/api/v1/star_calendar/activity/create', {
       method: 'POST',
       body: JSON.stringify(activityData)
     })
@@ -179,7 +179,7 @@ class ApiClient {
 
   // 更新活动
   async updateActivity(activityId: number, activityData: ActivityUpdateRequest): Promise<Activity> {
-    return this.request<Activity>(`/api/star_calendar/activity/update/${activityId}`, {
+    return this.request<Activity>(`/api/v1/star_calendar/activity/update/${activityId}`, {
       method: 'PUT',
       body: JSON.stringify(activityData)
     })
@@ -187,7 +187,7 @@ class ApiClient {
 
   // 删除活动
   async deleteActivity(activityId: number): Promise<{ success: boolean; message: string }> {
-    return this.request<{ success: boolean; message: string }>(`/api/star_calendar/activity/delete/${activityId}`, {
+    return this.request<{ success: boolean; message: string }>(`/api/v1/star_calendar/activity/delete/${activityId}`, {
       method: 'DELETE'
     })
   }
@@ -246,7 +246,7 @@ export const memberApi = {
 
   // 从avatar_url中提取成员ID
   extractMemberId(avatarUrl: string): number {
-    const match = avatarUrl.match(/\/api\/avatar\/(\d+)/)
+    const match = avatarUrl.match(/\/api\/v1\/avatar\/(\d+)/)
     return match ? parseInt(match[1], 10) : 0
   }
 }

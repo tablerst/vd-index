@@ -9,7 +9,7 @@ from services.deps import get_session
 from schema.member_schemas import MemberListResponse, MemberDetailResponse
 from domain.member_service import MemberService
 
-router = APIRouter(prefix="/api", tags=["members"])
+router = APIRouter(tags=["members"])
 
 
 @router.get(
@@ -68,7 +68,7 @@ async def get_member_stats(session: AsyncSession = Depends(get_session)):
     """获取成员统计信息"""
     try:
         from sqlmodel import select, func
-        from backend.services.database.models.member import Member
+        from services.database.models.member.base import Member
 
         # 总成员数
         total_statement = select(func.count(Member.id))
