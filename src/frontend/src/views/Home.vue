@@ -18,8 +18,6 @@
     <!-- Footer -->
     <AppFooter />
 
-    <!-- 自定义光标 -->
-    <CustomPointer />
     <!-- 全局背景粒子 -->
     <GlobalParticles />
   </div>
@@ -31,7 +29,6 @@ import HeroSection from '@/components/HeroSection.vue'
 import MembersCircle from '@/components/MembersCircle.vue'
 import StarCalendar from '@/components/StarCalendar.vue'
 import AppFooter from '@/components/AppFooter.vue'
-import CustomPointer from '@/components/CustomPointer.vue'
 import GlobalParticles from '@/components/GlobalParticles.vue'
 </script>
 

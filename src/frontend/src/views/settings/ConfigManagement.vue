@@ -52,6 +52,7 @@
         :loading="loading"
         :pagination="pagination"
         :row-key="(row) => row.id"
+        remote
         striped
       />
     </n-card>
@@ -443,11 +444,12 @@ const pagination = computed(() => ({
   pageSizes: [10, 20, 50],
   showQuickJumper: true,
   prefix: (info: any) => `共 ${info.itemCount} 条`,
-  onUpdatePage: (page: number) => {
+  suffix: (info: { page?: number, pageCount?: number }) => `第 ${info.page || 1} 页，共 ${info.pageCount || 1} 页`,
+  'onUpdate:page': (page: number) => {
     currentPage.value = page
     loadConfigs()
   },
-  onUpdatePageSize: (size: number) => {
+  'onUpdate:pageSize': (size: number) => {
     pageSize.value = size
     currentPage.value = 1
     loadConfigs()

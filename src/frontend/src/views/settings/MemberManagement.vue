@@ -71,6 +71,7 @@
         :loading="loading"
         :pagination="pagination"
         :row-key="(row: any) => row.id"
+        remote
         size="small"
         striped
       />
@@ -216,6 +217,7 @@ const statusFilter = ref<string | null>(null)
 // 成员数据
 const members = ref<Member[]>([])
 const totalMembers = ref(0)
+const totalPages = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(20)
 
@@ -245,24 +247,29 @@ const statusOptions = [
 ]
 
 // 分页配置
-const pagination = computed(() => ({
-  page: currentPage.value,
-  pageSize: pageSize.value,
-  itemCount: totalMembers.value,
-  showSizePicker: true,
-  pageSizes: [10, 20, 50, 100],
-  showQuickJumper: true,
-  prefix: ({ itemCount }: { itemCount: number }) => `共 ${itemCount} 条`,
-  onUpdatePage: (page: number) => {
-    currentPage.value = page
-    loadMembers()
-  },
-  onUpdatePageSize: (size: number) => {
-    pageSize.value = size
-    currentPage.value = 1
-    loadMembers()
+const pagination = computed(() => {
+  const config = {
+    page: currentPage.value,
+    pageSize: pageSize.value,
+    itemCount: totalMembers.value,
+    showSizePicker: true,
+    pageSizes: [10, 20, 50, 100],
+    showQuickJumper: true,
+    prefix: (info: { itemCount?: number }) => `共 ${info.itemCount || 0} 条`,
+    suffix: (info: { page?: number, pageCount?: number }) => `第 ${info.page || 1} 页，共 ${info.pageCount || 1} 页`,
+    'onUpdate:page': (page: number) => {
+      currentPage.value = page
+      loadMembers()
+    },
+    'onUpdate:pageSize': (size: number) => {
+      pageSize.value = size
+      currentPage.value = 1
+      loadMembers()
+    }
   }
-}))
+  console.log('Pagination config:', config)
+  return config
+})
 
 // 表格列配置
 const columns: DataTableColumns = [
@@ -362,8 +369,15 @@ const loadMembers = async () => {
   loading.value = true
   try {
     const response = await memberApi.getMembers(currentPage.value, pageSize.value)
+    console.log('API Response:', response)
     members.value = response.members
     totalMembers.value = response.total
+    totalPages.value = response.total_pages
+    console.log('Updated values:', {
+      totalMembers: totalMembers.value,
+      totalPages: totalPages.value,
+      membersCount: members.value.length
+    })
   } catch (error) {
     console.error('Failed to load members:', error)
     message.error('加载成员数据失败')
