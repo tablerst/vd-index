@@ -1,0 +1,9 @@
+{
+	"dependencies": {
+		"vue-router": "^4.5.1",
+		"naive-ui": "^2.42.0",
+		"vue-i18n": "^9.14.4",
+		"echarts": "^5.6.0",
+		"@vicons/ionicons5": "^0.13.0"
+	}
+}

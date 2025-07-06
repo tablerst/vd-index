@@ -7,9 +7,7 @@ from fastapi.responses import FileResponse
 from pathlib import Path
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from core.config import settings
-from services.deps import get_session
-from core.crypto import decrypt_uin
+from services.deps import get_session, get_config_service, get_crypto_service
 
 # 设置日志记录器
 logger = logging.getLogger(__name__)
@@ -44,9 +42,14 @@ async def get_avatar(member_id: int, session: AsyncSession = Depends(get_session
         logger.debug(f"[GET_AVATAR] 加密UIN长度: {len(member.uin_encrypted) if member.uin_encrypted else 0}")
         logger.debug(f"[GET_AVATAR] Salt: {member.salt}")
 
+        # 获取服务
+        config_service = get_config_service()
+        crypto_service = get_crypto_service()
+        settings = config_service.get_settings()
+
         # 解密得到UIN
         logger.debug(f"[GET_AVATAR] 开始解密UIN - member_id: {member_id}")
-        uin = decrypt_uin(member.uin_encrypted, member.salt)
+        uin = crypto_service.decrypt_uin(member.uin_encrypted, member.salt)
         logger.info(f"[GET_AVATAR] UIN解密成功 - member_id: {member_id}, uin: {uin}")
 
         # 构建头像文件路径
@@ -113,9 +116,14 @@ async def check_avatar(member_id: int, session: AsyncSession = Depends(get_sessi
         logger.debug(f"[CHECK_AVATAR] 加密UIN: {member.uin_encrypted[:20]}..." if member.uin_encrypted and len(member.uin_encrypted) > 20 else f"[CHECK_AVATAR] 加密UIN: {member.uin_encrypted}")
         logger.debug(f"[CHECK_AVATAR] Salt: {member.salt}")
 
+        # 获取服务
+        config_service = get_config_service()
+        crypto_service = get_crypto_service()
+        settings = config_service.get_settings()
+
         # 解密得到UIN
         logger.debug(f"[CHECK_AVATAR] 开始解密UIN - member_id: {member_id}")
-        uin = decrypt_uin(member.uin_encrypted, member.salt)
+        uin = crypto_service.decrypt_uin(member.uin_encrypted, member.salt)
         logger.info(f"[CHECK_AVATAR] UIN解密成功 - member_id: {member_id}, uin: {uin}")
 
         # 构建头像文件路径

@@ -1,5 +1,5 @@
 """
-加密解密工具模块
+加密解密服务模块
 """
 import hashlib
 import secrets
@@ -9,16 +9,23 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import base64
-from core.config import get_or_create_aes_key
 
 # 设置日志记录器
 logger = logging.getLogger(__name__)
 
 
-class CryptoManager:
-    """加密管理器"""
+class CryptoService:
+    """加密服务类"""
     
-    def __init__(self):
+    name = "crypto_service"
+    
+    def __init__(self, config_service):
+        """初始化加密服务
+        
+        Args:
+            config_service: 配置服务实例
+        """
+        self.config_service = config_service
         self._key = None
         self._salt = b"vd_member_salt_2024"  # 固定盐值
     
@@ -27,7 +34,7 @@ class CryptoManager:
         """获取加密密钥"""
         if self._key is None:
             logger.debug("[CRYPTO] 初始化加密密钥")
-            master_key = get_or_create_aes_key()
+            master_key = self.config_service.get_or_create_aes_key()
             logger.debug(f"[CRYPTO] 主密钥长度: {len(master_key)}")
             logger.debug(f"[CRYPTO] 主密钥前10字符: {master_key[:10]}...")
 
@@ -130,27 +137,3 @@ class CryptoManager:
         """生成安全的文件名"""
         avatar_hash = self.generate_avatar_hash(uin, salt)
         return f"{avatar_hash}.webp"
-
-
-# 全局加密管理器实例
-crypto_manager = CryptoManager()
-
-
-def encrypt_uin(uin: int, salt: str) -> str:
-    """加密UIN的便捷函数"""
-    return crypto_manager.encrypt_uin(uin, salt)
-
-
-def decrypt_uin(encrypted_uin: str, salt: str) -> int:
-    """解密UIN的便捷函数"""
-    return crypto_manager.decrypt_uin(encrypted_uin, salt)
-
-
-def generate_avatar_hash(uin: int, salt: str) -> str:
-    """生成头像哈希的便捷函数"""
-    return crypto_manager.generate_avatar_hash(uin, salt)
-
-
-def generate_secure_filename(uin: int, salt: str) -> str:
-    """生成安全文件名的便捷函数"""
-    return crypto_manager.generate_secure_filename(uin, salt)

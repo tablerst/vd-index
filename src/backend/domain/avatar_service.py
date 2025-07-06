@@ -5,8 +5,7 @@ import os
 import shutil
 from pathlib import Path
 from typing import Optional
-from core.config import settings
-from core.crypto import generate_secure_filename
+from services.deps import get_config_service, get_crypto_service
 
 
 class AvatarService:
@@ -15,6 +14,8 @@ class AvatarService:
     @staticmethod
     def ensure_avatar_directory():
         """确保头像目录存在"""
+        config_service = get_config_service()
+        settings = config_service.get_settings()
         avatar_dir = Path(settings.avatar_root)
         avatar_dir.mkdir(parents=True, exist_ok=True)
         return avatar_dir
@@ -28,7 +29,8 @@ class AvatarService:
         original_path = Path(f"../public/avatars/mems/{original_uin}.webp")
         
         # 生成安全的文件名
-        secure_filename = generate_secure_filename(original_uin, salt)
+        crypto_service = get_crypto_service()
+        secure_filename = crypto_service.generate_secure_filename(original_uin, salt)
         target_path = avatar_dir / secure_filename
         
         # 复制文件
@@ -43,6 +45,8 @@ class AvatarService:
     @staticmethod
     def get_avatar_path(avatar_hash: str) -> Optional[Path]:
         """获取头像文件路径"""
+        config_service = get_config_service()
+        settings = config_service.get_settings()
         avatar_dir = Path(settings.avatar_root)
         avatar_path = avatar_dir / f"{avatar_hash}.webp"
         

@@ -3,9 +3,14 @@
 后端服务启动脚本
 """
 import uvicorn
-from core.config import settings
+from services.config.factory import ConfigServiceFactory
 
 if __name__ == "__main__":
+    # 初始化配置服务
+    config_factory = ConfigServiceFactory()
+    config_service = config_factory.create()
+    settings = config_service.get_settings()
+
     uvicorn.run(
         "main:app",
         host=settings.host,
