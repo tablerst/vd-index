@@ -83,8 +83,12 @@ async def run_async_migrations() -> None:
     # Get configuration and set database URL
     configuration = config.get_section(config.config_ini_section, {})
 
+    from dotenv import load_dotenv
+    database_url = load_dotenv(backend_dir / ".env")
     # Use environment variable database URL first
     database_url = os.getenv("DATABASE_URL")
+        
+
     if database_url:
         configuration["sqlalchemy.url"] = database_url
     elif not configuration.get("sqlalchemy.url"):
