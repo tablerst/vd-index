@@ -8,6 +8,12 @@ importers:
 
   .:
     dependencies:
+      '@vicons/carbon':
+        specifier: ^0.13.0
+        version: 0.13.0
+      '@vicons/fluent':
+        specifier: ^0.13.0
+        version: 0.13.0
       '@vicons/ionicons5':
         specifier: ^0.13.0
         version: 0.13.0
@@ -18,8 +24,8 @@ importers:
         specifier: ^2.42.0
         version: 2.42.0(vue@3.5.17)
       vue-i18n:
-        specifier: ^9.14.4
-        version: 9.14.4(vue@3.5.17)
+        specifier: ^11.1.9
+        version: 11.1.9(vue@3.5.17)
       vue-router:
         specifier: ^4.5.1
         version: 4.5.1(vue@3.5.17)
@@ -56,16 +62,16 @@ packages:
   '@emotion/hash@0.8.0':
     resolution: {integrity: sha512-kBJtf7PH6aWwZ6fka3zQ0p6SBYzx4fl1LoZXE2RrnYST9Xljm7WfKJrU4g/Xr3Beg72MLrp1AWNUmuYJTL7Cow==}
 
-  '@intlify/core-base@9.14.4':
-    resolution: {integrity: sha512-vtZCt7NqWhKEtHa3SD/322DlgP5uR9MqWxnE0y8Q0tjDs9H5Lxhss+b5wv8rmuXRoHKLESNgw9d+EN9ybBbj9g==}
+  '@intlify/core-base@11.1.9':
+    resolution: {integrity: sha512-Lrdi4wp3XnGhWmB/mMD/XtfGUw1Jt+PGpZI/M63X1ZqhTDjNHRVCs/i8vv8U1cwaj1A9fb0bkCQHLSL0SK+pIQ==}
     engines: {node: '>= 16'}
 
-  '@intlify/message-compiler@9.14.4':
-    resolution: {integrity: sha512-vcyCLiVRN628U38c3PbahrhbbXrckrM9zpy0KZVlDk2Z0OnGwv8uQNNXP3twwGtfLsCf4gu3ci6FMIZnPaqZsw==}
+  '@intlify/message-compiler@11.1.9':
+    resolution: {integrity: sha512-84SNs3Ikjg0rD1bOuchzb3iK1vR2/8nxrkyccIl5DjFTeMzE/Fxv6X+A7RN5ZXjEWelc1p5D4kHA6HEOhlKL5Q==}
     engines: {node: '>= 16'}
 
-  '@intlify/shared@9.14.4':
-    resolution: {integrity: sha512-P9zv6i1WvMc9qDBWvIgKkymjY2ptIiQ065PjDv7z7fDqH3J/HBRBN5IoiR46r/ujRcU7hCuSIZWvCAFCyuOYZA==}
+  '@intlify/shared@11.1.9':
+    resolution: {integrity: sha512-H/83xgU1l8ox+qG305p6ucmoy93qyjIPnvxGWRA7YdOoHe1tIiW9IlEu4lTdsOR7cfP1ecrwyflQSqXdXBacXA==}
     engines: {node: '>= 16'}
 
   '@jridgewell/sourcemap-codec@1.5.4':
@@ -82,6 +88,12 @@ packages:
 
   '@types/lodash@4.17.20':
     resolution: {integrity: sha512-H3MHACvFUEiujabxhaI/ImO6gUrd8oOurg7LQtS7mbwIXA/cUqWrvBsaeJ23aZEPk1TAYkurjfMbSELfoCXlGA==}
+
+  '@vicons/carbon@0.13.0':
+    resolution: {integrity: sha512-Z/jExyyS4gsXJc66oTqV/j98nsaiX2JlQ0IUwu9Ms3rztf8VOHEQRuX8Jey1/zbxJpFY/tU+bWvKPRFYGIvCWQ==}
+
+  '@vicons/fluent@0.13.0':
+    resolution: {integrity: sha512-bYGZsOE3qzvm3Cm43e7tybgGlr5ZUpYqtRZq0g0Tfupe8jIzLolpvQLNUt1zS8Mgt6goTbUk5YH7Fkv16jkykg==}
 
   '@vicons/ionicons5@0.13.0':
     resolution: {integrity: sha512-zvZKBPjEXKN7AXNo2Na2uy+nvuv6SP4KAMQxpKL2vfHMj0fSvuw7JZcOPCjQC3e7ayssKnaoFVAhbYcW6v41qQ==}
@@ -204,8 +216,8 @@ packages:
     peerDependencies:
       vue: ^3.0.0
 
-  vue-i18n@9.14.4:
-    resolution: {integrity: sha512-B934C8yUyWLT0EMud3DySrwSUJI7ZNiWYsEEz2gknTthqKiG4dzWE/WSa8AzCuSQzwBEv4HtG1jZDhgzPfWSKQ==}
+  vue-i18n@11.1.9:
+    resolution: {integrity: sha512-N9ZTsXdRmX38AwS9F6Rh93RtPkvZTkSy/zNv63FTIwZCUbLwwrpqlKz9YQuzFLdlvRdZTnWAUE5jMxr8exdl7g==}
     engines: {node: '>= 16'}
     peerDependencies:
       vue: ^3.0.0
@@ -256,17 +268,17 @@ snapshots:
 
   '@emotion/hash@0.8.0': {}
 
-  '@intlify/core-base@9.14.4':
+  '@intlify/core-base@11.1.9':
     dependencies:
-      '@intlify/message-compiler': 9.14.4
-      '@intlify/shared': 9.14.4
+      '@intlify/message-compiler': 11.1.9
+      '@intlify/shared': 11.1.9
 
-  '@intlify/message-compiler@9.14.4':
+  '@intlify/message-compiler@11.1.9':
     dependencies:
-      '@intlify/shared': 9.14.4
+      '@intlify/shared': 11.1.9
       source-map-js: 1.2.1
 
-  '@intlify/shared@9.14.4': {}
+  '@intlify/shared@11.1.9': {}
 
   '@jridgewell/sourcemap-codec@1.5.4': {}
 
@@ -279,6 +291,10 @@ snapshots:
       '@types/lodash': 4.17.20
 
   '@types/lodash@4.17.20': {}
+
+  '@vicons/carbon@0.13.0': {}
+
+  '@vicons/fluent@0.13.0': {}
 
   '@vicons/ionicons5@0.13.0': {}
 
@@ -427,10 +443,10 @@ snapshots:
       evtd: 0.2.4
       vue: 3.5.17
 
-  vue-i18n@9.14.4(vue@3.5.17):
+  vue-i18n@11.1.9(vue@3.5.17):
     dependencies:
-      '@intlify/core-base': 9.14.4
-      '@intlify/shared': 9.14.4
+      '@intlify/core-base': 11.1.9
+      '@intlify/shared': 11.1.9
       '@vue/devtools-api': 6.6.4
       vue: 3.5.17
 

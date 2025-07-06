@@ -3,16 +3,16 @@
  * 支持主界面和后台管理系统的路由
  */
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { setupRouterGuards } from './guards'
 
 // 路由组件懒加载
 const Home = () => import('@/views/Home.vue')
 const Login = () => import('@/views/Login.vue')
 const SettingsLayout = () => import('@/views/settings/SettingsLayout.vue')
 const MemberManagement = () => import('@/views/settings/MemberManagement.vue')
-// const ActivityManagement = () => import('@/views/settings/ActivityManagement.vue')
-// const ConfigManagement = () => import('@/views/settings/ConfigManagement.vue')
-// const Dashboard = () => import('@/views/settings/Dashboard.vue')
+const ActivityManagement = () => import('@/views/settings/ActivityManagement.vue')
+const ConfigManagement = () => import('@/views/settings/ConfigManagement.vue')
+const Dashboard = () => import('@/views/settings/Dashboard.vue')
 
 const routes = [
   {
@@ -42,18 +42,53 @@ const routes = [
     children: [
       {
         path: '',
-        redirect: '/settings/member-management'
+        redirect: '/settings/dashboard'
       },
       {
-        path: 'member-management',
-        name: 'member-management',
+        path: 'dashboard',
+        name: 'dashboard',
+        component: Dashboard,
+        meta: {
+          title: '仪表板',
+          icon: 'dashboard-outline',
+          requiresAuth: true,
+          permissions: ['dashboard:read']
+        }
+      },
+      {
+        path: 'members',
+        name: 'members',
         component: MemberManagement,
         meta: {
           title: '成员管理',
-          icon: 'people-outline'
+          icon: 'people-outline',
+          requiresAuth: true,
+          permissions: ['members:read']
         }
       },
-      // 其他管理页面将在后续阶段实现
+      {
+        path: 'activities',
+        name: 'activities',
+        component: ActivityManagement,
+        meta: {
+          title: '活动管理',
+          icon: 'calendar-outline',
+          requiresAuth: true,
+          permissions: ['activities:read']
+        }
+      },
+      {
+        path: 'configs',
+        name: 'configs',
+        component: ConfigManagement,
+        meta: {
+          title: '配置管理',
+          icon: 'settings-outline',
+          requiresAuth: true,
+          roles: ['admin'],
+          permissions: ['configs:read']
+        }
+      }
     ]
   },
   {
@@ -76,34 +111,7 @@ const router = createRouter({
   }
 })
 
-// 路由守卫
-router.beforeEach(async (to, from, next) => {
-  const authStore = useAuthStore()
-  
-  // 设置页面标题
-  if (to.meta.title) {
-    document.title = to.meta.title as string
-  }
-  
-  // 检查是否需要认证
-  if (to.meta.requiresAuth) {
-    if (!authStore.isAuthenticated) {
-      // 未登录，跳转到登录页
-      next({
-        path: '/login',
-        query: { redirect: to.fullPath }
-      })
-      return
-    }
-  }
-  
-  // 已登录用户访问登录页，重定向到设置页
-  if (to.meta.hideForAuth && authStore.isAuthenticated) {
-    next('/settings')
-    return
-  }
-  
-  next()
-})
+// 设置路由守卫
+setupRouterGuards(router)
 
 export default router

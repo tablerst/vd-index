@@ -6,6 +6,7 @@ import { defineStore } from 'pinia'
 import { ref, computed, readonly } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '@/services/api'
+import { TokenManager, TokenWatcher } from '@/utils/token'
 
 export interface User {
   id: number
@@ -30,8 +31,8 @@ export const useAuthStore = defineStore('auth', () => {
   const router = useRouter()
   
   // 状态
-  const user = ref<User | null>(null)
-  const token = ref<string | null>(localStorage.getItem('access_token'))
+  const user = ref<User | null>(TokenManager.getUser())
+  const token = ref<string | null>(TokenManager.getAccessToken())
   const isLoading = ref(false)
   const error = ref<string | null>(null)
   
@@ -42,32 +43,21 @@ export const useAuthStore = defineStore('auth', () => {
   const setAuth = (authData: LoginResponse) => {
     token.value = authData.access_token
     user.value = authData.user
-    localStorage.setItem('access_token', authData.access_token)
-    localStorage.setItem('user', JSON.stringify(authData.user))
+    TokenManager.setAccessToken(authData.access_token)
+    TokenManager.setUser(authData.user)
+
+    // 开始token监控
+    TokenWatcher.start()
   }
-  
+
   // 清除认证信息
   const clearAuth = () => {
     token.value = null
     user.value = null
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('user')
-  }
-  
-  // 从本地存储恢复用户信息
-  const restoreAuth = () => {
-    const storedToken = localStorage.getItem('access_token')
-    const storedUser = localStorage.getItem('user')
-    
-    if (storedToken && storedUser) {
-      try {
-        token.value = storedToken
-        user.value = JSON.parse(storedUser)
-      } catch (e) {
-        console.error('Failed to restore auth from localStorage:', e)
-        clearAuth()
-      }
-    }
+    TokenManager.clear()
+
+    // 停止token监控
+    TokenWatcher.stop()
   }
   
   // 登录
@@ -108,10 +98,17 @@ export const useAuthStore = defineStore('auth', () => {
   // 验证token有效性
   const validateToken = async () => {
     if (!token.value) return false
-    
+
+    // 检查token是否过期
+    if (TokenManager.isTokenExpired(token.value)) {
+      clearAuth()
+      return false
+    }
+
     try {
       const response = await api.get<User>('/api/v1/auth/me')
       user.value = response.data
+      TokenManager.setUser(response.data)
       return true
     } catch (err) {
       console.error('Token validation failed:', err)
@@ -119,9 +116,20 @@ export const useAuthStore = defineStore('auth', () => {
       return false
     }
   }
-  
-  // 初始化时恢复认证状态
-  restoreAuth()
+
+  // 初始化认证状态
+  const initAuth = () => {
+    if (TokenManager.hasToken() && !TokenManager.isTokenExpired()) {
+      // 如果有有效token，开始监控
+      TokenWatcher.start()
+    } else {
+      // 清除无效token
+      clearAuth()
+    }
+  }
+
+  // 初始化
+  initAuth()
   
   return {
     // 状态

@@ -89,6 +89,7 @@ import {
 } from 'naive-ui'
 import { PersonOutline, LockClosedOutline } from '@vicons/ionicons5'
 import { useAuthStore } from '@/stores/auth'
+import { RevealEffect } from '@/utils/fluentEffects'
 
 // 路由和状态管理
 const router = useRouter()
@@ -217,26 +218,43 @@ const handleLogin = async () => {
   }
 }
 
+// Reveal 效果
+let revealEffect: RevealEffect | null = null
+
 onMounted(() => {
   initParticles()
+
+  // 为登录表单添加 Reveal 效果
+  setTimeout(() => {
+    const loginForm = document.querySelector('.login-form') as HTMLElement
+    if (loginForm) {
+      revealEffect = new RevealEffect(loginForm)
+    }
+  }, 100)
 })
 
 onUnmounted(() => {
   if (animationId) {
     cancelAnimationFrame(animationId)
   }
+  if (revealEffect) {
+    revealEffect.destroy()
+  }
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@import '@/styles/fluent-theme.scss';
+
 .login-container {
   position: relative;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--fluent-primary) 0%, #764ba2 100%);
   overflow: hidden;
+  font-family: var(--fluent-font-family);
 }
 
 .particles-background {
@@ -258,51 +276,146 @@ onUnmounted(() => {
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 400px;
-  padding: 20px;
+  max-width: 420px;
+  padding: var(--fluent-spacing-xl);
 }
 
 .login-form {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  padding: 40px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  @include fluent-acrylic(0.95, 30px);
+  border-radius: var(--fluent-radius-xlarge);
+  padding: var(--fluent-spacing-xxxl);
+  @include fluent-depth(16);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  @include fluent-motion();
+
+  // Reveal 效果
+  @include fluent-reveal();
+
+  &:hover {
+    @include fluent-depth(64);
+  }
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: var(--fluent-spacing-xxxl);
+
+  h1 {
+    @include fluent-typography(large-title);
+    color: var(--fluent-text-primary);
+    margin: 0 0 var(--fluent-spacing-sm) 0;
+  }
+
+  p {
+    @include fluent-typography(body);
+    color: var(--fluent-text-secondary);
+    margin: 0;
+  }
 }
 
-.login-header h1 {
-  font-size: 28px;
-  font-weight: 600;
-  color: #333;
-  margin: 0 0 8px 0;
-}
-
-.login-header p {
-  font-size: 14px;
-  color: #666;
-  margin: 0;
-}
-
+// Naive UI 组件样式覆盖
 :deep(.n-input) {
-  border-radius: 8px;
+  border-radius: var(--fluent-radius-medium);
+  @include fluent-motion();
+
+  .n-input__input-el {
+    @include fluent-typography(body);
+  }
+
+  &:hover {
+    @include fluent-depth(2);
+  }
+
+  &:focus-within {
+    @include fluent-depth(4);
+  }
 }
 
 :deep(.n-button) {
-  border-radius: 8px;
+  border-radius: var(--fluent-radius-medium);
   height: 44px;
+  font-weight: var(--fluent-font-weight-semibold);
+  @include fluent-motion();
+
+  &:hover {
+    @include fluent-depth(8);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    @include fluent-depth(2);
+    transform: translateY(0);
+  }
 }
 
 :deep(.n-form-item) {
-  margin-bottom: 20px;
+  margin-bottom: var(--fluent-spacing-xl);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
-:deep(.n-form-item:last-child) {
-  margin-bottom: 0;
+:deep(.n-alert) {
+  border-radius: var(--fluent-radius-medium);
+  @include fluent-motion();
+}
+
+// 图标样式
+:deep(.n-icon) {
+  color: var(--fluent-text-tertiary);
+  @include fluent-motion();
+}
+
+:deep(.n-input:focus-within .n-icon) {
+  color: var(--fluent-primary);
+}
+
+// 响应式设计
+@media (max-width: 480px) {
+  .login-form-wrapper {
+    max-width: 100%;
+    padding: var(--fluent-spacing-lg);
+  }
+
+  .login-form {
+    padding: var(--fluent-spacing-xxl);
+  }
+
+  .login-header h1 {
+    @include fluent-typography(title);
+  }
+}
+
+// 加载状态动画
+:deep(.n-button--loading) {
+  .n-button__icon {
+    animation: fluent-spin 1s linear infinite;
+  }
+}
+
+@keyframes fluent-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// 表单验证错误样式
+:deep(.n-form-item--feedback-error) {
+  .n-input {
+    border-color: var(--fluent-error);
+
+    &:hover {
+      border-color: var(--fluent-error);
+    }
+  }
+}
+
+// 粒子颜色调整
+.particles-background canvas {
+  opacity: 0.6;
 }
 </style>

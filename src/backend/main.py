@@ -34,8 +34,8 @@ settings = config_service.get_settings()
 
 def setup_logging():
     """设置日志配置"""
-    # 创建日志目录
-    log_dir = Path("./logs")
+    # 创建日志目录 - 移到项目根目录，避免触发uvicorn热重载
+    log_dir = Path("../../logs")
     log_dir.mkdir(exist_ok=True)
 
     # 设置日志级别

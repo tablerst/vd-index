@@ -22,9 +22,16 @@ class ConfigCRUD:
         return config
     
     @staticmethod
+    async def get_by_id(session: AsyncSession, config_id: int) -> Optional[Config]:
+        """根据ID获取配置"""
+        return await session.get(Config, config_id)
+
+    @staticmethod
     async def get_by_key(session: AsyncSession, key: str) -> Optional[Config]:
         """根据key获取配置"""
-        return await session.get(Config, key)
+        statement = select(Config).where(Config.key == key)
+        result = await session.exec(statement)
+        return result.first()
     
     @staticmethod
     async def get_value_by_key(session: AsyncSession, key: str) -> Optional[str]:
@@ -33,11 +40,22 @@ class ConfigCRUD:
         return config.value if config else None
     
     @staticmethod
-    async def get_all(session: AsyncSession) -> List[Config]:
+    async def get_all(session: AsyncSession, limit: Optional[int] = None, offset: Optional[int] = None) -> List[Config]:
         """获取所有配置"""
         statement = select(Config).order_by(Config.key)
+        if limit is not None:
+            statement = statement.limit(limit)
+        if offset is not None:
+            statement = statement.offset(offset)
         result = await session.exec(statement)
         return result.all()
+
+    @staticmethod
+    async def count_all(session: AsyncSession) -> int:
+        """获取配置总数"""
+        statement = select(func.count(Config.id))
+        result = await session.exec(statement)
+        return result.one()
     
     @staticmethod
     async def get_all_as_dict(session: AsyncSession) -> Dict[str, str]:
@@ -46,11 +64,22 @@ class ConfigCRUD:
         return {config.key: config.value for config in configs}
     
     @staticmethod
-    async def get_by_key_prefix(session: AsyncSession, prefix: str) -> List[Config]:
+    async def get_by_key_prefix(session: AsyncSession, prefix: str, limit: Optional[int] = None, offset: Optional[int] = None) -> List[Config]:
         """根据key前缀获取配置"""
         statement = select(Config).where(Config.key.startswith(prefix)).order_by(Config.key)
+        if limit is not None:
+            statement = statement.limit(limit)
+        if offset is not None:
+            statement = statement.offset(offset)
         result = await session.exec(statement)
         return result.all()
+
+    @staticmethod
+    async def count_by_key_prefix(session: AsyncSession, prefix: str) -> int:
+        """获取指定前缀的配置总数"""
+        statement = select(func.count(Config.id)).where(Config.key.startswith(prefix))
+        result = await session.exec(statement)
+        return result.one()
     
     @staticmethod
     async def search_by_description(session: AsyncSession, keyword: str) -> List[Config]:
@@ -62,20 +91,42 @@ class ConfigCRUD:
         return result.all()
     
     @staticmethod
-    async def update(session: AsyncSession, key: str, config_data: ConfigUpdate) -> Optional[Config]:
-        """更新配置"""
-        config = await session.get(Config, key)
+    async def update(session: AsyncSession, config_id: int, config_data: ConfigUpdate) -> Optional[Config]:
+        """根据ID更新配置"""
+        config = await session.get(Config, config_id)
         if not config:
             return None
-        
+
         # 更新字段
         update_data = config_data.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(config, field, value)
-        
+
         # 更新时间戳
         config.updated_at = datetime.utcnow()
-        
+
+        session.add(config)
+        await session.commit()
+        await session.refresh(config)
+        return config
+
+    @staticmethod
+    async def update_by_key(session: AsyncSession, key: str, config_data: ConfigUpdate) -> Optional[Config]:
+        """根据key更新配置"""
+        statement = select(Config).where(Config.key == key)
+        result = await session.exec(statement)
+        config = result.first()
+        if not config:
+            return None
+
+        # 更新字段
+        update_data = config_data.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(config, field, value)
+
+        # 更新时间戳
+        config.updated_at = datetime.utcnow()
+
         session.add(config)
         await session.commit()
         await session.refresh(config)
@@ -121,12 +172,25 @@ class ConfigCRUD:
         return config
     
     @staticmethod
-    async def delete(session: AsyncSession, key: str) -> bool:
-        """删除配置"""
-        config = await session.get(Config, key)
+    async def delete(session: AsyncSession, config_id: int) -> bool:
+        """根据ID删除配置"""
+        config = await session.get(Config, config_id)
         if not config:
             return False
-        
+
+        await session.delete(config)
+        await session.commit()
+        return True
+
+    @staticmethod
+    async def delete_by_key(session: AsyncSession, key: str) -> bool:
+        """根据key删除配置"""
+        statement = select(Config).where(Config.key == key)
+        result = await session.exec(statement)
+        config = result.first()
+        if not config:
+            return False
+
         await session.delete(config)
         await session.commit()
         return True

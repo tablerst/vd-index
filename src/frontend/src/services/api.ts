@@ -2,6 +2,7 @@
  * 后端API服务
  * 提供安全的成员数据访问接口
  */
+import { TokenManager, RequestInterceptor, TokenRefreshManager } from '@/utils/token'
 
 // API基础配置
 // 在生产环境中使用相对路径，开发环境使用完整URL
@@ -94,6 +95,41 @@ export interface ActivityUpdateRequest {
   participant_ids?: number[]
 }
 
+// 配置接口定义
+export interface Config {
+  id: number
+  key: string
+  value: string
+  description: string
+  type: 'string' | 'number' | 'boolean' | 'json'
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface ConfigListResponse {
+  configs: Config[]
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
+}
+
+export interface ConfigCreateRequest {
+  key: string
+  value: string
+  description: string
+  type: 'string' | 'number' | 'boolean' | 'json'
+  is_active: boolean
+}
+
+export interface ConfigUpdateRequest {
+  value?: string
+  description?: string
+  type?: 'string' | 'number' | 'boolean' | 'json'
+  is_active?: boolean
+}
+
 // HTTP客户端类
 class ApiClient {
   private baseURL: string
@@ -108,22 +144,38 @@ class ApiClient {
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`
 
-    // 获取认证token
-    const token = localStorage.getItem('access_token')
+    // 检查并刷新token
+    await TokenRefreshManager.autoRefreshToken()
 
-    const config: RequestInit = {
+    // 添加认证头
+    const config = RequestInterceptor.addAuthHeader({
       headers: {
         'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` }),
         ...options.headers,
       },
       ...options,
-    }
+    })
 
     try {
       const response = await fetch(url, config)
 
       if (!response.ok) {
+        // 处理认证错误
+        if (response.status === 401) {
+          const retryConfig = await RequestInterceptor.handleAuthError({
+            response,
+            config: { ...config, url }
+          })
+
+          if (retryConfig) {
+            // 重试请求
+            const retryResponse = await fetch(url, retryConfig)
+            if (retryResponse.ok) {
+              return await retryResponse.json()
+            }
+          }
+        }
+
         const errorData = await response.json().catch(() => ({}))
         throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`)
       }
@@ -218,6 +270,46 @@ class ApiClient {
   // 删除活动
   async deleteActivity(activityId: number): Promise<{ success: boolean; message: string }> {
     return this.request<{ success: boolean; message: string }>(`/api/v1/star_calendar/activity/delete/${activityId}`, {
+      method: 'DELETE'
+    })
+  }
+
+  // 获取配置列表
+  async getConfigs(page: number = 1, pageSize: number = 10): Promise<ConfigListResponse> {
+    return this.request<ConfigListResponse>(
+      `/api/v1/configs?page=${page}&page_size=${pageSize}`
+    )
+  }
+
+  // 获取单个配置
+  async getConfig(configId: number): Promise<Config> {
+    return this.request<Config>(`/api/v1/configs/${configId}`)
+  }
+
+  // 根据键获取配置
+  async getConfigByKey(key: string): Promise<Config> {
+    return this.request<Config>(`/api/v1/configs/key/${key}`)
+  }
+
+  // 创建配置
+  async createConfig(configData: ConfigCreateRequest): Promise<Config> {
+    return this.request<Config>('/api/v1/configs', {
+      method: 'POST',
+      body: JSON.stringify(configData)
+    })
+  }
+
+  // 更新配置
+  async updateConfig(configId: number, configData: ConfigUpdateRequest): Promise<Config> {
+    return this.request<Config>(`/api/v1/configs/${configId}`, {
+      method: 'PUT',
+      body: JSON.stringify(configData)
+    })
+  }
+
+  // 删除配置
+  async deleteConfig(configId: number): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>(`/api/v1/configs/${configId}`, {
       method: 'DELETE'
     })
   }
@@ -368,6 +460,125 @@ export const activityApi = {
     return {
       day: date.getDate().toString().padStart(2, '0'),
       month: date.toLocaleDateString('zh-CN', { month: 'short' })
+    }
+  }
+}
+
+// 配置API便捷函数
+export const configApi = {
+  // 获取所有配置（自动处理分页）
+  async getAllConfigs(): Promise<Config[]> {
+    const firstPage = await apiClient.getConfigs(1, 50)
+    const allConfigs = [...firstPage.configs]
+
+    // 如果有多页，继续获取
+    if (firstPage.total_pages > 1) {
+      const promises = []
+      for (let page = 2; page <= firstPage.total_pages; page++) {
+        promises.push(apiClient.getConfigs(page, 50))
+      }
+
+      const additionalPages = await Promise.all(promises)
+      additionalPages.forEach(pageData => {
+        allConfigs.push(...pageData.configs)
+      })
+    }
+
+    return allConfigs
+  },
+
+  // 获取分页配置
+  async getConfigs(page: number = 1, pageSize: number = 10): Promise<ConfigListResponse> {
+    return apiClient.getConfigs(page, pageSize)
+  },
+
+  // 获取配置详情
+  async getConfig(configId: number): Promise<Config> {
+    return apiClient.getConfig(configId)
+  },
+
+  // 根据键获取配置
+  async getConfigByKey(key: string): Promise<Config> {
+    return apiClient.getConfigByKey(key)
+  },
+
+  // 创建配置
+  async createConfig(configData: ConfigCreateRequest): Promise<Config> {
+    return apiClient.createConfig(configData)
+  },
+
+  // 更新配置
+  async updateConfig(configId: number, configData: ConfigUpdateRequest): Promise<Config> {
+    return apiClient.updateConfig(configId, configData)
+  },
+
+  // 删除配置
+  async deleteConfig(configId: number): Promise<{ success: boolean; message: string }> {
+    return apiClient.deleteConfig(configId)
+  },
+
+  // 验证配置值格式
+  validateConfigValue(type: string, value: string): { valid: boolean; error?: string } {
+    switch (type) {
+      case 'number':
+        const num = Number(value)
+        if (isNaN(num)) {
+          return { valid: false, error: '请输入有效的数字' }
+        }
+        return { valid: true }
+
+      case 'boolean':
+        if (!['true', 'false', '1', '0'].includes(value.toLowerCase())) {
+          return { valid: false, error: '布尔值只能是 true/false 或 1/0' }
+        }
+        return { valid: true }
+
+      case 'json':
+        try {
+          JSON.parse(value)
+          return { valid: true }
+        } catch {
+          return { valid: false, error: 'JSON格式不正确' }
+        }
+
+      case 'string':
+      default:
+        return { valid: true }
+    }
+  },
+
+  // 格式化配置值用于显示
+  formatConfigValue(config: Config): string {
+    switch (config.type) {
+      case 'json':
+        try {
+          return JSON.stringify(JSON.parse(config.value), null, 2)
+        } catch {
+          return config.value
+        }
+      case 'boolean':
+        return ['true', '1'].includes(config.value.toLowerCase()) ? '是' : '否'
+      default:
+        return config.value
+    }
+  },
+
+  // 获取配置的实际值（转换为正确的类型）
+  getConfigValue(config: Config): any {
+    switch (config.type) {
+      case 'number':
+        return Number(config.value)
+      case 'boolean':
+        return ['true', '1'].includes(config.value.toLowerCase())
+      case 'json':
+        try {
+          return JSON.parse(config.value)
+        } catch {
+          return config.value
+        }
+      case 'string':
+      default:
+        return config.value
     }
   }
 }

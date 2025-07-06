@@ -50,13 +50,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, h } from 'vue'
+import { ref, computed, h, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { 
-  NMenu, 
-  NAvatar, 
-  NButton, 
-  NIcon, 
+import {
+  NMenu,
+  NAvatar,
+  NButton,
+  NIcon,
   NBreadcrumb,
   NBreadcrumbItem,
   useMessage,
@@ -67,11 +67,10 @@ import {
   CalendarOutline,
   BarChartOutline,
   SettingsOutline,
-  ShieldCheckmarkOutline,
-  LanguageOutline,
   LogOutOutline
 } from '@vicons/ionicons5'
 import { useAuthStore } from '@/stores/auth'
+import { RevealEffect } from '@/utils/fluentEffects'
 
 // 路由和状态管理
 const router = useRouter()
@@ -80,7 +79,7 @@ const authStore = useAuthStore()
 const message = useMessage()
 
 // 当前选中的菜单项
-const activeKey = ref(route.name as string || 'member-management')
+const activeKey = ref(route.name as string || 'dashboard')
 
 // 用户头像（默认头像）
 const userAvatar = computed(() => {
@@ -96,34 +95,24 @@ const currentPageTitle = computed(() => {
 // 菜单选项
 const menuOptions: MenuOption[] = [
   {
+    label: '仪表板',
+    key: 'dashboard',
+    icon: () => h(NIcon, { component: BarChartOutline })
+  },
+  {
     label: '成员管理',
-    key: 'member-management',
+    key: 'members',
     icon: () => h(NIcon, { component: PeopleOutline })
   },
   {
     label: '活动管理',
-    key: 'activity-management',
+    key: 'activities',
     icon: () => h(NIcon, { component: CalendarOutline })
   },
   {
-    label: '数据统计',
-    key: 'data-statistics',
-    icon: () => h(NIcon, { component: BarChartOutline })
-  },
-  {
-    label: '权限管理',
-    key: 'permission-management',
-    icon: () => h(NIcon, { component: ShieldCheckmarkOutline })
-  },
-  {
-    label: '系统配置',
-    key: 'system-config',
+    label: '配置管理',
+    key: 'configs',
     icon: () => h(NIcon, { component: SettingsOutline })
-  },
-  {
-    label: '国际化',
-    key: 'internationalization',
-    icon: () => h(NIcon, { component: LanguageOutline })
   }
 ]
 
@@ -144,56 +133,141 @@ const handleLogout = async () => {
     message.error('登出失败')
   }
 }
+
+// Reveal 效果
+let revealEffects: RevealEffect[] = []
+
+onMounted(() => {
+  // 为侧边栏添加 Reveal 效果
+  const sidebar = document.querySelector('.sidebar') as HTMLElement
+  if (sidebar) {
+    revealEffects.push(new RevealEffect(sidebar))
+  }
+
+  // 为菜单项添加 Reveal 效果
+  setTimeout(() => {
+    const menuItems = document.querySelectorAll('.n-menu-item') as NodeListOf<HTMLElement>
+    menuItems.forEach(item => {
+      revealEffects.push(new RevealEffect(item))
+    })
+  }, 100)
+})
+
+onUnmounted(() => {
+  revealEffects.forEach(effect => effect.destroy())
+  revealEffects = []
+})
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@import '@/styles/fluent-theme.scss';
+
 .settings-layout {
   display: flex;
   height: 100vh;
-  background: #f5f5f5;
+  background: var(--fluent-bg-layer);
+  font-family: var(--fluent-font-family);
 }
 
 .sidebar {
-  width: 260px;
-  background: #fff;
-  border-right: 1px solid #e0e0e0;
+  width: 280px;
+  @include fluent-acrylic(0.9, 20px);
+  border-right: 1px solid var(--fluent-border-default);
   display: flex;
   flex-direction: column;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  @include fluent-depth(8);
+  position: relative;
+  z-index: 10;
+
+  // Reveal 效果
+  @include fluent-reveal();
 }
 
 .sidebar-header {
-  padding: 24px 20px;
-  border-bottom: 1px solid #e0e0e0;
-}
+  padding: var(--fluent-spacing-xxl) var(--fluent-spacing-xl);
+  border-bottom: 1px solid var(--fluent-border-subtle);
 
-.sidebar-header h2 {
-  margin: 0 0 16px 0;
-  font-size: 20px;
-  font-weight: 600;
-  color: #333;
+  h2 {
+    margin: 0 0 var(--fluent-spacing-lg) 0;
+    @include fluent-typography(title);
+    color: var(--fluent-text-primary);
+  }
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--fluent-spacing-sm);
+  padding: var(--fluent-spacing-sm) var(--fluent-spacing-md);
+  border-radius: var(--fluent-radius-medium);
+  @include fluent-motion();
+
+  &:hover {
+    background: var(--fluent-bg-subtle);
+  }
 }
 
 .username {
-  font-size: 14px;
-  color: #666;
-  font-weight: 500;
+  @include fluent-typography(body);
+  color: var(--fluent-text-secondary);
+  font-weight: var(--fluent-font-weight-medium);
 }
 
 :deep(.n-menu) {
   flex: 1;
-  padding: 16px 0;
+  padding: var(--fluent-spacing-lg) 0;
+  background: transparent;
+}
+
+:deep(.n-menu-item) {
+  border-radius: var(--fluent-radius-large);
+  margin: 2px var(--fluent-spacing-md);
+  @include fluent-motion();
+  position: relative;
+  overflow: hidden;
+
+  // Reveal 效果
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                               rgba(0, 120, 212, 0.1) 0%,
+                               transparent 50%);
+    opacity: 0;
+    transition: opacity var(--fluent-duration-fast) var(--fluent-ease-standard);
+    pointer-events: none;
+  }
+
+  &:hover::before {
+    opacity: 1;
+  }
+}
+
+:deep(.n-menu-item--selected) {
+  background: var(--fluent-primary-light);
+  color: var(--fluent-primary);
+  font-weight: var(--fluent-font-weight-medium);
+
+  .n-menu-item-content-header {
+    color: var(--fluent-primary);
+  }
+}
+
+:deep(.n-menu-item:hover) {
+  background: var(--fluent-bg-subtle);
+}
+
+:deep(.n-menu-item-content) {
+  @include fluent-typography(body);
 }
 
 .sidebar-footer {
-  padding: 20px;
-  border-top: 1px solid #e0e0e0;
+  padding: var(--fluent-spacing-xl);
+  border-top: 1px solid var(--fluent-border-subtle);
 }
 
 .main-content {
@@ -201,52 +275,111 @@ const handleLogout = async () => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: var(--fluent-bg-canvas);
 }
 
 .content-header {
-  background: #fff;
-  padding: 16px 24px;
-  border-bottom: 1px solid #e0e0e0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  @include fluent-acrylic(0.95, 15px);
+  padding: var(--fluent-spacing-lg) var(--fluent-spacing-xxl);
+  border-bottom: 1px solid var(--fluent-border-subtle);
+  @include fluent-depth(2);
+  position: relative;
+  z-index: 5;
 }
 
 .content-body {
   flex: 1;
-  padding: 24px;
+  padding: var(--fluent-spacing-xxl);
   overflow-y: auto;
-  background: #f5f5f5;
+  background: var(--fluent-bg-layer);
+
+  // 自定义滚动条
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--fluent-bg-subtle);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--fluent-neutral-grey-20);
+    border-radius: var(--fluent-radius-medium);
+
+    &:hover {
+      background: var(--fluent-neutral-grey-24);
+    }
+  }
 }
 
-/* Microsoft Fluent Design System 样式 */
-.sidebar {
-  backdrop-filter: blur(30px);
-  background: rgba(255, 255, 255, 0.9);
-}
-
-.content-header {
-  backdrop-filter: blur(30px);
-  background: rgba(255, 255, 255, 0.9);
-}
-
-:deep(.n-menu-item) {
-  border-radius: 8px;
-  margin: 2px 12px;
-}
-
-:deep(.n-menu-item--selected) {
-  background: rgba(0, 120, 212, 0.1);
-  color: #0078d4;
-}
-
-:deep(.n-menu-item:hover) {
-  background: rgba(0, 120, 212, 0.05);
-}
-
+// 按钮样式增强
 :deep(.n-button) {
-  border-radius: 6px;
+  border-radius: var(--fluent-radius-medium);
+  font-weight: var(--fluent-font-weight-medium);
+  @include fluent-motion();
+
+  &:hover {
+    @include fluent-depth(4);
+  }
+
+  &:active {
+    @include fluent-depth(2);
+  }
 }
 
+// 面包屑样式
 :deep(.n-breadcrumb) {
-  font-size: 14px;
+  @include fluent-typography(body);
+
+  .n-breadcrumb-item {
+    color: var(--fluent-text-secondary);
+
+    &:last-child {
+      color: var(--fluent-text-primary);
+      font-weight: var(--fluent-font-weight-medium);
+    }
+  }
+}
+
+// 头像样式
+:deep(.n-avatar) {
+  @include fluent-depth(2);
+  @include fluent-motion();
+
+  &:hover {
+    @include fluent-depth(4);
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .sidebar {
+    width: 240px;
+  }
+
+  .content-body {
+    padding: var(--fluent-spacing-lg);
+  }
+}
+
+@media (max-width: 640px) {
+  .settings-layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--fluent-border-default);
+  }
+
+  :deep(.n-menu) {
+    padding: var(--fluent-spacing-sm) 0;
+  }
+
+  :deep(.n-menu-item) {
+    margin: 1px var(--fluent-spacing-sm);
+  }
 }
 </style>

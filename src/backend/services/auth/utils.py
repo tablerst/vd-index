@@ -87,6 +87,18 @@ async def get_admin_user(
     return current_user
 
 
+async def require_admin(
+    current_user: Annotated[User, Depends(get_current_active_user)]
+) -> dict:
+    """要求管理员权限的依赖"""
+    if current_user.role not in ["admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    return {"user": current_user, "role": current_user.role}
+
+
 async def create_super_user(
     session: AsyncSession,
     auth_service: AuthService,
