@@ -99,42 +99,139 @@
                 </div>
               </div>
 
+              <!-- 背景控制 -->
+              <div class="control-section">
+                <h3>背景控制</h3>
+                <div class="control-group">
+                  <label>背景颜色</label>
+                  <input
+                    type="color"
+                    v-model="backgroundColor"
+                    @input="updateBackground"
+                    class="color-picker"
+                  >
+                  <span>{{ backgroundColor }}</span>
+                </div>
+
+                <div class="control-group">
+                  <label>背景透明度</label>
+                  <input
+                    type="range"
+                    v-model="backgroundOpacity"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    @input="updateBackground"
+                  >
+                  <span>{{ backgroundOpacity }}</span>
+                </div>
+              </div>
+
+              <!-- 图片映射控制 -->
+              <div class="control-section" v-if="hasImageTexture">
+                <h3>图片映射控制</h3>
+                <div class="control-group">
+                  <label>图片缩放</label>
+                  <input
+                    type="range"
+                    v-model="textureScale"
+                    min="0.1"
+                    max="5"
+                    step="0.1"
+                    @input="updateTextureMapping"
+                  >
+                  <span>{{ textureScale }}x</span>
+                </div>
+
+                <div class="control-group">
+                  <label>水平位置</label>
+                  <input
+                    type="range"
+                    v-model="textureOffset.x"
+                    min="-1"
+                    max="1"
+                    step="0.05"
+                    @input="updateTextureMapping"
+                  >
+                  <span>{{ textureOffset.x }}</span>
+                </div>
+
+                <div class="control-group">
+                  <label>垂直位置</label>
+                  <input
+                    type="range"
+                    v-model="textureOffset.y"
+                    min="-1"
+                    max="1"
+                    step="0.05"
+                    @input="updateTextureMapping"
+                  >
+                  <span>{{ textureOffset.y }}</span>
+                </div>
+
+                <div class="control-group">
+                  <label>旋转角度</label>
+                  <input
+                    type="range"
+                    v-model="textureRotation"
+                    min="0"
+                    max="360"
+                    step="1"
+                    @input="updateTextureMapping"
+                  >
+                  <span>{{ textureRotation }}°</span>
+                </div>
+
+                <div class="control-group">
+                  <label>图片透明度</label>
+                  <input
+                    type="range"
+                    v-model="textureOpacity"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    @input="updateTextureMapping"
+                  >
+                  <span>{{ textureOpacity }}</span>
+                </div>
+              </div>
+
               <!-- 光源控制 -->
               <div class="control-section">
                 <h3>光源控制</h3>
                 <div class="control-group">
                   <label>光源强度</label>
-                  <input 
-                    type="range" 
-                    v-model="lightIntensity" 
-                    min="0.1" 
-                    max="3" 
+                  <input
+                    type="range"
+                    v-model="lightIntensity"
+                    min="0.1"
+                    max="3"
                     step="0.1"
                     @input="updateLighting"
                   >
                   <span>{{ lightIntensity }}</span>
                 </div>
-                
+
                 <div class="control-group">
                   <label>环境光</label>
-                  <input 
-                    type="range" 
-                    v-model="ambientIntensity" 
-                    min="0" 
-                    max="1" 
+                  <input
+                    type="range"
+                    v-model="ambientIntensity"
+                    min="0"
+                    max="1"
                     step="0.1"
                     @input="updateLighting"
                   >
                   <span>{{ ambientIntensity }}</span>
                 </div>
-                
+
                 <div class="control-group">
                   <label>光源X位置</label>
-                  <input 
-                    type="range" 
-                    v-model="lightPosition.x" 
-                    min="-10" 
-                    max="10" 
+                  <input
+                    type="range"
+                    v-model="lightPosition.x"
+                    min="-10"
+                    max="10"
                     step="0.5"
                     @input="updateLighting"
                   >
@@ -241,6 +338,18 @@ const isWebGLSupported = ref(true)
 const badgeThickness = ref(1.0)
 const badgeSize = ref(50)
 
+// 背景参数
+const backgroundColor = ref('#000000')
+const backgroundOpacity = ref(1.0)
+
+// 图片映射参数
+const hasImageTexture = ref(false)
+const textureScale = ref(1.0)
+const textureOffset = ref({ x: 0, y: 0 })
+const textureRotation = ref(0)
+const textureOpacity = ref(1.0)
+let currentTexture: THREE.Texture | null = null
+
 // 光源参数
 const lightIntensity = ref(1.5)
 const ambientIntensity = ref(0.3)
@@ -295,7 +404,7 @@ const initThreeJS = async () => {
 
   // 创建场景
   scene = new THREE.Scene()
-  scene.background = new THREE.Color(0x0a0a0a)
+  updateBackground()
 
   // 创建相机
   camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
@@ -352,12 +461,15 @@ const createDefaultBadge = () => {
     32
   )
 
-  // 主体材质 - 金属质感
+  // 主体材质 - 金属质感，确保有基础颜色
   const mainMaterial = new THREE.MeshPhongMaterial({
-    color: 0xc0c0c0,
+    color: 0xc0c0c0,  // 银色基础颜色
     shininess: 100,
     transparent: false,
-    side: THREE.DoubleSide
+    side: THREE.DoubleSide,
+    // 确保材质在没有纹理时也能正常显示
+    emissive: 0x111111,  // 轻微的自发光，避免完全黑色
+    specular: 0x222222   // 镜面反射颜色
   })
 
   // 创建主体网格
@@ -477,6 +589,18 @@ const resetView = () => {
   // 重置所有参数到默认值
   badgeThickness.value = 1.0
   badgeSize.value = 50
+
+  // 重置背景参数
+  backgroundColor.value = '#000000'
+  backgroundOpacity.value = 1.0
+
+  // 重置纹理映射参数
+  textureScale.value = 1.0
+  textureOffset.value = { x: 0, y: 0 }
+  textureRotation.value = 0
+  textureOpacity.value = 1.0
+
+  // 重置光源参数
   lightIntensity.value = 1.5
   ambientIntensity.value = 0.3
   lightPosition.value = { x: 5, y: 5, z: 10 }
@@ -484,9 +608,13 @@ const resetView = () => {
   fillLightIntensity.value = 0.3
   backLightIntensity.value = 0.2
 
-  // 更新几何体和光源
+  // 更新所有设置
+  updateBackground()
   updateBadgeGeometry()
   updateLighting()
+  if (hasImageTexture.value) {
+    updateTextureMapping()
+  }
 }
 
 // 导出预览图
@@ -506,24 +634,113 @@ const exportPreview = () => {
   }
 }
 
+// 更新背景
+const updateBackground = () => {
+  if (!scene) return
+
+  const color = new THREE.Color(backgroundColor.value)
+  if (backgroundOpacity.value < 1.0) {
+    // 如果透明度小于1，使用透明背景
+    scene.background = null
+    if (renderer) {
+      renderer.setClearColor(color, backgroundOpacity.value)
+    }
+  } else {
+    // 完全不透明时使用纯色背景
+    scene.background = color
+    if (renderer) {
+      renderer.setClearColor(color, 1.0)
+    }
+  }
+}
+
 // 加载图片纹理
 const loadImageTexture = (imageUrl: string) => {
   const loader = new THREE.TextureLoader()
   loader.load(imageUrl, (texture) => {
+    // 保存当前纹理引用
+    currentTexture = texture
+    hasImageTexture.value = true
+
     // 更新徽章主体材质
     if (badgeMesh && badgeMesh.children && badgeMesh.children[0]) {
       const mainMesh = badgeMesh.children[0] as THREE.Mesh
       const material = mainMesh.material as THREE.MeshPhongMaterial
 
-      // 设置纹理
-      texture.wrapS = THREE.RepeatWrapping
-      texture.wrapT = THREE.RepeatWrapping
+      // 设置纹理基本属性
+      texture.wrapS = THREE.ClampToEdgeWrapping  // 改为ClampToEdgeWrapping避免重复导致的黑边
+      texture.wrapT = THREE.ClampToEdgeWrapping
       texture.flipY = false
 
+      // 设置纹理过滤方式，提高质量
+      texture.magFilter = THREE.LinearFilter
+      texture.minFilter = THREE.LinearMipmapLinearFilter
+      texture.generateMipmaps = true
+
       material.map = texture
+      material.transparent = true
+      material.needsUpdate = true
+
+      // 应用初始映射设置
+      updateTextureMapping()
+    }
+  }, undefined, (error) => {
+    console.error('纹理加载失败:', error)
+    error.value = '图片加载失败，请重试'
+    setTimeout(() => error.value = '', 3000)
+  })
+}
+
+// 更新纹理映射
+const updateTextureMapping = () => {
+  if (!currentTexture || !badgeMesh || !badgeMesh.children || !badgeMesh.children[0]) return
+
+  const mainMesh = badgeMesh.children[0] as THREE.Mesh
+  const material = mainMesh.material as THREE.MeshPhongMaterial
+
+  if (material.map) {
+    const texture = material.map
+
+    try {
+      // 确保缩放值在合理范围内，避免过小导致黑色
+      const safeScale = Math.max(0.1, Math.min(5.0, textureScale.value))
+      texture.repeat.set(safeScale, safeScale)
+
+      // 限制偏移范围，避免纹理完全移出可见区域
+      const safeOffsetX = Math.max(-1.0, Math.min(1.0, textureOffset.value.x))
+      const safeOffsetY = Math.max(-1.0, Math.min(1.0, textureOffset.value.y))
+      texture.offset.set(safeOffsetX, safeOffsetY)
+
+      // 设置旋转 (需要转换为弧度)
+      const rotationRad = (textureRotation.value * Math.PI) / 180
+      texture.rotation = rotationRad
+
+      // 设置旋转中心点
+      texture.center.set(0.5, 0.5)
+
+      // 确保透明度在有效范围内
+      const safeOpacity = Math.max(0.0, Math.min(1.0, textureOpacity.value))
+      material.opacity = safeOpacity
+      material.transparent = safeOpacity < 1.0 || material.map.format === THREE.RGBAFormat
+
+      // 确保材质有基础颜色，避免完全黑色
+      if (!material.color) {
+        material.color = new THREE.Color(0xffffff)
+      }
+
+      material.needsUpdate = true
+
+    } catch (error) {
+      console.error('更新纹理映射时出错:', error)
+      // 发生错误时重置为安全值
+      texture.repeat.set(1, 1)
+      texture.offset.set(0, 0)
+      texture.rotation = 0
+      material.opacity = 1.0
+      material.transparent = false
       material.needsUpdate = true
     }
-  })
+  }
 }
 
 // 更新徽章几何体
@@ -934,6 +1151,39 @@ onUnmounted(() => {
     }
 
     input[type="color"] {
+      width: 100%;
+      height: 40px;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      background: none;
+      padding: 0;
+      overflow: hidden;
+      transition: all 0.2s ease;
+
+      &:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      &::-webkit-color-swatch-wrapper {
+        padding: 0;
+        border: none;
+        border-radius: var(--radius-md);
+      }
+
+      &::-webkit-color-swatch {
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-md);
+        transition: border-color 0.2s ease;
+      }
+
+      &:hover::-webkit-color-swatch {
+        border-color: var(--primary-color);
+      }
+    }
+
+    .color-picker {
       width: 100%;
       height: 32px;
       border: 1px solid var(--border-color);
