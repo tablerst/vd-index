@@ -87,15 +87,41 @@
                 
                 <div class="control-group">
                   <label>尺寸</label>
-                  <input 
-                    type="range" 
-                    v-model="badgeSize" 
-                    min="20" 
-                    max="100" 
+                  <input
+                    type="range"
+                    v-model="badgeSize"
+                    min="20"
+                    max="100"
                     step="5"
                     @input="updateBadgeGeometry"
                   >
                   <span>{{ badgeSize }}mm</span>
+                </div>
+
+                <div class="control-group">
+                  <label>正面弧度</label>
+                  <input
+                    type="range"
+                    v-model="badgeCurvature"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    @input="updateBadgeGeometry"
+                  >
+                  <span>{{ (badgeCurvature * 100).toFixed(0) }}%</span>
+                </div>
+
+                <div class="control-group">
+                  <label>边缘圆润度</label>
+                  <input
+                    type="range"
+                    v-model="edgeRoundness"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    @input="updateBadgeGeometry"
+                  >
+                  <span>{{ (edgeRoundness * 100).toFixed(0) }}%</span>
                 </div>
               </div>
 
@@ -337,6 +363,8 @@ const isWebGLSupported = ref(true)
 // 徽章参数
 const badgeThickness = ref(1.0)
 const badgeSize = ref(50)
+const badgeCurvature = ref(0.1)  // 正面弧度 (0=平面, 1=最大弯曲)
+const edgeRoundness = ref(0.05)   // 边缘圆润度 (0=尖锐, 1=最圆润)
 
 // 背景参数
 const backgroundColor = ref('#000000')
@@ -448,18 +476,121 @@ const initThreeJS = async () => {
   }
 }
 
+// 创建弯曲徽章几何体
+const createCurvedBadgeGeometry = () => {
+  const radius = badgeSize.value / 20
+  const thickness = badgeThickness.value / 10
+  const curvature = badgeCurvature.value
+  const roundness = edgeRoundness.value
+
+  // 创建自定义几何体，专门为徽章设计
+  const geometry = new THREE.BufferGeometry()
+
+  // 分辨率参数
+  const radialSegments = 64  // 径向分段数
+  const heightSegments = 8   // 高度分段数
+  const thetaSegments = 64   // 角度分段数
+
+  const vertices = []
+  const normals = []
+  const uvs = []
+  const indices = []
+
+  // 生成顶点
+  for (let i = 0; i <= heightSegments; i++) {
+    const v = i / heightSegments
+    const y = (v - 0.5) * thickness
+
+    for (let j = 0; j <= thetaSegments; j++) {
+      const u = j / thetaSegments
+      const theta = u * Math.PI * 2
+
+      for (let k = 0; k <= radialSegments; k++) {
+        const r = k / radialSegments
+
+        // 计算基础位置
+        let currentRadius = radius * r
+
+        // 应用边缘圆润效果
+        if (r > 0.8) {
+          const edgeFactor = (r - 0.8) / 0.2
+          const roundnessFactor = roundness * edgeFactor
+          currentRadius = radius * (0.8 + 0.2 * (1 - roundnessFactor * 0.3))
+        }
+
+        const x = Math.cos(theta) * currentRadius
+        const z = Math.sin(theta) * currentRadius
+
+        // 应用正面弧度 - 只在表面应用
+        let finalY = y
+        if (Math.abs(y) < thickness * 0.4) {
+          const surfaceFactor = 1 - Math.abs(y) / (thickness * 0.4)
+          const curvatureHeight = curvature * radius * 0.3 * (1 - r * r) * surfaceFactor
+          finalY = y + curvatureHeight
+        }
+
+        vertices.push(x, finalY, z)
+
+        // 计算法向量
+        const normal = new THREE.Vector3()
+        if (Math.abs(y) < thickness * 0.4) {
+          // 表面法向量需要考虑弯曲
+          const curvatureNormalY = curvature * 0.5 * (1 - r * r)
+          normal.set(x, curvatureNormalY, z).normalize()
+        } else {
+          // 侧面法向量
+          normal.set(x, 0, z).normalize()
+        }
+        normals.push(normal.x, normal.y, normal.z)
+
+        // 重新设计UV坐标 - 使用平面投影而不是球面投影
+        // 将3D坐标投影到2D平面上，适合徽章的平面纹理
+        const uvX = (x / radius + 1) * 0.5  // 将 [-radius, radius] 映射到 [0, 1]
+        const uvY = (z / radius + 1) * 0.5  // 将 [-radius, radius] 映射到 [0, 1]
+
+        // 确保UV坐标在有效范围内
+        const clampedU = Math.max(0, Math.min(1, uvX))
+        const clampedV = Math.max(0, Math.min(1, uvY))
+
+        uvs.push(clampedU, clampedV)
+      }
+    }
+  }
+
+  // 生成索引
+  for (let i = 0; i < heightSegments; i++) {
+    for (let j = 0; j < thetaSegments; j++) {
+      for (let k = 0; k < radialSegments; k++) {
+        const a = i * (thetaSegments + 1) * (radialSegments + 1) + j * (radialSegments + 1) + k
+        const b = a + radialSegments + 1
+        const c = a + 1
+        const d = b + 1
+
+        // 确保索引有效
+        if (a < vertices.length / 3 && b < vertices.length / 3 &&
+            c < vertices.length / 3 && d < vertices.length / 3) {
+          indices.push(a, b, c)
+          indices.push(b, d, c)
+        }
+      }
+    }
+  }
+
+  geometry.setIndex(indices)
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+  geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3))
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
+
+  return geometry
+}
+
 // 创建默认徽章
 const createDefaultBadge = () => {
   // 创建徽章组
   const badgeGroup = new THREE.Group()
 
-  // 主体圆形几何体
-  const mainGeometry = new THREE.CylinderGeometry(
-    badgeSize.value / 20,
-    badgeSize.value / 20,
-    badgeThickness.value / 10,
-    32
-  )
+  // 创建弯曲徽章几何体
+  const mainGeometry = createCurvedBadgeGeometry()
 
   // 主体材质 - 金属质感，确保有基础颜色
   const mainMaterial = new THREE.MeshPhongMaterial({
@@ -589,6 +720,8 @@ const resetView = () => {
   // 重置所有参数到默认值
   badgeThickness.value = 1.0
   badgeSize.value = 50
+  badgeCurvature.value = 0.2
+  edgeRoundness.value = 0.5
 
   // 重置背景参数
   backgroundColor.value = '#000000'
@@ -751,16 +884,14 @@ const updateBadgeGeometry = () => {
   const mainMesh = badgeMesh.children[0]
   if (mainMesh && mainMesh.geometry) {
     mainMesh.geometry.dispose()
-    const newMainGeometry = new THREE.CylinderGeometry(
-      badgeSize.value / 20,
-      badgeSize.value / 20,
-      badgeThickness.value / 10,
-      32
-    )
+    const newMainGeometry = createCurvedBadgeGeometry()
     mainMesh.geometry = newMainGeometry
+
+    // 如果有纹理，需要重新应用映射
+    if (hasImageTexture.value) {
+      updateTextureMapping()
+    }
   }
-
-
 }
 
 // 更新光源
