@@ -46,6 +46,21 @@ export interface MemberStats {
   join_year_stats: Record<string, number>
 }
 
+export interface MemberUpdateRequest {
+  display_name?: string
+  group_nick?: string
+  role?: number
+  level_point?: number
+  level_value?: number
+}
+
+export interface CreateMemberRequest {
+  display_name: string
+  group_nick?: string
+  role?: number
+  bio?: string
+}
+
 // 活动接口定义
 export interface ParticipantInfo {
   id: number
@@ -220,6 +235,40 @@ class ApiClient {
   }
 
   // 获取成员详情
+  async getMemberDetail(id: number): Promise<MemberDetail> {
+    return this.request<MemberDetail>(`/api/v1/members/${id}`)
+  }
+
+  // 创建成员
+  async createMember(data: CreateMemberRequest): Promise<any> {
+    return this.request('/api/v1/members', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+  }
+
+  // 更新成员信息
+  async updateMember(id: number, data: MemberUpdateRequest): Promise<any> {
+    return this.request(`/api/v1/members/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+  }
+
+  // 删除成员
+  async deleteMember(id: number): Promise<any> {
+    return this.request(`/api/v1/members/${id}`, {
+      method: 'DELETE'
+    })
+  }
+
+  // 获取成员详情
   async getMemberDetail(memberId: number): Promise<MemberDetail> {
     return this.request<MemberDetail>(`/api/v1/members/${memberId}`)
   }
@@ -374,9 +423,24 @@ export const memberApi = {
     return apiClient.getMemberDetail(memberId)
   },
 
+  // 创建成员
+  async createMember(data: CreateMemberRequest): Promise<any> {
+    return apiClient.createMember(data)
+  },
+
   // 获取统计信息
   async getStats(): Promise<MemberStats> {
     return apiClient.getMemberStats()
+  },
+
+  // 更新成员信息
+  async updateMember(id: number, data: MemberUpdateRequest): Promise<any> {
+    return apiClient.updateMember(id, data)
+  },
+
+  // 删除成员
+  async deleteMember(id: number): Promise<any> {
+    return apiClient.deleteMember(id)
   },
 
   // 获取头像URL

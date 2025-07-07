@@ -47,6 +47,14 @@ class ImportMemberRequest(BaseModel):
     qage: Optional[int] = Field(default=None, description="Q龄")
 
 
+class CreateMemberRequest(BaseModel):
+    """手动创建成员请求模型"""
+    display_name: str = Field(description="显示名称")
+    group_nick: Optional[str] = Field(default=None, description="群昵称")
+    role: int = Field(default=2, description="群权限：0=群主, 1=管理员, 2=群员")
+    bio: Optional[str] = Field(default=None, description="简介/备注")
+
+
 class ImportBatchRequest(BaseModel):
     """批量导入请求模型"""
     members: List[ImportMemberRequest] = Field(description="成员列表")

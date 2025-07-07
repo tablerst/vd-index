@@ -10,6 +10,15 @@
         <h3>成员列表</h3>
         <div class="actions">
           <n-button
+            type="primary"
+            @click="showCreateModal = true"
+          >
+            <template #icon>
+              <n-icon :component="AddOutline" />
+            </template>
+            创建成员
+          </n-button>
+          <n-button
             v-if="canImport"
             type="primary"
             @click="showImportModal = true"
@@ -76,6 +85,54 @@
         striped
       />
     </div>
+
+    <!-- 创建成员模态框 -->
+    <n-modal
+      v-model:show="showCreateModal"
+      preset="dialog"
+      title="创建新成员"
+      style="width: 500px;"
+    >
+      <n-form
+        v-if="newMember"
+        :model="newMember"
+        :rules="createRules"
+        ref="createFormRef"
+        label-placement="left"
+        label-width="80px"
+      >
+        <n-form-item label="显示名称" path="display_name">
+          <n-input v-model:value="newMember.display_name" placeholder="请输入显示名称" />
+        </n-form-item>
+        <n-form-item label="群昵称" path="group_nick">
+          <n-input v-model:value="newMember.group_nick" placeholder="请输入群昵称（可选）" />
+        </n-form-item>
+        <n-form-item label="角色" path="role">
+          <n-select
+            v-model:value="newMember.role"
+            :options="roleOptions"
+            placeholder="请选择角色"
+          />
+        </n-form-item>
+        <n-form-item label="个人简介" path="bio">
+          <n-input
+            v-model:value="newMember.bio"
+            type="textarea"
+            placeholder="请输入个人简介（可选）"
+            :rows="3"
+          />
+        </n-form-item>
+      </n-form>
+
+      <template #action>
+        <n-space>
+          <n-button @click="showCreateModal = false">取消</n-button>
+          <n-button type="primary" @click="handleCreateConfirm" :loading="creating">
+            确认创建
+          </n-button>
+        </n-space>
+      </template>
+    </n-modal>
 
     <!-- 导入成员模态框 -->
     <n-modal
@@ -201,7 +258,8 @@ import {
   PersonOutline,
   TrashOutline,
   CreateOutline,
-  DownloadOutline
+  DownloadOutline,
+  AddOutline
 } from '@vicons/ionicons5'
 import { memberApi, type Member, type MemberDetail } from '@/services/api'
 import { hasPermission } from '@/router/guards'
@@ -224,7 +282,30 @@ const pageSize = ref(20)
 // 模态框状态
 const showImportModal = ref(false)
 const showEditModal = ref(false)
+const showCreateModal = ref(false)
 const editingMember = ref<Member | null>(null)
+const creating = ref(false)
+
+// 创建成员表单
+const newMember = ref({
+  display_name: '',
+  group_nick: '',
+  role: 2, // 默认为群员
+  bio: ''
+})
+
+// 创建表单引用
+const createFormRef = ref()
+
+// 创建表单验证规则
+const createRules = {
+  display_name: [
+    { required: true, message: '请输入显示名称', trigger: 'blur' }
+  ],
+  role: [
+    { required: true, message: '请选择角色', trigger: 'change', type: 'number' }
+  ]
+}
 
 // 上传文件
 const uploadFiles = ref<UploadFileInfo[]>([])
@@ -447,6 +528,45 @@ const handleExportMembers = async () => {
   }
 }
 
+// 处理创建成员确认
+const handleCreateConfirm = async () => {
+  if (!createFormRef.value) return
+
+  try {
+    await createFormRef.value.validate()
+  } catch (error) {
+    return
+  }
+
+  creating.value = true
+  try {
+    await memberApi.createMember({
+      display_name: newMember.value.display_name,
+      group_nick: newMember.value.group_nick || newMember.value.display_name,
+      role: newMember.value.role,
+      bio: newMember.value.bio || undefined
+    })
+
+    message.success('成员创建成功')
+    showCreateModal.value = false
+
+    // 重置表单
+    newMember.value = {
+      display_name: '',
+      group_nick: '',
+      role: 2,
+      bio: ''
+    }
+
+    await loadMembers()
+  } catch (error) {
+    console.error('Create failed:', error)
+    message.error('创建成员失败')
+  } finally {
+    creating.value = false
+  }
+}
+
 // 处理编辑
 const handleEdit = (member: Member) => {
   editingMember.value = { ...member }
@@ -459,8 +579,12 @@ const handleEditConfirm = async () => {
 
   loading.value = true
   try {
-    // 这里应该调用后端API进行更新
-    // await memberApi.updateMember(editingMember.value.id, editingMember.value)
+    const updateData = {
+      display_name: editingMember.value.name,
+      group_nick: editingMember.value.group_nick,
+      role: editingMember.value.role
+    }
+    await memberApi.updateMember(editingMember.value.id, updateData)
 
     message.success('成员信息更新成功')
     showEditModal.value = false
@@ -477,8 +601,7 @@ const handleEditConfirm = async () => {
 // 处理删除
 const handleDelete = async (member: Member) => {
   try {
-    // 这里应该调用后端API进行删除
-    // await memberApi.deleteMember(member.id)
+    await memberApi.deleteMember(member.id)
 
     message.success(`成员 ${member.name} 删除成功`)
     await loadMembers()
