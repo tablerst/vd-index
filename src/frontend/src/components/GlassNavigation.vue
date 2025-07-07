@@ -31,6 +31,11 @@
               </a>
             </li>
             <li class="nav-item">
+              <router-link to="/badge-preview" class="nav-link">
+                徽章预览
+              </router-link>
+            </li>
+            <li class="nav-item">
               <a href="#about" class="nav-link" @click="scrollToSection('about')">
                 关于
               </a>
@@ -275,12 +280,20 @@ onUnmounted(() => {
     
     &:hover {
       color: var(--text-primary);
-      
+
       &::before {
         width: 100%;
       }
     }
-    
+
+    &.router-link-active {
+      color: var(--text-primary);
+
+      &::before {
+        width: 100%;
+      }
+    }
+
     &:focus-visible {
       outline: 2px solid var(--secondary);
       outline-offset: 4px;

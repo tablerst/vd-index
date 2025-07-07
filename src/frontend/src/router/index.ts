@@ -7,6 +7,7 @@ import { setupRouterGuards } from './guards'
 
 // 路由组件懒加载
 const Home = () => import('@/views/Home.vue')
+const BadgePreview = () => import('@/views/BadgePreview.vue')
 const Login = () => import('@/views/Login.vue')
 const SettingsLayout = () => import('@/views/settings/SettingsLayout.vue')
 const MemberManagement = () => import('@/views/settings/MemberManagement.vue')
@@ -21,6 +22,14 @@ const routes = [
     component: Home,
     meta: {
       title: 'VD Index - 群成员星云'
+    }
+  },
+  {
+    path: '/badge-preview',
+    name: 'BadgePreview',
+    component: BadgePreview,
+    meta: {
+      title: '3D徽章打印预览'
     }
   },
   {
