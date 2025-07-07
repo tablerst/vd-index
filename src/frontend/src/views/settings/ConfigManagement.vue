@@ -207,16 +207,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, h } from 'vue'
 import {
-  NCard, NDataTable, NInput, NButton, NIcon, NModal, NForm, NFormItem,
+  NDataTable, NInput, NButton, NIcon, NModal, NForm, NFormItem,
   NSelect, NSpace, NTag, NSwitch, NPopconfirm, NText, NTooltip,
-  useMessage, useDialog
+  useMessage
 } from 'naive-ui'
 import {
   SearchOutline,
   AddOutline,
   CreateOutline,
   TrashOutline,
-  SettingsOutline,
   RefreshOutline,
   DownloadOutline,
   CodeOutline
@@ -231,7 +230,7 @@ import {
 import { hasPermission } from '@/router/guards'
 
 const message = useMessage()
-const dialog = useDialog()
+// const dialog = useDialog()
 
 // 数据状态
 const loading = ref(false)

@@ -74,10 +74,11 @@ export class AcrylicEffect {
   }
 
   private apply() {
-    const { opacity, blur, saturation, brightness, tintColor } = this.options
+    const { blur, saturation, brightness, tintColor } = this.options
 
     this.element.style.background = tintColor
     this.element.style.backdropFilter = `blur(${blur}px) saturate(${saturation}%) brightness(${brightness})`
+    // @ts-ignore - webkitBackdropFilter is not in TypeScript types but is valid CSS
     this.element.style.webkitBackdropFilter = `blur(${blur}px) saturate(${saturation}%) brightness(${brightness})`
     this.element.style.border = '1px solid rgba(255, 255, 255, 0.2)'
   }

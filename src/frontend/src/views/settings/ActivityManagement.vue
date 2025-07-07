@@ -219,16 +219,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, h } from 'vue'
 import {
-  NCard, NDataTable, NInput, NButton, NIcon, NModal, NForm, NFormItem,
-  NDatePicker, NSelect, NSpace, NTag, NPopconfirm, NTransfer, NText,
-  NAvatar, NTooltip, NDynamicTags, useMessage, useDialog
+  NDataTable, NInput, NButton, NIcon, NModal, NForm, NFormItem,
+  NDatePicker, NSpace, NTag, NPopconfirm, NTransfer, NText,
+  NTooltip, NDynamicTags, useMessage
 } from 'naive-ui'
 import {
   SearchOutline,
   AddOutline,
   CreateOutline,
   TrashOutline,
-  CalendarOutline,
   PeopleOutline,
   RefreshOutline,
   DownloadOutline
@@ -245,7 +244,7 @@ import {
 import { hasPermission } from '@/router/guards'
 
 const message = useMessage()
-const dialog = useDialog()
+// const dialog = useDialog()
 
 // 数据状态
 const loading = ref(false)
@@ -502,11 +501,11 @@ const handleEdit = (activity: Activity) => {
 }
 
 // 处理参与者变化
-const handleParticipantsChange = (value: number[]) => {
+const handleParticipantsChange = (value: (string | number)[]) => {
   if (editingActivity.value) {
     // 更新参与者列表
     editingActivity.value.participants = members.value
-      .filter(member => value.includes(member.id))
+      .filter(member => value.includes(member.id as string | number))
       .map(member => ({
         id: member.id,
         name: member.name,

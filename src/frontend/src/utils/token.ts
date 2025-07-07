@@ -161,7 +161,7 @@ export class TokenManager {
  * Token 刷新管理
  */
 export class TokenRefreshManager {
-  private static refreshPromise: Promise<string> | null = null
+  private static refreshPromise: Promise<string | null> | null = null
 
   /**
    * 刷新访问令牌

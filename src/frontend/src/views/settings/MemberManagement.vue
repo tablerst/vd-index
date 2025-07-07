@@ -247,7 +247,6 @@ import {
   NText,
   NPopconfirm,
   useMessage,
-  useDialog,
   type DataTableColumns,
   type UploadFileInfo
 } from 'naive-ui'
@@ -255,18 +254,17 @@ import {
   CloudUploadOutline,
   RefreshOutline,
   SearchOutline,
-  PersonOutline,
   TrashOutline,
   CreateOutline,
   DownloadOutline,
   AddOutline
 } from '@vicons/ionicons5'
-import { memberApi, type Member, type MemberDetail } from '@/services/api'
+import { memberApi, type Member } from '@/services/api'
 import { hasPermission } from '@/router/guards'
 
 // 状态管理
 const message = useMessage()
-const dialog = useDialog()
+// const dialog = useDialog()
 const loading = ref(false)
 const searchQuery = ref('')
 const roleFilter = ref<string | null>(null)
@@ -303,7 +301,7 @@ const createRules = {
     { required: true, message: '请输入显示名称', trigger: 'blur' }
   ],
   role: [
-    { required: true, message: '请选择角色', trigger: 'change', type: 'number' }
+    { required: true, message: '请选择角色', trigger: 'change' }
   ]
 }
 
@@ -358,11 +356,14 @@ const columns: DataTableColumns = [
     title: '头像',
     key: 'avatar',
     width: 80,
-    render: (row: Member) => h(NAvatar, {
-      size: 'small',
-      src: row.avatar_url,
-      fallbackSrc: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNGNUY1RjUiLz4KPHBhdGggZD0iTTIwIDIwQzIyLjc2MTQgMjAgMjUgMTcuNzYxNCAyNSAxNUMyNSAxMi4yMzg2IDIyLjc2MTQgMTAgMjAgMTBDMTcuMjM4NiAxMCAxNSAxMi4yMzg2IDE1IDE1QzE1IDE3Ljc2MTQgMTcuMjM4NiAyMCAyMCAyMFoiIGZpbGw9IiNEREREREQiLz4KPHBhdGggZD0iTTEwIDMwQzEwIDI1LjAyOTQgMTQuMDI5NCAyMSAxOSAyMUgyMUMyNS45NzA2IDIxIDMwIDI1LjAyOTQgMzAgMzBWMzBIMTBWMzBaIiBmaWxsPSIjREREREREIi8+Cjwvc3ZnPgo='
-    })
+    render: (rowData: any) => {
+      const row = rowData as Member
+      return h(NAvatar, {
+        size: 'small',
+        src: row.avatar_url,
+        fallbackSrc: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNGNUY1RjUiLz4KPHBhdGggZD0iTTIwIDIwQzIyLjc2MTQgMjAgMjUgMTcuNzYxNCAyNSAxNUMyNSAxMi4yMzg2IDIyLjc2MTQgMTAgMjAgMTBDMTcuMjM4NiAxMCAxNSAxMi4yMzg2IDE1IDE1QzE1IDE3Ljc2MTQgMTcuMjM4NiAyMCAyMCAyMFoiIGZpbGw9IiNEREREREQiLz4KPHBhdGggZD0iTTEwIDMwQzEwIDI1LjAyOTQgMTQuMDI5NCAyMSAxOSAyMUgyMUMyNS45NzA2IDIxIDMwIDI1LjAyOTQgMzAgMzBWMzBIMTBWMzBaIiBmaWxsPSIjREREREREIi8+Cjwvc3ZnPgo='
+      })
+    }
   },
   {
     title: 'ID',
@@ -378,19 +379,26 @@ const columns: DataTableColumns = [
     title: '群昵称',
     key: 'group_nick',
     width: 150,
-    render: (row: Member) => row.group_nick || '-'
+    render: (rowData: any) => {
+      const row = rowData as Member
+      return row.group_nick || '-'
+    }
   },
   {
     title: 'QQ昵称',
     key: 'qq_nick',
     width: 150,
-    render: (row: Member) => row.qq_nick || '-'
+    render: (rowData: any) => {
+      const row = rowData as Member
+      return row.qq_nick || '-'
+    }
   },
   {
     title: '角色',
     key: 'role',
     width: 100,
-    render: (row: Member) => {
+    render: (rowData: any) => {
+      const row = rowData as Member
       const roleMap: Record<number, { type: any, label: string }> = {
         0: { type: 'error', label: '群主' },
         1: { type: 'warning', label: '管理员' },
@@ -404,38 +412,44 @@ const columns: DataTableColumns = [
     title: '加入时间',
     key: 'join_date',
     width: 120,
-    render: (row: Member) => new Date(row.join_date).toLocaleDateString('zh-CN')
+    render: (rowData: any) => {
+      const row = rowData as Member
+      return new Date(row.join_date).toLocaleDateString('zh-CN')
+    }
   },
   {
     title: '操作',
     key: 'actions',
     width: 150,
-    render: (row: Member) => h(NSpace, { size: 'small' }, {
-      default: () => [
-        canEdit.value && h(NButton, {
-          size: 'small',
-          type: 'primary',
-          text: true,
-          onClick: () => handleEdit(row)
-        }, {
-          default: () => '编辑',
-          icon: () => h(NIcon, { component: CreateOutline })
-        }),
-        canDelete.value && h(NPopconfirm, {
-          onPositiveClick: () => handleDelete(row)
-        }, {
-          trigger: () => h(NButton, {
+    render: (rowData: any) => {
+      const row = rowData as Member
+      return h(NSpace, { size: 'small' }, {
+        default: () => [
+          canEdit.value && h(NButton, {
             size: 'small',
-            type: 'error',
-            text: true
+            type: 'primary',
+            text: true,
+            onClick: () => handleEdit(row)
           }, {
-            default: () => '删除',
-            icon: () => h(NIcon, { component: TrashOutline })
+            default: () => '编辑',
+            icon: () => h(NIcon, { component: CreateOutline })
           }),
-          default: () => `确定要删除成员 ${row.name} 吗？`
-        })
-      ].filter(Boolean)
-    })
+          canDelete.value && h(NPopconfirm, {
+            onPositiveClick: () => handleDelete(row)
+          }, {
+            trigger: () => h(NButton, {
+              size: 'small',
+              type: 'error',
+              text: true
+            }, {
+              default: () => '删除',
+              icon: () => h(NIcon, { component: TrashOutline })
+            }),
+            default: () => `确定要删除成员 ${row.name} 吗？`
+          })
+        ].filter(Boolean)
+      })
+    }
   }
 ]
 
@@ -487,8 +501,8 @@ const handleImportConfirm = async () => {
 
   loading.value = true
   try {
-    const text = await file.text()
-    const data = JSON.parse(text)
+    // const text = await file.text()
+    // const data = JSON.parse(text)
 
     // 这里应该调用后端API进行导入
     // await memberApi.importMembers(data)

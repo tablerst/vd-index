@@ -5,7 +5,8 @@
  */
 import type { GlobalTheme } from 'naive-ui'
 
-// VD 官网首页「Nebula Linear」主题色彩体系
+// VD 官网首页「Nebula Linear」主题色彩体系 (未使用，已注释)
+/*
 const nebulaColors = {
   // 主色调 - 紫色系
   primary: '#AA83FF',
@@ -84,9 +85,88 @@ const nebulaColors = {
   drawerMaskColor: 'rgba(14, 16, 22, 0.8)',
   popoverMaskColor: 'rgba(14, 16, 22, 0.6)'
 }
+*/
 
 // 通用配置
 const common = {
+  name: 'common' as const,
+  baseColor: '#0E1016',
+  primaryColor: '#AA83FF',
+  primaryColorHover: '#B99AFD',
+  primaryColorPressed: '#8F6BFF',
+  primaryColorSuppl: 'rgba(170, 131, 255, 0.1)',
+  infoColor: '#3F7DFB',
+  infoColorHover: '#5A8FFC',
+  infoColorPressed: '#2A6BFA',
+  infoColorSuppl: 'rgba(63, 125, 251, 0.1)',
+  successColor: '#D4DEC7',
+  successColorHover: '#E8F2DB',
+  successColorPressed: '#C0CA9F',
+  successColorSuppl: 'rgba(212, 222, 199, 0.1)',
+  warningColor: '#FFB020',
+  warningColorHover: '#FFC040',
+  warningColorPressed: '#FF9500',
+  warningColorSuppl: 'rgba(255, 176, 32, 0.1)',
+  errorColor: '#FF4150',
+  errorColorHover: '#FF6B78',
+  errorColorPressed: '#FF1728',
+  errorColorSuppl: 'rgba(255, 65, 80, 0.1)',
+  textColorBase: 'rgba(255, 255, 255, 0.95)',
+  textColor1: 'rgba(255, 255, 255, 0.95)',
+  textColor2: 'rgba(255, 255, 255, 0.82)',
+  textColor3: 'rgba(255, 255, 255, 0.52)',
+  textColorDisabled: 'rgba(255, 255, 255, 0.3)',
+  placeholderColor: 'rgba(255, 255, 255, 0.5)',
+  placeholderColorDisabled: 'rgba(255, 255, 255, 0.3)',
+  iconColor: 'rgba(255, 255, 255, 0.7)',
+  iconColorHover: 'rgba(255, 255, 255, 0.9)',
+  iconColorPressed: 'rgba(255, 255, 255, 0.8)',
+  iconColorDisabled: 'rgba(255, 255, 255, 0.3)',
+  opacity1: '0.82',
+  opacity2: '0.72',
+  opacity3: '0.38',
+  opacity4: '0.24',
+  opacity5: '0.18',
+  dividerColor: 'rgba(255, 255, 255, 0.12)',
+  borderColor: 'rgba(255, 255, 255, 0.12)',
+  closeIconColor: 'rgba(255, 255, 255, 0.52)',
+  closeIconColorHover: 'rgba(255, 255, 255, 0.82)',
+  closeIconColorPressed: 'rgba(255, 255, 255, 0.72)',
+  clearColor: 'rgba(255, 255, 255, 0.52)',
+  clearColorHover: 'rgba(255, 255, 255, 0.82)',
+  clearColorPressed: 'rgba(255, 255, 255, 0.72)',
+  scrollbarColor: 'rgba(255, 255, 255, 0.2)',
+  scrollbarColorHover: 'rgba(255, 255, 255, 0.3)',
+  scrollbarWidth: '5px',
+  scrollbarHeight: '5px',
+  scrollbarBorderRadius: '5px',
+  progressRailColor: 'rgba(255, 255, 255, 0.12)',
+  railColor: 'rgba(255, 255, 255, 0.12)',
+  popoverColor: 'rgba(255, 255, 255, 0.08)',
+  tableColor: 'rgba(255, 255, 255, 0.05)',
+  cardColor: 'rgba(255, 255, 255, 0.08)',
+  modalColor: 'rgba(255, 255, 255, 0.08)',
+  bodyColor: '#0E1016',
+  tagColor: 'rgba(255, 255, 255, 0.08)',
+  avatarColor: 'rgba(255, 255, 255, 0.12)',
+  invertedColor: '#0E1016',
+  inputColor: 'rgba(255, 255, 255, 0.08)',
+  codeColor: 'rgba(255, 255, 255, 0.05)',
+  tabColor: 'rgba(255, 255, 255, 0.08)',
+  actionColor: 'rgba(255, 255, 255, 0.08)',
+  tableHeaderColor: 'rgba(255, 255, 255, 0.08)',
+  hoverColor: 'rgba(255, 255, 255, 0.08)',
+  tableColorHover: 'rgba(255, 255, 255, 0.08)',
+  tableColorStriped: 'rgba(255, 255, 255, 0.03)',
+  pressedColor: 'rgba(255, 255, 255, 0.06)',
+  opacityDisabled: '0.5',
+  inputColorDisabled: 'rgba(255, 255, 255, 0.05)',
+  buttonColor2: 'rgba(255, 255, 255, 0.08)',
+  buttonColor2Hover: 'rgba(255, 255, 255, 0.12)',
+  buttonColor2Pressed: 'rgba(255, 255, 255, 0.06)',
+  boxShadow1: '0 1px 2px -2px rgba(0, 0, 0, 0.8), 0 3px 6px 0 rgba(0, 0, 0, 0.34), 0 5px 12px 4px rgba(0, 0, 0, 0.12)',
+  boxShadow2: '0 3px 6px -4px rgba(0, 0, 0, 0.8), 0 6px 16px 0 rgba(0, 0, 0, 0.32), 0 9px 28px 8px rgba(0, 0, 0, 0.05)',
+  boxShadow3: '0 6px 16px -9px rgba(0, 0, 0, 0.8), 0 9px 28px 0 rgba(0, 0, 0, 0.44), 0 12px 48px 16px rgba(0, 0, 0, 0.05)',
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
   fontSize: '14px',
   fontSizeMini: '12px',
@@ -95,29 +175,30 @@ const common = {
   fontSizeMedium: '14px',
   fontSizeLarge: '16px',
   fontSizeHuge: '18px',
-
   lineHeight: '1.6',
-
   borderRadius: '8px',
   borderRadiusSmall: '4px',
-
   heightMini: '22px',
   heightTiny: '28px',
   heightSmall: '32px',
   heightMedium: '36px',
   heightLarge: '40px',
   heightHuge: '46px',
-
-  // 使用首页的缓动函数
   cubicBezierEaseInOut: 'cubic-bezier(0.22, 1, 0.36, 1)',
   cubicBezierEaseOut: 'cubic-bezier(0.19, 1, 0.22, 1)',
   cubicBezierEaseIn: 'cubic-bezier(0.16, 0.84, 0.44, 1)',
 
-  ...nebulaColors
+  // 添加缺少的属性
+  closeColorHover: 'rgba(255, 255, 255, 0.12)',
+  closeColorPressed: 'rgba(255, 255, 255, 0.08)',
+  fontFamilyMono: 'ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+  fontWeight: '400',
+  fontWeightStrong: '600'
 }
 
 // 组件特定配置
 const Button = {
+  name: 'Button' as const,
   paddingTiny: '0 8px',
   paddingSmall: '0 12px',
   paddingMedium: '0 16px',
@@ -176,6 +257,7 @@ const Button = {
 }
 
 const Card = {
+  name: 'Card' as const,
   borderRadius: '12px',
   color: 'rgba(255, 255, 255, 0.08)',
   colorModal: 'rgba(255, 255, 255, 0.08)',
@@ -194,6 +276,7 @@ const Card = {
 }
 
 const Input = {
+  name: 'Input' as const,
   borderRadius: '8px',
   color: 'rgba(255, 255, 255, 0.08)',
   colorDisabled: 'rgba(255, 255, 255, 0.05)',
@@ -232,6 +315,7 @@ const Input = {
 }
 
 const DataTable = {
+  name: 'DataTable' as const,
   borderRadius: '12px',
   borderColor: 'rgba(255, 255, 255, 0.12)',
   thColor: 'rgba(255, 255, 255, 0.08)',
@@ -252,6 +336,7 @@ const DataTable = {
 
 // Form 组件配置
 const Form = {
+  name: 'Form' as const,
   labelTextColor: '#FFFFFF',
   labelFontWeight: '500',
   labelFontSize: '14px',
@@ -263,6 +348,7 @@ const Form = {
 
 // Select 组件配置
 const Select = {
+  name: 'Select' as const,
   color: 'rgba(255, 255, 255, 0.08)',
   colorActive: 'rgba(255, 255, 255, 0.12)',
   border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -277,6 +363,7 @@ const Select = {
 
 // Menu 组件配置
 const Menu = {
+  name: 'Menu' as const,
   color: 'transparent',
   itemTextColor: '#FFFFFF',
   itemTextColorHover: '#FFFFFF',
@@ -295,6 +382,7 @@ const Menu = {
 
 // Breadcrumb 组件配置
 const Breadcrumb = {
+  name: 'Breadcrumb' as const,
   itemTextColor: 'rgba(255, 255, 255, 0.7)',
   itemTextColorHover: '#FFFFFF',
   itemTextColorPressed: '#AA83FF',
@@ -304,6 +392,7 @@ const Breadcrumb = {
 
 // 导出主题配置
 export const nebulaTheme: GlobalTheme = {
+  name: 'nebulaTheme',
   common,
   Button,
   Card,

@@ -75,7 +75,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+// import { useRouter } from 'vue-router'
 import { 
   NForm, 
   NFormItem, 
@@ -92,7 +92,7 @@ import { useAuthStore } from '@/stores/auth'
 import { RevealEffect } from '@/utils/fluentEffects'
 
 // 路由和状态管理
-const router = useRouter()
+// const router = useRouter()
 const authStore = useAuthStore()
 const message = useMessage()
 

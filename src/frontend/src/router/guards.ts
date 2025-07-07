@@ -10,7 +10,7 @@ import { useAuthStore } from '@/stores/auth'
  */
 export function setupRouterGuards(router: Router) {
   // 全局前置守卫
-  router.beforeEach(async (to, from, next) => {
+  router.beforeEach(async (to, _from, next) => {
     const authStore = useAuthStore()
     
     // 检查是否需要认证
@@ -64,7 +64,7 @@ export function setupRouterGuards(router: Router) {
   })
   
   // 全局后置钩子
-  router.afterEach((to, from) => {
+  router.afterEach((to, _from) => {
     // 更新页面标题
     if (to.meta.title) {
       document.title = `${to.meta.title} - VD群管理系统`
@@ -73,8 +73,8 @@ export function setupRouterGuards(router: Router) {
     }
     
     // 记录路由变化（用于分析）
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`Route changed: ${from.path} -> ${to.path}`)
+    if (import.meta.env.DEV) {
+      console.log(`Route changed: ${_from.path} -> ${to.path}`)
     }
   })
   
@@ -83,7 +83,7 @@ export function setupRouterGuards(router: Router) {
     console.error('Router error:', error)
     
     // 可以在这里添加错误上报逻辑
-    if (process.env.NODE_ENV === 'production') {
+    if (import.meta.env.PROD) {
       // 上报错误到监控系统
       // reportError(error)
     }

@@ -37,7 +37,7 @@
             <div v-if="error" class="error-overlay">
               <div class="error-icon">⚠️</div>
               <p>{{ error }}</p>
-              <button class="btn btn-primary" @click="location.reload()">刷新页面</button>
+              <button class="btn btn-primary" @click="handleReload">刷新页面</button>
             </div>
 
             <!-- 操作提示 -->
@@ -391,7 +391,7 @@ let scene: THREE.Scene
 let camera: THREE.PerspectiveCamera
 let renderer: THREE.WebGLRenderer
 let controls: OrbitControls
-let badgeMesh: THREE.Mesh
+let badgeMesh: THREE.Group
 let directionalLight: THREE.DirectionalLight
 let ambientLight: THREE.AmbientLight
 let fillLight: THREE.DirectionalLight
@@ -802,8 +802,8 @@ const loadImageTexture = (imageUrl: string) => {
       // 应用初始映射设置
       updateTextureMapping()
     }
-  }, undefined, (error) => {
-    console.error('纹理加载失败:', error)
+  }, undefined, (loadError) => {
+    console.error('纹理加载失败:', loadError)
     error.value = '图片加载失败，请重试'
     setTimeout(() => error.value = '', 3000)
   })
@@ -866,7 +866,7 @@ const updateBadgeGeometry = () => {
   if (!badgeMesh || !badgeMesh.children) return
 
   // 更新主体几何体
-  const mainMesh = badgeMesh.children[0]
+  const mainMesh = badgeMesh.children[0] as THREE.Mesh
   if (mainMesh && mainMesh.geometry) {
     mainMesh.geometry.dispose()
     const newMainGeometry = createCurvedBadgeGeometry()
@@ -914,8 +914,8 @@ const onMouseDown = (event: MouseEvent) => {
 const onMouseMove = (event: MouseEvent) => {
   if (!isMouseDown.value) return
   
-  const deltaX = event.clientX - mousePosition.value.x
-  const deltaY = event.clientY - mousePosition.value.y
+  // const deltaX = event.clientX - mousePosition.value.x
+  // const deltaY = event.clientY - mousePosition.value.y
   
   mousePosition.value = { x: event.clientX, y: event.clientY }
 }
@@ -926,6 +926,11 @@ const onMouseUp = () => {
 
 const onWheel = (event: WheelEvent) => {
   event.preventDefault()
+}
+
+// 刷新页面
+const handleReload = () => {
+  window.location.reload()
 }
 
 // 窗口大小调整

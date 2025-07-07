@@ -2,7 +2,7 @@
  * 后端API服务
  * 提供安全的成员数据访问接口
  */
-import { TokenManager, RequestInterceptor, TokenRefreshManager } from '@/utils/token'
+import { RequestInterceptor, TokenRefreshManager } from '@/utils/token'
 
 // API基础配置
 // 在生产环境中使用相对路径，开发环境使用完整URL
@@ -268,10 +268,7 @@ class ApiClient {
     })
   }
 
-  // 获取成员详情
-  async getMemberDetail(memberId: number): Promise<MemberDetail> {
-    return this.request<MemberDetail>(`/api/v1/members/${memberId}`)
-  }
+
 
   // 获取成员统计信息
   async getMemberStats(): Promise<MemberStats> {

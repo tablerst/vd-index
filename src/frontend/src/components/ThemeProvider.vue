@@ -29,7 +29,7 @@ import {
   zhCN,
   dateZhCN
 } from 'naive-ui'
-import { nebulaTheme } from '@/config/theme'
+// import { nebulaTheme } from '@/config/theme'
 import type { GlobalThemeOverrides } from 'naive-ui'
 
 // 主题覆盖配置 - 基于 Nebula Linear 主题
@@ -143,7 +143,6 @@ const themeOverrides: GlobalThemeOverrides = {
         color: 'rgba(255, 255, 255, 0.08)',
         optionTextColor: '#FFFFFF',
         optionTextColorActive: '#FFFFFF',
-        optionColorHover: 'rgba(170, 131, 255, 0.2)',
         optionColorActive: 'rgba(170, 131, 255, 0.3)',
         borderRadius: '8px'
       }
@@ -161,16 +160,7 @@ const themeOverrides: GlobalThemeOverrides = {
     feedbackFontSize: '12px'
   },
 
-  Button: {
-    // 按钮样式
-    borderRadius: '8px',
-    // 小尺寸按钮的最小宽度和内边距
-    paddingSmall: '0 12px',
-    heightSmall: '28px',
-    // 文字按钮的内边距
-    paddingTiny: '0 8px',
-    heightTiny: '24px'
-  },
+
 
   Menu: {
     // 菜单样式
