@@ -483,103 +483,88 @@ const createCurvedBadgeGeometry = () => {
   const curvature = badgeCurvature.value
   const roundness = edgeRoundness.value
 
-  // 创建自定义几何体，专门为徽章设计
-  const geometry = new THREE.BufferGeometry()
+  // 使用球面几何体作为基础，然后修改顶点位置
+  const geometry = new THREE.SphereGeometry(radius, 32, 16, 0, Math.PI * 2, 0, Math.PI)
 
-  // 分辨率参数
-  const radialSegments = 64  // 径向分段数
-  const heightSegments = 8   // 高度分段数
-  const thetaSegments = 64   // 角度分段数
+  const positions = geometry.attributes.position.array
+  const uvs = geometry.attributes.uv.array
 
-  const vertices = []
-  const normals = []
-  const uvs = []
-  const indices = []
+  // 修改顶点位置以创建徽章形状
+  for (let i = 0; i < positions.length; i += 3) {
+    const x = positions[i]
+    const y = positions[i + 1]
+    const z = positions[i + 2]
 
-  // 生成顶点
-  for (let i = 0; i <= heightSegments; i++) {
-    const v = i / heightSegments
-    const y = (v - 0.5) * thickness
+    // 计算距离中心的径向距离
+    const radialDistance = Math.sqrt(x * x + z * z)
+    const normalizedRadius = radialDistance / radius
 
-    for (let j = 0; j <= thetaSegments; j++) {
-      const u = j / thetaSegments
-      const theta = u * Math.PI * 2
+    // 限制徽章的厚度
+    let newY = y
 
-      for (let k = 0; k <= radialSegments; k++) {
-        const r = k / radialSegments
+    // 只保留上半球，并压缩高度
+    if (y >= 0) {
+      // 应用弯曲度：0=完全平面，1=保持球形
+      const curvatureHeight = curvature * y
+      const flatHeight = thickness / 2
+      newY = curvatureHeight + (1 - curvature) * flatHeight
 
-        // 计算基础位置
-        let currentRadius = radius * r
+      // 应用边缘圆润效果
+      if (normalizedRadius > 0.7) {
+        const edgeFactor = (normalizedRadius - 0.7) / 0.3
+        const edgeRoundnessFactor = roundness * edgeFactor
 
-        // 应用边缘圆润效果
-        if (r > 0.8) {
-          const edgeFactor = (r - 0.8) / 0.2
-          const roundnessFactor = roundness * edgeFactor
-          currentRadius = radius * (0.8 + 0.2 * (1 - roundnessFactor * 0.3))
-        }
+        // 边缘向下弯曲
+        newY *= (1 - edgeRoundnessFactor * 0.8)
 
-        const x = Math.cos(theta) * currentRadius
-        const z = Math.sin(theta) * currentRadius
+        // 边缘向内收缩
+        const shrinkFactor = 1 - edgeRoundnessFactor * 0.2
+        positions[i] = x * shrinkFactor
+        positions[i + 2] = z * shrinkFactor
+      }
+    } else {
+      // 下半部分：创建底面
+      newY = -thickness / 2
 
-        // 应用正面弧度 - 只在表面应用
-        let finalY = y
-        if (Math.abs(y) < thickness * 0.4) {
-          const surfaceFactor = 1 - Math.abs(y) / (thickness * 0.4)
-          const curvatureHeight = curvature * radius * 0.3 * (1 - r * r) * surfaceFactor
-          finalY = y + curvatureHeight
-        }
+      // 边缘处理
+      if (normalizedRadius > 0.8) {
+        const edgeFactor = (normalizedRadius - 0.8) / 0.2
+        const edgeRoundnessFactor = roundness * edgeFactor
 
-        vertices.push(x, finalY, z)
+        // 底部边缘向上弯曲
+        newY += edgeRoundnessFactor * thickness * 0.3
 
-        // 计算法向量
-        const normal = new THREE.Vector3()
-        if (Math.abs(y) < thickness * 0.4) {
-          // 表面法向量需要考虑弯曲
-          const curvatureNormalY = curvature * 0.5 * (1 - r * r)
-          normal.set(x, curvatureNormalY, z).normalize()
-        } else {
-          // 侧面法向量
-          normal.set(x, 0, z).normalize()
-        }
-        normals.push(normal.x, normal.y, normal.z)
-
-        // 重新设计UV坐标 - 使用平面投影而不是球面投影
-        // 将3D坐标投影到2D平面上，适合徽章的平面纹理
-        const uvX = (x / radius + 1) * 0.5  // 将 [-radius, radius] 映射到 [0, 1]
-        const uvY = (z / radius + 1) * 0.5  // 将 [-radius, radius] 映射到 [0, 1]
-
-        // 确保UV坐标在有效范围内
-        const clampedU = Math.max(0, Math.min(1, uvX))
-        const clampedV = Math.max(0, Math.min(1, uvY))
-
-        uvs.push(clampedU, clampedV)
+        // 边缘向内收缩
+        const shrinkFactor = 1 - edgeRoundnessFactor * 0.1
+        positions[i] = x * shrinkFactor
+        positions[i + 2] = z * shrinkFactor
       }
     }
+
+    positions[i + 1] = newY
   }
 
-  // 生成索引
-  for (let i = 0; i < heightSegments; i++) {
-    for (let j = 0; j < thetaSegments; j++) {
-      for (let k = 0; k < radialSegments; k++) {
-        const a = i * (thetaSegments + 1) * (radialSegments + 1) + j * (radialSegments + 1) + k
-        const b = a + radialSegments + 1
-        const c = a + 1
-        const d = b + 1
+  // 重新计算UV坐标 - 使用平面投影
+  for (let i = 0; i < positions.length; i += 3) {
+    const x = positions[i]
+    const z = positions[i + 2]
 
-        // 确保索引有效
-        if (a < vertices.length / 3 && b < vertices.length / 3 &&
-            c < vertices.length / 3 && d < vertices.length / 3) {
-          indices.push(a, b, c)
-          indices.push(b, d, c)
-        }
-      }
-    }
+    // 将3D坐标投影到2D平面上，适合徽章的平面纹理
+    const uvX = (x / radius + 1) * 0.5  // 将 [-radius, radius] 映射到 [0, 1]
+    const uvY = (z / radius + 1) * 0.5  // 将 [-radius, radius] 映射到 [0, 1]
+
+    // 确保UV坐标在有效范围内
+    const clampedU = Math.max(0, Math.min(1, uvX))
+    const clampedV = Math.max(0, Math.min(1, uvY))
+
+    // 更新UV坐标
+    const uvIndex = (i / 3) * 2
+    uvs[uvIndex] = clampedU
+    uvs[uvIndex + 1] = clampedV
   }
 
-  geometry.setIndex(indices)
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
-  geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3))
-  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
+  // 重新计算法向量
+  geometry.computeVertexNormals()
 
   return geometry
 }
