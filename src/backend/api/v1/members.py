@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from services.deps import get_session
+from services.auth.utils import require_admin
 from schema.member_schemas import (
     MemberListResponse,
     MemberDetailResponse,
@@ -167,7 +168,8 @@ async def get_member_detail(
 )
 async def create_member(
     member_data: CreateMemberRequest,
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
+    _: dict = Depends(require_admin)
 ):
     """手动创建新成员"""
     try:
@@ -216,7 +218,8 @@ async def create_member(
 )
 async def import_members_from_json(
     batch_data: ImportBatchRequest,
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
+    _: dict = Depends(require_admin)
 ):
     """从JSON导入成员数据"""
     try:
@@ -244,7 +247,8 @@ async def import_members_from_json(
 async def update_member(
     member_id: int,
     member_data: MemberUpdate,
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
+    _: dict = Depends(require_admin)
 ):
     """更新成员信息"""
     if member_id < 1:
@@ -277,7 +281,8 @@ async def update_member(
 )
 async def delete_member(
     member_id: int,
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
+    _: dict = Depends(require_admin)
 ):
     """删除成员"""
     if member_id < 1:

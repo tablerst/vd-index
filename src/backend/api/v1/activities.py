@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from services.deps import get_session
+from services.auth.utils import require_admin
 from services.database.models.activity import ActivityCRUD, ActivityCreate, ActivityUpdate
 from services.database.models.member import MemberCRUD
 from schema.activity_schemas import (
@@ -157,7 +158,8 @@ async def get_activity(
 )
 async def create_activity(
     activity_data: ActivityCreateRequest,
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
+    _: dict = Depends(require_admin)
 ):
     """创建新活动"""
     try:
@@ -189,7 +191,8 @@ async def create_activity(
 async def update_activity(
     activity_id: int,
     activity_data: ActivityUpdateRequest,
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
+    _: dict = Depends(require_admin)
 ):
     """更新活动"""
     try:
@@ -229,7 +232,8 @@ async def update_activity(
 )
 async def delete_activity(
     activity_id: int,
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
+    _: dict = Depends(require_admin)
 ):
     """删除活动"""
     try:

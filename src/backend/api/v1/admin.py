@@ -5,9 +5,10 @@ import json
 from pathlib import Path
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from sqlmodel import Session
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from services.deps import get_session
+from services.auth.utils import require_admin
 from schema.member_schemas import ImportBatchRequest, ApiResponse, ImportMemberRequest
 from domain.avatar_service import AvatarService
 from domain.member_service import MemberService
@@ -24,7 +25,8 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 )
 async def import_members_from_json(
     batch_request: ImportBatchRequest,
-    session: Session = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
+    _: dict = Depends(require_admin)
 ):
     """从JSON数据批量导入成员"""
     try:
@@ -35,7 +37,7 @@ async def import_members_from_json(
         for member_data in batch_request.members:
             try:
                 # 导入成员数据
-                member = MemberService.import_member_from_json(session, member_data)
+                member = await MemberService.import_member_from_json(session, member_data)
                 
                 # 复制头像文件
                 try:
@@ -75,7 +77,8 @@ async def import_members_from_json(
 )
 async def import_members_from_file(
     file: UploadFile = File(...),
-    session: Session = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
+    _: dict = Depends(require_admin)
 ):
     """从上传的JSON文件导入成员"""
     # 验证文件类型
@@ -124,12 +127,13 @@ async def import_members_from_file(
 )
 async def decrypt_member_uin(
     member_id: int,
-    session: Session = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
+    _: dict = Depends(require_admin)
 ):
     """解密成员UIN（仅用于调试）"""
     from services.database.models.member.base import Member
-    
-    member = session.get(Member, member_id)
+
+    member = await session.get(Member, member_id)
     if not member:
         raise HTTPException(status_code=404, detail="成员不存在")
     
@@ -151,23 +155,29 @@ async def decrypt_member_uin(
     summary="获取数据库统计信息",
     description="获取数据库的详细统计信息"
 )
-async def get_database_stats(session: Session = Depends(get_session)):
+async def get_database_stats(
+    session: AsyncSession = Depends(get_session),
+    _: dict = Depends(require_admin)
+):
     """获取数据库统计信息"""
     try:
         from sqlmodel import select, func
         from services.database.models.member.base import Member
         
         # 基本统计
-        total_members = session.exec(select(func.count(Member.id))).one()
-        
+        total_members_result = await session.exec(select(func.count(Member.id)))
+        total_members = total_members_result.one()
+
         # 最新和最早的成员
-        latest_member = session.exec(
+        latest_member_result = await session.exec(
             select(Member).order_by(Member.created_at.desc()).limit(1)
-        ).first()
-        
-        earliest_member = session.exec(
+        )
+        latest_member = latest_member_result.first()
+
+        earliest_member_result = await session.exec(
             select(Member).order_by(Member.created_at.asc()).limit(1)
-        ).first()
+        )
+        earliest_member = earliest_member_result.first()
         
         return {
             "total_members": total_members,
