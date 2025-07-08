@@ -23,19 +23,23 @@ router = APIRouter(tags=["activities"])
 
 
 async def build_activity_response(activity, session: AsyncSession) -> ActivityResponse:
-    """构建活动响应对象，包含参与者信息"""
+    """构建活动响应对象，包含参与者信息（优化版本）"""
     participants = []
-    
-    # 获取参与者详细信息
-    for member_id in activity.participant_ids:
-        member = await MemberCRUD.get_by_id(session, member_id)
-        if member:
-            participants.append(ParticipantInfo(
-                id=member.id,
-                name=member.display_name,
-                avatar_url=f"/api/v1/avatar/{member.id}"
-            ))
-    
+
+    # 批量获取参与者详细信息（使用缓存优化）
+    if activity.participant_ids:
+        members_dict = await MemberCRUD.get_many_by_ids(session, activity.participant_ids)
+
+        # 按原始顺序构建参与者列表
+        for member_id in activity.participant_ids:
+            member = members_dict.get(member_id)
+            if member:
+                participants.append(ParticipantInfo(
+                    id=member.id,
+                    name=member.display_name,
+                    avatar_url=f"/api/v1/avatar/{member.id}"
+                ))
+
     return ActivityResponse(
         id=activity.id,
         title=activity.title,
@@ -97,29 +101,54 @@ async def get_activities(
     description="获取活动总数、参与人次等统计信息"
 )
 async def get_activity_stats(session: AsyncSession = Depends(get_session)):
-    """获取活动统计信息"""
+    """获取活动统计信息（带缓存）"""
     try:
+        from services.deps import get_cache_service
+
+        # 尝试从缓存获取
+        cache_key = "activity:stats:all"
+        try:
+            cache_service = get_cache_service()
+            cached_stats = await cache_service.get(cache_key)
+            if cached_stats is not None:
+                return cached_stats
+        except Exception as e:
+            logger.warning(f"Failed to get activity stats from cache: {e}")
+
+        # 缓存未命中，从数据库获取
         # 获取活动总数
         total_activities = await ActivityCRUD.count_total(session)
-        
+
         # 获取所有活动
         all_activities = await ActivityCRUD.get_all(session)
-        
+
         # 计算总参与人次
         total_participants = sum(activity.participants_total for activity in all_activities)
-        
+
         # 计算独立参与成员数
         unique_participant_ids = set()
         for activity in all_activities:
             unique_participant_ids.update(activity.participant_ids)
         unique_participants = len(unique_participant_ids)
-        
-        return ActivityStatsResponse(
+
+        stats_response = ActivityStatsResponse(
             total_activities=total_activities,
             total_participants=total_participants,
             unique_participants=unique_participants
         )
-    
+
+        # 缓存结果（使用配置的统计TTL）
+        try:
+            cache_service = get_cache_service()
+            from services.deps import get_config_service
+            config_service = get_config_service()
+            settings = config_service.get_settings()
+            await cache_service.set(cache_key, stats_response, ttl=settings.cache_stats_ttl)
+        except Exception as e:
+            logger.warning(f"Failed to cache activity stats: {e}")
+
+        return stats_response
+
     except Exception as e:
         logger.error(f"获取活动统计信息失败: {str(e)}")
         raise HTTPException(status_code=500, detail=f"获取活动统计信息失败: {str(e)}")

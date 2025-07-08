@@ -94,6 +94,16 @@ export interface ActivityStats {
   unique_participants: number
 }
 
+export interface CacheStats {
+  hits: number
+  misses: number
+  total_requests: number
+  hit_rate: number
+  cache_size: number
+  max_size: number
+  last_updated: string
+}
+
 export interface ActivityCreateRequest {
   title: string
   description: string
@@ -295,6 +305,23 @@ class ApiClient {
   // 获取单个活动详情
   async getActivity(activityId: number): Promise<Activity> {
     return this.request<Activity>(`/api/v1/star_calendar/activity/${activityId}`)
+  }
+
+  // 缓存管理相关方法
+  async getCacheStats(): Promise<CacheStats> {
+    return this.request<CacheStats>('/api/v1/cache/stats')
+  }
+
+  async clearCache(): Promise<{ message: string; success: boolean }> {
+    return this.request('/api/v1/cache/clear', {
+      method: 'POST'
+    })
+  }
+
+  async deleteCacheKey(cacheKey: string): Promise<{ message: string; success: boolean }> {
+    return this.request(`/api/v1/cache/key/${encodeURIComponent(cacheKey)}`, {
+      method: 'DELETE'
+    })
   }
 
   // 创建活动

@@ -2,16 +2,27 @@
 Member表的CRUD操作
 """
 from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 from sqlmodel import select, func
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from .base import Member, MemberCreate, MemberRead, MemberUpdate
+from services.deps import get_cache_service, get_config_service
+
+
+def _get_member_cache_ttl() -> int:
+    """获取成员缓存TTL配置"""
+    try:
+        config_service = get_config_service()
+        settings = config_service.get_settings()
+        return settings.cache_member_ttl
+    except Exception:
+        return 300  # 默认5分钟
 
 
 class MemberCRUD:
     """Member表的CRUD操作类"""
-    
+
     @staticmethod
     async def create(session: AsyncSession, member_data: MemberCreate) -> Member:
         """创建新成员"""
@@ -19,12 +30,50 @@ class MemberCRUD:
         session.add(member)
         await session.commit()
         await session.refresh(member)
+
+        # 更新缓存
+        try:
+            cache_service = get_cache_service()
+            cache_key = f"member:id:{member.id}"
+            ttl = _get_member_cache_ttl()
+            await cache_service.set(cache_key, member, ttl=ttl)
+        except Exception as e:
+            # 缓存失败不影响主要功能
+            import logging
+            logging.getLogger(__name__).warning(f"Failed to cache member {member.id}: {e}")
+
         return member
-    
+
     @staticmethod
     async def get_by_id(session: AsyncSession, member_id: int) -> Optional[Member]:
-        """根据ID获取成员"""
-        return await session.get(Member, member_id)
+        """根据ID获取成员（带缓存）"""
+        # 先尝试从缓存获取
+        try:
+            cache_service = get_cache_service()
+            cache_key = f"member:id:{member_id}"
+            cached_member = await cache_service.get(cache_key)
+            if cached_member is not None:
+                return cached_member
+        except Exception as e:
+            # 缓存失败不影响主要功能
+            import logging
+            logging.getLogger(__name__).warning(f"Failed to get member {member_id} from cache: {e}")
+
+        # 缓存未命中，从数据库获取
+        member = await session.get(Member, member_id)
+
+        # 如果找到成员，存入缓存
+        if member is not None:
+            try:
+                cache_service = get_cache_service()
+                cache_key = f"member:id:{member_id}"
+                ttl = _get_member_cache_ttl()
+                await cache_service.set(cache_key, member, ttl=ttl)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(f"Failed to cache member {member_id}: {e}")
+
+        return member
     
     @staticmethod
     async def get_by_uin_encrypted(session: AsyncSession, uin_encrypted: str) -> Optional[Member]:
@@ -32,7 +81,61 @@ class MemberCRUD:
         statement = select(Member).where(Member.uin_encrypted == uin_encrypted)
         result = await session.exec(statement)
         return result.first()
-    
+
+    @staticmethod
+    async def get_many_by_ids(session: AsyncSession, member_ids: List[int]) -> Dict[int, Optional[Member]]:
+        """批量获取成员（带缓存优化）"""
+        result = {}
+        uncached_ids = []
+
+        # 先尝试从缓存获取
+        try:
+            cache_service = get_cache_service()
+            cache_keys = [f"member:id:{member_id}" for member_id in member_ids]
+            cached_members = await cache_service.get_many(cache_keys)
+
+            for i, member_id in enumerate(member_ids):
+                cache_key = cache_keys[i]
+                cached_member = cached_members.get(cache_key)
+                if cached_member is not None:
+                    result[member_id] = cached_member
+                else:
+                    uncached_ids.append(member_id)
+        except Exception as e:
+            # 缓存失败，全部从数据库获取
+            import logging
+            logging.getLogger(__name__).warning(f"Failed to get members from cache: {e}")
+            uncached_ids = member_ids
+
+        # 从数据库批量获取未缓存的成员
+        if uncached_ids:
+            statement = select(Member).where(Member.id.in_(uncached_ids))
+            db_result = await session.exec(statement)
+            db_members = db_result.all()
+
+            # 更新结果和缓存
+            cache_items = {}
+            for member in db_members:
+                result[member.id] = member
+                cache_items[f"member:id:{member.id}"] = member
+
+            # 为未找到的ID设置None
+            for member_id in uncached_ids:
+                if member_id not in result:
+                    result[member_id] = None
+
+            # 批量更新缓存
+            if cache_items:
+                try:
+                    cache_service = get_cache_service()
+                    ttl = _get_member_cache_ttl()
+                    await cache_service.set_many(cache_items, ttl=ttl)
+                except Exception as e:
+                    import logging
+                    logging.getLogger(__name__).warning(f"Failed to cache members: {e}")
+
+        return result
+
     @staticmethod
     async def get_all(session: AsyncSession) -> List[Member]:
         """获取所有成员"""
@@ -86,18 +189,29 @@ class MemberCRUD:
         member = await session.get(Member, member_id)
         if not member:
             return None
-        
+
         # 更新字段
         update_data = member_data.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(member, field, value)
-        
+
         # 更新时间戳
         member.updated_at = datetime.utcnow()
-        
+
         session.add(member)
         await session.commit()
         await session.refresh(member)
+
+        # 更新缓存
+        try:
+            cache_service = get_cache_service()
+            cache_key = f"member:id:{member_id}"
+            ttl = _get_member_cache_ttl()
+            await cache_service.set(cache_key, member, ttl=ttl)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"Failed to update cache for member {member_id}: {e}")
+
         return member
     
     @staticmethod
@@ -106,9 +220,19 @@ class MemberCRUD:
         member = await session.get(Member, member_id)
         if not member:
             return False
-        
+
         await session.delete(member)
         await session.commit()
+
+        # 删除缓存
+        try:
+            cache_service = get_cache_service()
+            cache_key = f"member:id:{member_id}"
+            await cache_service.delete(cache_key)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"Failed to delete cache for member {member_id}: {e}")
+
         return True
     
     @staticmethod
@@ -150,11 +274,26 @@ class MemberCRUD:
         members = [Member(**member_data.model_dump()) for member_data in members_data]
         session.add_all(members)
         await session.commit()
-        
+
         # 刷新所有成员以获取ID
         for member in members:
             await session.refresh(member)
-        
+
+        # 批量更新缓存
+        try:
+            cache_service = get_cache_service()
+            cache_items = {}
+            for member in members:
+                cache_key = f"member:id:{member.id}"
+                cache_items[cache_key] = member
+
+            if cache_items:
+                ttl = _get_member_cache_ttl()
+                await cache_service.set_many(cache_items, ttl=ttl)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"Failed to cache bulk created members: {e}")
+
         return members
     
     @staticmethod

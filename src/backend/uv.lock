@@ -176,6 +176,15 @@ wheels = [
 ]
 
 [[package]]
+name = "cachetools"
+version = "6.1.0"
+source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
+sdist = { url = "https://mirrors.aliyun.com/pypi/packages/8a/89/817ad5d0411f136c484d535952aef74af9b25e0d99e90cdffbe121e6d628/cachetools-6.1.0.tar.gz", hash = "sha256:b4c4f404392848db3ce7aac34950d17be4d864da4b8b66911008e430bc544587" }
+wheels = [
+    { url = "https://mirrors.aliyun.com/pypi/packages/00/f0/2ef431fe4141f5e334759d73e81120492b23b2824336883a91ac04ba710b/cachetools-6.1.0-py3-none-any.whl", hash = "sha256:1c7bb3cf9193deaf3508b7c5f2a79986c13ea38965c5adcff1f84519cf39163e" },
+]
+
+[[package]]
 name = "certifi"
 version = "2025.6.15"
 source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
@@ -1175,6 +1184,7 @@ dependencies = [
     { name = "alembic" },
     { name = "asyncpg" },
     { name = "bcrypt" },
+    { name = "cachetools" },
     { name = "cryptography" },
     { name = "fastapi" },
     { name = "gunicorn" },
@@ -1210,6 +1220,7 @@ requires-dist = [
     { name = "alembic", specifier = ">=1.16.2" },
     { name = "asyncpg", specifier = ">=0.30.0" },
     { name = "bcrypt", specifier = ">=4.0.0,<5.0.0" },
+    { name = "cachetools", specifier = ">=6.1.0" },
     { name = "cryptography", specifier = ">=45.0.4" },
     { name = "fastapi", specifier = ">=0.115.13" },
     { name = "gunicorn", specifier = ">=23.0.0" },

@@ -20,7 +20,8 @@ from services.database.factory import DatabaseServiceFactory
 from services.auth.factory import AuthServiceFactory
 from services.config.factory import ConfigServiceFactory
 from services.crypto.factory import CryptoServiceFactory
-from services.deps import set_database_service, set_auth_service, set_config_service, set_crypto_service
+from services.cache.factory import CacheServiceFactory
+from services.deps import set_database_service, set_auth_service, set_config_service, set_crypto_service, set_cache_service
 from services.auth.utils import create_super_user
 from services.database.models.user import User
 from sqlmodel import select
@@ -150,6 +151,12 @@ async def lifespan(app: FastAPI):
     logger.info(f"调试模式: {settings.debug}")
     logger.info(f"数据库URL: {settings.database_url}")
     logger.info(f"头像根目录: {settings.avatar_root}")
+
+    # 初始化缓存服务
+    cache_factory = CacheServiceFactory()
+    cache_service = cache_factory.create(config_service=config_service)
+    set_cache_service(cache_service)
+    logger.info(f"✅ 缓存服务初始化完成 - 最大容量: {settings.cache_max_size}, 默认TTL: {settings.cache_default_ttl}秒")
 
     # 初始化加密服务
     crypto_factory = CryptoServiceFactory()

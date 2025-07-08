@@ -55,6 +55,13 @@ class Settings(BaseSettings):
     rate_limit_requests: int = 100
     rate_limit_window: int = 60
 
+    # 缓存配置
+    cache_max_size: int = 10000
+    cache_default_ttl: int = 300  # 5分钟
+    cache_stats_ttl: int = 60     # 统计数据缓存1分钟
+    cache_member_ttl: int = 300   # 成员数据缓存5分钟
+    cache_activity_ttl: int = 300 # 活动数据缓存5分钟
+
     # 超级用户配置
     super_user_username: str = "admin"
     super_user_password: str = "admin123"

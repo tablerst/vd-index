@@ -17,12 +17,14 @@ if TYPE_CHECKING:
     from .auth.service import AuthService
     from .config.service import ConfigService
     from .crypto.service import CryptoService
+    from .cache.service import CacheService
 
 # 全局服务实例
 _database_service: DatabaseService | None = None
 _auth_service: AuthService | None = None
 _config_service: ConfigService | None = None
 _crypto_service: CryptoService | None = None
+_cache_service: CacheService | None = None
 
 
 def get_service(service_type: ServiceType, default=None):
@@ -43,6 +45,8 @@ def get_service(service_type: ServiceType, default=None):
         return get_config_service()
     elif service_type == ServiceType.CRYPTO_SERVICE:
         return get_crypto_service()
+    elif service_type == ServiceType.CACHE_SERVICE:
+        return get_cache_service()
 
     if default:
         return default.create()
@@ -98,6 +102,18 @@ def clear_crypto_service() -> None:
     _crypto_service = None
 
 
+def set_cache_service(cache_service: CacheService) -> None:
+    """设置全局缓存服务实例"""
+    global _cache_service
+    _cache_service = cache_service
+
+
+def clear_cache_service() -> None:
+    """清除全局缓存服务实例（主要用于测试）"""
+    global _cache_service
+    _cache_service = None
+
+
 def get_db_service() -> DatabaseService:
     """获取数据库服务实例
 
@@ -140,6 +156,17 @@ def get_crypto_service() -> CryptoService:
     if _crypto_service is None:
         raise ValueError("Crypto service not initialized. Call set_crypto_service() first.")
     return _crypto_service
+
+
+def get_cache_service() -> CacheService:
+    """获取缓存服务实例
+
+    Returns:
+        CacheService: 缓存服务实例
+    """
+    if _cache_service is None:
+        raise ValueError("Cache service not initialized. Call set_cache_service() first.")
+    return _cache_service
 
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:

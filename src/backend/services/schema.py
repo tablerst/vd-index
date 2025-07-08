@@ -8,3 +8,4 @@ class ServiceType(str, Enum):
     AUTH_SERVICE = "auth_service"
     CONFIG_SERVICE = "config_service"
     CRYPTO_SERVICE = "crypto_service"
+    CACHE_SERVICE = "cache_service"

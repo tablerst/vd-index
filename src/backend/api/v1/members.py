@@ -74,11 +74,24 @@ async def get_members(
     description="获取群成员的统计信息"
 )
 async def get_member_stats(session: AsyncSession = Depends(get_session)):
-    """获取成员统计信息"""
+    """获取成员统计信息（带缓存）"""
     try:
         from sqlmodel import select, func
         from services.database.models.member.base import Member
+        from services.deps import get_cache_service
 
+        # 尝试从缓存获取
+        cache_key = "member:stats:all"
+        try:
+            cache_service = get_cache_service()
+            cached_stats = await cache_service.get(cache_key)
+            if cached_stats is not None:
+                return cached_stats
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"Failed to get member stats from cache: {e}")
+
+        # 缓存未命中，从数据库获取
         # 总成员数
         total_statement = select(func.count(Member.id))
         total_result = await session.exec(total_statement)
@@ -113,11 +126,24 @@ async def get_member_stats(session: AsyncSession = Depends(get_session)):
         year_stats = year_result.all()
         join_year_stats = {int(year): count for year, count in year_stats}
 
-        return {
+        stats_response = {
             "total_members": total_members,
             "role_distribution": role_counts,
             "join_year_stats": join_year_stats
         }
+
+        # 缓存结果（使用配置的统计TTL）
+        try:
+            cache_service = get_cache_service()
+            from services.deps import get_config_service
+            config_service = get_config_service()
+            settings = config_service.get_settings()
+            await cache_service.set(cache_key, stats_response, ttl=settings.cache_stats_ttl)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"Failed to cache member stats: {e}")
+
+        return stats_response
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取统计信息失败: {str(e)}")
