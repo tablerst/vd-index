@@ -249,6 +249,18 @@ $fluent-easing-standard: cubic-bezier(0.8, 0, 0.2, 1);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+// 改进的模态框毛玻璃效果 - 提高可读性
+@mixin fluent-modal-acrylic($opacity: 0.15, $blur: 24px) {
+  background: rgba(14, 16, 22, $opacity);
+  backdrop-filter: blur($blur) saturate(150%) brightness(1.1);
+  -webkit-backdrop-filter: blur($blur) saturate(150%) brightness(1.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(170, 131, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
 // Reveal 效果（悬停高亮）
 @mixin fluent-reveal() {
   position: relative;

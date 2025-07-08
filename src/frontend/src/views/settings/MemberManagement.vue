@@ -792,8 +792,25 @@ onMounted(() => {
 :deep(.n-modal) {
   .n-dialog {
     border-radius: $fluent-border-radius-large;
-    @include fluent-acrylic(0.95, 40px);
+    @include fluent-modal-acrylic(0.15, 24px);
     @include fluent-depth-shadow(32);
+
+    // 确保文字可读性
+    color: rgba(255, 255, 255, 0.95) !important;
+
+    .n-dialog__title {
+      color: rgba(255, 255, 255, 0.95) !important;
+      font-weight: 600;
+    }
+
+    .n-dialog__content {
+      color: rgba(255, 255, 255, 0.9) !important;
+    }
+  }
+
+  // 增强遮罩层
+  .n-modal-mask {
+    background-color: rgba(0, 0, 0, 0.6) !important;
   }
 }
 

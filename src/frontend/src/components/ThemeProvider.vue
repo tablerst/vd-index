@@ -46,8 +46,8 @@ const themeOverrides: GlobalThemeOverrides = {
 
     // 玻璃态效果
     cardColor: 'rgba(255, 255, 255, 0.08)',
-    modalColor: 'rgba(255, 255, 255, 0.08)',
-    popoverColor: 'rgba(255, 255, 255, 0.08)',
+    modalColor: 'rgba(14, 16, 22, 1)', // 使用深色背景，降低透明度提高可读性
+    popoverColor: 'rgba(14, 16, 22, 0.9)', // 弹出框使用更不透明的背景
 
     // 文本颜色
     textColorBase: 'rgba(255, 255, 255, 0.95)',
@@ -84,8 +84,17 @@ const themeOverrides: GlobalThemeOverrides = {
   },
 
   Modal: {
-    // 模态框玻璃态效果
-    borderRadius: '12px'
+    // 模态框样式优化 - 提高可读性
+    borderRadius: '12px',
+    color: 'rgba(14, 16, 22, 0.85)', // 深色背景，降低透明度
+    // 模态框遮罩层
+    maskColor: 'rgba(0, 0, 0, 0.6)', // 增强遮罩层不透明度
+    // 文本颜色确保可读性
+    textColor: 'rgba(255, 255, 255, 0.95)',
+    titleTextColor: 'rgba(255, 255, 255, 0.95)',
+    // 边框和阴影
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    boxShadow: '0 12px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(170, 131, 255, 0.1)'
   },
 
   Input: {

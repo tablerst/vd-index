@@ -95,7 +95,7 @@
 
           <n-form-item label="活动日期" path="date">
             <n-date-picker
-              v-model:formatted-value="formData.date"
+              v-model:value="createDateValue"
               type="date"
               placeholder="选择活动日期"
               style="width: 100%"
@@ -171,7 +171,7 @@
 
           <n-form-item label="活动日期" path="date">
             <n-date-picker
-              v-model:formatted-value="editingActivity.date"
+              v-model:value="editDateValue"
               type="date"
               placeholder="选择活动日期"
               style="width: 100%"
@@ -189,12 +189,11 @@
 
           <n-form-item label="参与成员" path="participant_ids">
             <n-transfer
-              :value="editingActivity.participants.map(p => p.id)"
+              v-model:value="editParticipantIds"
               :options="availableParticipants"
               source-title="可选成员"
               target-title="已选成员"
               style="width: 100%"
-              @update:value="handleParticipantsChange"
             />
           </n-form-item>
         </n-form>
@@ -242,8 +241,10 @@ import {
   type Member
 } from '@/services/api'
 import { hasPermission } from '@/router/guards'
+import { useAuthStore } from '@/stores/auth'
 
 const message = useMessage()
+const authStore = useAuthStore()
 // const dialog = useDialog()
 
 // 数据状态
@@ -262,12 +263,46 @@ const totalActivities = ref(0)
 
 // 表单数据
 const formRef = ref()
+const editFormRef = ref()
 const formData = ref<ActivityCreateRequest>({
   title: '',
   description: '',
   date: '',
   tags: [],
   participant_ids: []
+})
+
+// 编辑表单的参与者ID列表
+const editParticipantIds = ref<(string | number)[]>([])
+
+// 创建表单的日期值（用于日期选择器）
+const createDateValue = computed({
+  get: () => {
+    return formData.value.date ? new Date(formData.value.date).getTime() : null
+  },
+  set: (value: number | null) => {
+    if (value) {
+      formData.value.date = new Date(value).toISOString().split('T')[0]
+    } else {
+      formData.value.date = ''
+    }
+  }
+})
+
+// 编辑表单的日期值（用于日期选择器）
+const editDateValue = computed({
+  get: () => {
+    return editingActivity.value?.date ? new Date(editingActivity.value.date).getTime() : null
+  },
+  set: (value: number | null) => {
+    if (editingActivity.value) {
+      if (value) {
+        editingActivity.value.date = new Date(value).toISOString().split('T')[0]
+      } else {
+        editingActivity.value.date = ''
+      }
+    }
+  }
 })
 
 // 参与者选择
@@ -472,7 +507,7 @@ const handleCreateActivity = () => {
   formData.value = {
     title: '',
     description: '',
-    date: '',
+    date: '', // 空字符串，通过计算属性转换为null
     tags: [],
     participant_ids: []
   }
@@ -497,21 +532,9 @@ const handleCreateSubmit = async () => {
 // 处理编辑活动
 const handleEdit = (activity: Activity) => {
   editingActivity.value = { ...activity }
+  // 设置编辑表单的参与者ID列表
+  editParticipantIds.value = activity.participants.map(p => p.id)
   showEditModal.value = true
-}
-
-// 处理参与者变化
-const handleParticipantsChange = (value: (string | number)[]) => {
-  if (editingActivity.value) {
-    // 更新参与者列表
-    editingActivity.value.participants = members.value
-      .filter(member => value.includes(member.id as string | number))
-      .map(member => ({
-        id: member.id,
-        name: member.name,
-        avatar_url: member.avatar_url
-      }))
-  }
 }
 
 // 处理编辑提交
@@ -519,18 +542,21 @@ const handleEditSubmit = async () => {
   if (!editingActivity.value) return
 
   try {
+    await editFormRef.value?.validate()
+
     const updateData: ActivityUpdateRequest = {
       title: editingActivity.value.title,
       description: editingActivity.value.description,
       date: editingActivity.value.date,
       tags: editingActivity.value.tags,
-      participant_ids: editingActivity.value.participants.map(p => p.id)
+      participant_ids: editParticipantIds.value.map(id => Number(id))
     }
 
     await activityApi.updateActivity(editingActivity.value.id, updateData)
     message.success('活动更新成功')
     showEditModal.value = false
     editingActivity.value = null
+    editParticipantIds.value = []
     await loadActivities()
   } catch (error) {
     console.error('Update activity failed:', error)
@@ -734,8 +760,25 @@ onMounted(async () => {
 :deep(.n-modal) {
   .n-dialog {
     border-radius: $fluent-border-radius-large;
-    @include fluent-acrylic(0.95, 40px);
+    @include fluent-modal-acrylic(0.15, 24px);
     @include fluent-depth-shadow(32);
+
+    // 确保文字可读性
+    color: rgba(255, 255, 255, 0.95) !important;
+
+    .n-dialog__title {
+      color: rgba(255, 255, 255, 0.95) !important;
+      font-weight: 600;
+    }
+
+    .n-dialog__content {
+      color: rgba(255, 255, 255, 0.9) !important;
+    }
+  }
+
+  // 增强遮罩层
+  .n-modal-mask {
+    background-color: rgba(0, 0, 0, 0.6) !important;
   }
 }
 

@@ -114,7 +114,8 @@ export function hasPermission(permission: string): boolean {
       'members:update',
       'activities:read',
       'activities:create',
-      'activities:update'
+      'activities:update',
+      'activities:delete'
     ],
     user: [
       'members:read',
