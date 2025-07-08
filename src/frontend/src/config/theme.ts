@@ -390,6 +390,60 @@ const Breadcrumb = {
   fontSize: '14px'
 }
 
+const Tag = {
+  name: 'Tag' as const,
+  // 标签组件样式 - 深色主题适配
+  borderRadius: '6px',
+  // 默认标签
+  color: 'rgba(255, 255, 255, 0.1)',
+  textColor: 'rgba(255, 255, 255, 0.9)',
+  border: '1px solid rgba(255, 255, 255, 0.2)',
+  // 主要标签
+  colorPrimary: 'rgba(170, 131, 255, 0.2)',
+  textColorPrimary: '#AA83FF',
+  borderPrimary: '1px solid rgba(170, 131, 255, 0.4)',
+  // 信息标签
+  colorInfo: 'rgba(63, 125, 251, 0.2)',
+  textColorInfo: '#3F7DFB',
+  borderInfo: '1px solid rgba(63, 125, 251, 0.4)',
+  // 成功标签
+  colorSuccess: 'rgba(212, 222, 199, 0.2)',
+  textColorSuccess: '#D4DEC7',
+  borderSuccess: '1px solid rgba(212, 222, 199, 0.4)',
+  // 警告标签
+  colorWarning: 'rgba(255, 176, 32, 0.2)',
+  textColorWarning: '#FFB020',
+  borderWarning: '1px solid rgba(255, 176, 32, 0.4)',
+  // 错误标签
+  colorError: 'rgba(255, 65, 80, 0.2)',
+  textColorError: '#FF4150',
+  borderError: '1px solid rgba(255, 65, 80, 0.4)',
+  // 可关闭标签
+  closeIconColor: 'rgba(255, 255, 255, 0.6)',
+  closeIconColorHover: 'rgba(255, 255, 255, 0.9)',
+  closeIconColorPressed: 'rgba(255, 255, 255, 0.7)'
+}
+
+const Transfer = {
+  name: 'Transfer' as const,
+  // 穿梭框组件样式 - 深色主题适配
+  borderRadius: '8px',
+  // 列表容器
+  listColor: 'rgba(255, 255, 255, 0.08)',
+  headerColor: 'rgba(255, 255, 255, 0.12)',
+  // 文字颜色
+  titleTextColor: 'rgba(255, 255, 255, 0.9)',
+  itemTextColor: 'rgba(255, 255, 255, 0.8)',
+  itemTextColorDisabled: 'rgba(255, 255, 255, 0.3)',
+  // 边框
+  borderColor: 'rgba(255, 255, 255, 0.15)',
+  // 选中状态
+  itemColorPending: 'rgba(170, 131, 255, 0.1)',
+  itemColorPendingHover: 'rgba(170, 131, 255, 0.15)',
+  // 按钮样式
+  extraTextColor: 'rgba(255, 255, 255, 0.7)'
+}
+
 // 导出主题配置
 export const nebulaTheme: GlobalTheme = {
   name: 'nebulaTheme',
@@ -401,7 +455,9 @@ export const nebulaTheme: GlobalTheme = {
   Form,
   Select,
   Menu,
-  Breadcrumb
+  Breadcrumb,
+  Tag,
+  Transfer
 }
 
 export default nebulaTheme

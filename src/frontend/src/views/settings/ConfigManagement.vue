@@ -316,12 +316,12 @@ const typeOptions = [
   }
 ]
 
-// 类型标签映射
+// 类型标签映射 - 深色主题适配
 const typeTagMap = {
-  string: { type: 'default', text: '字符串', color: '#909399' },
-  number: { type: 'info', text: '数字', color: '#409eff' },
-  boolean: { type: 'success', text: '布尔值', color: '#67c23a' },
-  json: { type: 'warning', text: 'JSON', color: '#e6a23c' }
+  string: { type: 'default', text: '字符串', color: 'rgba(255, 255, 255, 0.7)' },
+  number: { type: 'info', text: '数字', color: '#3F7DFB' },
+  boolean: { type: 'success', text: '布尔值', color: '#D4DEC7' },
+  json: { type: 'warning', text: 'JSON', color: '#FFB020' }
 }
 
 // 表格列定义
@@ -754,25 +754,8 @@ onMounted(() => {
 :deep(.n-modal) {
   .n-dialog {
     border-radius: $fluent-border-radius-large;
-    @include fluent-modal-acrylic(0.15, 24px);
+    @include fluent-acrylic(0.95, 40px);
     @include fluent-depth-shadow(32);
-
-    // 确保文字可读性
-    color: rgba(255, 255, 255, 0.95) !important;
-
-    .n-dialog__title {
-      color: rgba(255, 255, 255, 0.95) !important;
-      font-weight: 600;
-    }
-
-    .n-dialog__content {
-      color: rgba(255, 255, 255, 0.9) !important;
-    }
-  }
-
-  // 增强遮罩层
-  .n-modal-mask {
-    background-color: rgba(0, 0, 0, 0.6) !important;
   }
 }
 

@@ -783,8 +783,21 @@ onMounted(async () => {
 }
 
 :deep(.n-tag) {
-  border-radius: $fluent-border-radius-small;
+  border-radius: 6px;
   font-weight: 500;
+
+  // 确保所有标签都使用深色主题
+  &:not(.tag-more) {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.15) !important;
+      color: rgba(255, 255, 255, 0.95) !important;
+      border-color: rgba(255, 255, 255, 0.3) !important;
+    }
+  }
 
   // 省略标签样式优化
   &.tag-more {
@@ -798,16 +811,73 @@ onMounted(async () => {
       border-color: rgba(255, 255, 255, 0.3) !important;
     }
   }
+
+  // 特定类型标签的深色主题适配
+  &.n-tag--info-type {
+    background: rgba(63, 125, 251, 0.2) !important;
+    color: #3F7DFB !important;
+    border: 1px solid rgba(63, 125, 251, 0.4) !important;
+  }
+
+  &.n-tag--warning-type {
+    background: rgba(255, 176, 32, 0.2) !important;
+    color: #FFB020 !important;
+    border: 1px solid rgba(255, 176, 32, 0.4) !important;
+  }
+
+  &.n-tag--success-type {
+    background: rgba(212, 222, 199, 0.2) !important;
+    color: #D4DEC7 !important;
+    border: 1px solid rgba(212, 222, 199, 0.4) !important;
+  }
+
+  &.n-tag--error-type {
+    background: rgba(255, 65, 80, 0.2) !important;
+    color: #FF4150 !important;
+    border: 1px solid rgba(255, 65, 80, 0.4) !important;
+  }
 }
 
 :deep(.n-transfer) {
   .n-transfer-list {
-    border-radius: $fluent-border-radius-medium;
-    border: 1px solid $fluent-stroke-surface;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
 
     .n-transfer-list-header {
-      background: $fluent-fill-subtle;
-      border-bottom: 1px solid $fluent-stroke-surface;
+      background: rgba(255, 255, 255, 0.12) !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+      color: rgba(255, 255, 255, 0.9) !important;
+    }
+
+    .n-transfer-list-body {
+      background: transparent !important;
+    }
+
+    .n-transfer-list-item {
+      color: rgba(255, 255, 255, 0.8) !important;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
+      }
+
+      &.n-transfer-list-item--pending {
+        background: rgba(170, 131, 255, 0.1) !important;
+        color: rgba(255, 255, 255, 0.9) !important;
+      }
+    }
+  }
+
+  .n-transfer-list-gap {
+    .n-button {
+      background: rgba(255, 255, 255, 0.08) !important;
+      border: 1px solid rgba(255, 255, 255, 0.15) !important;
+      color: rgba(255, 255, 255, 0.7) !important;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.12) !important;
+        color: rgba(255, 255, 255, 0.9) !important;
+      }
     }
   }
 }
