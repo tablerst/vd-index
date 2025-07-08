@@ -241,10 +241,8 @@ import {
   type Member
 } from '@/services/api'
 import { hasPermission } from '@/router/guards'
-import { useAuthStore } from '@/stores/auth'
 
 const message = useMessage()
-const authStore = useAuthStore()
 // const dialog = useDialog()
 
 // 数据状态
