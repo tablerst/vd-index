@@ -30,13 +30,27 @@
         </filter>
 
         <!-- 核心光晕滤镜 -->
-        <filter id="coreGlow" x="-200%" y="-200%" width="500%" height="500%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur"/>
-          <feColorMatrix in="blur" type="matrix" 
-            values="0.7 0 1 0 0  0 0.3 0.8 0 0  1 0 0.7 0 0  0 0 0 0.8 0"/>
+        <filter id="coreGlow" x="-300%" y="-300%" width="700%" height="700%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur1"/>
+          <feGaussianBlur in="SourceGraphic" stdDeviation="16" result="blur2"/>
+          <feColorMatrix in="blur1" type="matrix"
+            values="0.7 0 1 0 0  0 0.3 0.8 0 0  1 0 0.7 0 0  0 0 0 0.6 0" result="glow1"/>
+          <feColorMatrix in="blur2" type="matrix"
+            values="0.7 0 1 0 0  0 0.3 0.8 0 0  1 0 0.7 0 0  0 0 0 0.3 0" result="glow2"/>
           <feMerge>
-            <feMergeNode in="blur"/>
+            <feMergeNode in="glow2"/>
+            <feMergeNode in="glow1"/>
             <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+
+        <!-- 呼吸光晕滤镜 -->
+        <filter id="breathingGlow" x="-400%" y="-400%" width="900%" height="900%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="20" result="bigBlur"/>
+          <feColorMatrix in="bigBlur" type="matrix"
+            values="0.7 0 1 0 0  0 0.3 0.8 0 0  1 0 0.7 0 0  0 0 0 0.4 0" result="coloredGlow"/>
+          <feMerge>
+            <feMergeNode in="coloredGlow"/>
           </feMerge>
         </filter>
 
@@ -59,10 +73,18 @@
           <stop offset="100%" stop-color="#3F7DFB" stop-opacity="0.1"/>
         </radialGradient>
 
+        <!-- 核心渐变 - 纯紫色 -->
         <radialGradient id="coreGradient" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#FFFFFF" stop-opacity="1"/>
-          <stop offset="30%" stop-color="#AA83FF" stop-opacity="0.9"/>
-          <stop offset="100%" stop-color="#AA83FF" stop-opacity="0.6"/>
+          <stop offset="0%" stop-color="#AA83FF" stop-opacity="1"/>
+          <stop offset="70%" stop-color="#AA83FF" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#AA83FF" stop-opacity="0.7"/>
+        </radialGradient>
+
+        <!-- 呼吸光晕渐变 -->
+        <radialGradient id="breathingGradient" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#AA83FF" stop-opacity="0.3"/>
+          <stop offset="50%" stop-color="#AA83FF" stop-opacity="0.2"/>
+          <stop offset="100%" stop-color="#AA83FF" stop-opacity="0"/>
         </radialGradient>
       </defs>
 
@@ -104,11 +126,22 @@
         class="ring-inner"
       />
 
+      <!-- 呼吸光晕背景 -->
+      <circle
+        :r="r(0.15)"
+        :cx="c"
+        :cy="c"
+        fill="url(#breathingGradient)"
+        filter="url(#breathingGlow)"
+        ref="breathingHalo"
+        class="breathing-halo"
+      />
+
       <!-- 核心圆点 -->
-      <circle 
-        :r="r(0.06)" 
-        :cx="c" 
-        :cy="c" 
+      <circle
+        :r="r(0.08)"
+        :cx="c"
+        :cy="c"
         fill="url(#coreGradient)"
         filter="url(#coreGlow)"
         ref="core"
@@ -169,6 +202,7 @@ const ring1 = ref<SVGCircleElement>()
 const ring2 = ref<SVGCircleElement>()
 const ring3 = ref<SVGCircleElement>()
 const core = ref<SVGCircleElement>()
+const breathingHalo = ref<SVGCircleElement>()
 
 // 脉冲环数据
 const pulseRings = ref([
@@ -200,30 +234,50 @@ const prefersReducedMotion = () => {
 const initBreathingAnimation = () => {
   if (!props.enableBreathing || prefersReducedMotion()) return
 
-  breathingTl = gsap.timeline({ 
-    repeat: -1, 
-    yoyo: true, 
-    defaults: { 
-      ease: 'sine.inOut', 
-      duration: 3 
-    } 
+  breathingTl = gsap.timeline({
+    repeat: -1,
+    yoyo: true,
+    defaults: {
+      ease: 'sine.inOut',
+      duration: 4 // 增加持续时间减少计算频率
+    }
   })
 
-  // 环的呼吸效果
+  // 环的呼吸效果 - 使用will-change优化
   const rings = [ring1.value, ring2.value, ring3.value].filter(Boolean)
   if (rings.length > 0) {
+    // 设置will-change属性
+    rings.forEach(ring => {
+      if (ring) ring.style.willChange = 'transform, opacity'
+    })
+
     breathingTl.to(rings, {
-      scale: 1.08,
+      scale: 1.06, // 减少缩放幅度
       opacity: 1,
-      transformOrigin: 'center'
+      transformOrigin: 'center',
+      force3D: true // 强制GPU加速
     }, 0)
   }
 
+  // 核心圆的呼吸效果
   if (core.value) {
+    core.value.style.willChange = 'transform, opacity'
     breathingTl.to(core.value, {
-      scale: 1.15,
+      scale: 1.08, // 轻微缩放
       opacity: 1,
-      transformOrigin: 'center'
+      transformOrigin: 'center',
+      force3D: true
+    }, 0)
+  }
+
+  // 呼吸光晕的效果 - 更明显的呼吸
+  if (breathingHalo.value) {
+    breathingHalo.value.style.willChange = 'transform, opacity'
+    breathingTl.to(breathingHalo.value, {
+      scale: 1.3, // 更大的缩放幅度
+      opacity: 0.8, // 呼吸时更明显
+      transformOrigin: 'center',
+      force3D: true
     }, 0)
   }
 }
@@ -241,7 +295,10 @@ const initPulseAnimation = () => {
   pulseTl = gsap.timeline({ repeat: -1 })
 
   validPulseRefs.forEach((pulseEl, index) => {
-    const delay = index * 1.2 // 增加延迟间隔
+    // 设置will-change属性
+    if (pulseEl) pulseEl.style.willChange = 'transform, opacity'
+
+    const delay = index * 1.5 // 增加延迟间隔减少重叠
     pulseTl
       .fromTo(pulseEl,
         {
@@ -250,20 +307,20 @@ const initPulseAnimation = () => {
           transformOrigin: 'center'
         },
         {
-          scale: 1.2,
-          opacity: 0.8, // 增加可见度
-          duration: 0.6,
-          ease: 'power2.out'
+          scale: 1.15, // 减少缩放幅度
+          opacity: 0.6, // 降低透明度减少渲染负担
+          duration: 0.8, // 增加持续时间
+          ease: 'power2.out',
+          force3D: true
         }, delay)
       .to(pulseEl, {
-        scale: 2.0, // 增加扩散范围
+        scale: 1.8, // 减少最大缩放
         opacity: 0,
-        duration: 1.8,
-        ease: 'power2.out'
-      }, delay + 0.6)
+        duration: 2.2, // 增加持续时间
+        ease: 'power2.out',
+        force3D: true
+      }, delay + 0.8)
   })
-
-
 }
 
 // 初始化旋转动画
@@ -272,34 +329,40 @@ const initRotationAnimation = () => {
 
   rotationTl = gsap.timeline({ repeat: -1 })
 
-  // 不同环以不同速度旋转
+  // 不同环以不同速度旋转 - 优化性能
   if (ring1.value) {
-    gsap.to(ring1.value, { 
-      rotation: 360, 
-      duration: 20, 
-      ease: 'none', 
+    ring1.value.style.willChange = 'transform'
+    gsap.to(ring1.value, {
+      rotation: 360,
+      duration: 25, // 增加持续时间减少计算频率
+      ease: 'none',
       repeat: -1,
-      transformOrigin: 'center'
+      transformOrigin: 'center',
+      force3D: true
     })
   }
 
   if (ring2.value) {
-    gsap.to(ring2.value, { 
-      rotation: -360, 
-      duration: 15, 
-      ease: 'none', 
+    ring2.value.style.willChange = 'transform'
+    gsap.to(ring2.value, {
+      rotation: -360,
+      duration: 20, // 增加持续时间
+      ease: 'none',
       repeat: -1,
-      transformOrigin: 'center'
+      transformOrigin: 'center',
+      force3D: true
     })
   }
 
   if (ring3.value) {
-    gsap.to(ring3.value, { 
-      rotation: 360, 
-      duration: 10, 
-      ease: 'none', 
+    ring3.value.style.willChange = 'transform'
+    gsap.to(ring3.value, {
+      rotation: 360,
+      duration: 15, // 增加持续时间
+      ease: 'none',
       repeat: -1,
-      transformOrigin: 'center'
+      transformOrigin: 'center',
+      force3D: true
     })
   }
 }
@@ -433,6 +496,14 @@ onUnmounted(() => {
   transform-origin: center;
 }
 
+.breathing-halo {
+  will-change: transform, opacity;
+  transform-origin: center;
+  pointer-events: none;
+  // 确保光晕在核心圆下方
+  z-index: 1;
+}
+
 .pulse-ring {
   will-change: transform, opacity;
   transform-origin: center;
@@ -449,6 +520,7 @@ onUnmounted(() => {
   .ring-middle,
   .ring-inner,
   .ring-core,
+  .breathing-halo,
   .pulse-ring {
     animation: none !important;
     transform: none !important;

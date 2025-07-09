@@ -32,6 +32,18 @@
         <span class="metric-label">内存:</span>
         <span class="metric-value">{{ metrics.memoryUsage }}MB</span>
       </div>
+
+      <div class="metric">
+        <span class="metric-label">性能等级:</span>
+        <span class="metric-value" :class="getPerformanceLevelClass(optimizerStats.currentLevel)">
+          {{ optimizerStats.currentLevel.toUpperCase() }}
+        </span>
+      </div>
+
+      <div class="metric">
+        <span class="metric-label">粒子倍数:</span>
+        <span class="metric-value">{{ (optimizerStats.particleMultiplier * 100).toFixed(0) }}%</span>
+      </div>
     </div>
     
     <div v-if="suggestions.length > 0" class="performance-suggestions">
@@ -55,10 +67,35 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { usePerformanceMonitor } from '../composables/usePerformanceMonitor'
+import { performanceOptimizer } from '../utils/performanceOptimizer'
 
 const { metrics, getOptimizationSuggestions } = usePerformanceMonitor()
+
+// 性能优化器状态
+const optimizerStats = ref(performanceOptimizer.getStats())
+let statsUpdateInterval: number
+
+// 更新优化器统计
+const updateOptimizerStats = () => {
+  optimizerStats.value = performanceOptimizer.getStats()
+
+  // 记录FPS到优化器
+  performanceOptimizer.recordFPS(metrics.value.fps)
+
+  // 尝试自动调整性能
+  const adjusted = performanceOptimizer.autoAdjust()
+  if (adjusted) {
+    // 发送性能调整事件
+    window.dispatchEvent(new CustomEvent('performance-adjusted', {
+      detail: {
+        newLevel: performanceOptimizer.getCurrentLevel(),
+        stats: performanceOptimizer.getStats()
+      }
+    }))
+  }
+}
 
 const showStats = ref(false)
 
@@ -83,6 +120,26 @@ const getFPSClass = (fps: number) => {
   if (fps >= 30) return 'metric-value--warning'
   return 'metric-value--critical'
 }
+
+const getPerformanceLevelClass = (level: string) => {
+  switch (level) {
+    case 'high': return 'metric-value--good'
+    case 'medium': return 'metric-value--warning'
+    case 'low': return 'metric-value--danger'
+    default: return ''
+  }
+}
+
+// 生命周期管理
+onMounted(() => {
+  statsUpdateInterval = setInterval(updateOptimizerStats, 1000)
+})
+
+onUnmounted(() => {
+  if (statsUpdateInterval) {
+    clearInterval(statsUpdateInterval)
+  }
+})
 
 // 键盘快捷键
 const handleKeyDown = (e: KeyboardEvent) => {

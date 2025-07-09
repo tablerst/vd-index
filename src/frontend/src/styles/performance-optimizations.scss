@@ -1,0 +1,263 @@
+/**
+ * 性能优化CSS - 减少重绘和重排
+ */
+
+/* GPU加速优化 */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* 星环组件优化 */
+.ring-container {
+  contain: layout style paint;
+  transform: translateZ(0);
+  will-change: transform;
+  
+  svg {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+  
+  .ring-core,
+  .ring-layer,
+  .pulse-ring {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+  }
+}
+
+/* 粒子Canvas优化 */
+.ring-particles-canvas {
+  contain: strict;
+  transform: translateZ(0);
+  will-change: auto;
+  image-rendering: optimizeSpeed;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: optimize-contrast;
+  
+  /* 防止抗锯齿影响性能 */
+  &.low-quality {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* 成员头像优化 */
+.member-avatar {
+  contain: layout style paint;
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  
+  img {
+    transform: translateZ(0);
+    image-rendering: optimizeQuality;
+    
+    /* 低性能模式下的优化 */
+    .performance-low & {
+      image-rendering: optimizeSpeed;
+    }
+  }
+  
+  /* 减少阴影计算 */
+  &::before,
+  &::after {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+  }
+}
+
+/* 动画优化 */
+.optimized-animation {
+  /* 使用transform和opacity进行动画，避免layout和paint */
+  transition-property: transform, opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* GPU加速 */
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  
+  /* 减少动画复杂度 */
+  .performance-low & {
+    transition-duration: 0.2s !important;
+    animation-duration: 0.2s !important;
+  }
+  
+  .performance-medium & {
+    transition-duration: 0.3s !important;
+    animation-duration: 0.3s !important;
+  }
+}
+
+/* 滚动优化 */
+.scroll-optimized {
+  contain: layout style paint;
+  overflow: hidden;
+  
+  /* 使用transform进行滚动 */
+  &.smooth-scroll {
+    scroll-behavior: smooth;
+    
+    /* 低性能设备禁用平滑滚动 */
+    .performance-low & {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+/* 文字渲染优化 */
+.text-optimized {
+  text-rendering: optimizeSpeed;
+  font-smooth: never;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+  
+  /* 高性能设备使用更好的文字渲染 */
+  .performance-high & {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* 阴影优化 */
+.shadow-optimized {
+  /* 使用简单的阴影 */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
+  /* 低性能模式禁用阴影 */
+  .performance-low & {
+    box-shadow: none;
+  }
+  
+  /* 高性能模式使用复杂阴影 */
+  .performance-high & {
+    box-shadow: 
+      0 2px 8px rgba(0, 0, 0, 0.1),
+      0 8px 32px rgba(0, 0, 0, 0.05);
+  }
+}
+
+/* 模糊效果优化 */
+.blur-optimized {
+  /* 基础模糊 */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  
+  /* 低性能模式禁用模糊 */
+  .performance-low & {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(0, 0, 0, 0.8);
+  }
+  
+  /* 中等性能减少模糊强度 */
+  .performance-medium & {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+}
+
+/* 渐变优化 */
+.gradient-optimized {
+  /* 简单渐变 */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  
+  /* 低性能模式使用纯色 */
+  .performance-low & {
+    background: #667eea;
+  }
+  
+  /* 高性能模式使用复杂渐变 */
+  .performance-high & {
+    background: linear-gradient(
+      135deg,
+      #667eea 0%,
+      #764ba2 25%,
+      #f093fb 50%,
+      #f5576c 75%,
+      #4facfe 100%
+    );
+  }
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+  .mobile-optimized {
+    /* 移动端减少动画 */
+    animation-duration: 0.2s !important;
+    transition-duration: 0.2s !important;
+    
+    /* 禁用复杂效果 */
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+    
+    /* 简化渐变 */
+    background-image: none !important;
+  }
+}
+
+/* 高刷新率屏幕优化 */
+@media (min-resolution: 120dpi) {
+  .high-dpi-optimized {
+    /* 高DPI屏幕使用更好的渲染 */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+    
+    /* 但在低性能模式下仍然优化 */
+    .performance-low & {
+      image-rendering: optimizeSpeed;
+    }
+  }
+}
+
+/* 减少动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .respect-motion-preference {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* 性能等级类 */
+.performance-low {
+  /* 低性能模式全局设置 */
+  * {
+    animation-duration: 0.2s !important;
+    transition-duration: 0.2s !important;
+  }
+}
+
+.performance-medium {
+  /* 中等性能模式 */
+  * {
+    animation-duration: 0.3s !important;
+    transition-duration: 0.3s !important;
+  }
+}
+
+.performance-high {
+  /* 高性能模式保持原始设置 */
+}
+
+/* 容器查询优化（如果支持） */
+@supports (container-type: inline-size) {
+  .container-optimized {
+    container-type: inline-size;
+    contain: layout style paint;
+  }
+}
+
+/* 内容可见性优化 */
+@supports (content-visibility: auto) {
+  .content-visibility-optimized {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 500px;
+  }
+}

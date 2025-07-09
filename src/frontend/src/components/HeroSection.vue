@@ -66,6 +66,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { performanceOptimizer } from '../utils/performanceOptimizer'
 import Ring2D from './Ring2D.vue'
 
 const ringContainer = ref<HTMLElement>()
@@ -208,11 +209,14 @@ const initRingParticles = (): (() => void) => {
   )
 
   // 发送性能设置
+  const performanceConfig = performanceOptimizer.getCurrentConfig()
   particleWorker.postMessage({
     type: 'setPerformance',
     options: {
       reducedMotion: prefersReducedMotion,
-      isMobile: isMobile.value
+      isMobile: isMobile.value,
+      performanceLevel: performanceOptimizer.getCurrentLevel(),
+      adaptiveQuality: true
     }
   })
 

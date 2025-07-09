@@ -21,8 +21,13 @@ const distance = 600;
 let reducedMotion = false;
 let isMobile = false;
 let lastFrameTime = 0;
-const targetFPS = 45; // 目标帧率
-const frameInterval = 1000 / targetFPS;
+let targetFPS = 45; // 目标帧率，可动态调整
+let frameInterval = 1000 / targetFPS;
+let performanceLevel = 'medium'; // 'low', 'medium', 'high'
+let adaptiveQuality = true; // 自适应质量
+let frameSkipCounter = 0;
+let fpsHistory: number[] = [];
+const fpsHistorySize = 30;
 
 // Polyfill requestAnimationFrame in worker
 self.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 1000 / 60) as any;
@@ -54,15 +59,58 @@ function project3D(x: number, y: number, z: number) {
   return { x: x * scale, y: y * scale, scale };
 }
 
-// 创建分层粒子
-function createParticles() {
+// 动态性能调整
+function adjustPerformance() {
+  if (!adaptiveQuality || fpsHistory.length < 10) return;
+
+  const avgFPS = fpsHistory.reduce((a, b) => a + b) / fpsHistory.length;
+
+  if (avgFPS < 25 && performanceLevel !== 'low') {
+    performanceLevel = 'low';
+    targetFPS = 30;
+    frameInterval = 1000 / targetFPS;
+    console.log('Performance adjusted to LOW, avgFPS:', avgFPS);
+    recreateParticles();
+  } else if (avgFPS < 35 && performanceLevel === 'high') {
+    performanceLevel = 'medium';
+    targetFPS = 40;
+    frameInterval = 1000 / targetFPS;
+    console.log('Performance adjusted to MEDIUM, avgFPS:', avgFPS);
+    recreateParticles();
+  } else if (avgFPS > 50 && performanceLevel === 'low') {
+    performanceLevel = 'medium';
+    targetFPS = 45;
+    frameInterval = 1000 / targetFPS;
+    console.log('Performance adjusted to MEDIUM, avgFPS:', avgFPS);
+    recreateParticles();
+  }
+}
+
+// 重新创建粒子（性能调整时使用）
+function recreateParticles() {
   particles = [];
+  createParticles();
+}
+
+// 获取基于性能等级的粒子配置
+function getParticleConfig() {
   const baseRingRadius = Math.min(width, height) * 0.35;
 
   // 根据设备性能调整粒子数量
   let particleMultiplier = 1;
+
+  // 性能等级调整
+  if (performanceLevel === 'low') {
+    particleMultiplier = 0.4;
+  } else if (performanceLevel === 'medium') {
+    particleMultiplier = 0.7;
+  } else {
+    particleMultiplier = 1.0;
+  }
+
+  // 设备类型调整
   if (isMobile) {
-    particleMultiplier = 0.6; // 移动端减少40%粒子
+    particleMultiplier *= 0.6; // 移动端减少40%粒子
   }
   if (reducedMotion) {
     particleMultiplier *= 0.5; // 减少动画时再减少50%
@@ -74,6 +122,13 @@ function createParticles() {
     Math.floor(80 * particleMultiplier),
     Math.floor(50 * particleMultiplier)
   ];
+
+  return { baseRingRadius, configs };
+}
+
+// 创建分层粒子
+function createParticles() {
+  const { baseRingRadius, configs } = getParticleConfig();
   configs.forEach((count, idx) => {
     for (let i = 0; i < count; i++) {
       const seed = (i + idx * 1000) * 0.618033988749895;
@@ -112,6 +167,21 @@ function animate() {
   if (now - lastFrameTime < frameInterval) {
     animationId = requestAnimationFrame(animate);
     return;
+  }
+
+  // FPS监控
+  const deltaTime = now - lastFrameTime;
+  const currentFPS = 1000 / deltaTime;
+  fpsHistory.push(currentFPS);
+  if (fpsHistory.length > fpsHistorySize) {
+    fpsHistory.shift();
+  }
+
+  // 每30帧检查一次性能
+  frameSkipCounter++;
+  if (frameSkipCounter >= 30) {
+    frameSkipCounter = 0;
+    adjustPerformance();
   }
   lastFrameTime = now;
 
@@ -197,13 +267,26 @@ function updateCenter(x: number, y: number) {
 }
 
 // 设置性能选项
-function setPerformanceOptions(options: { reducedMotion?: boolean; isMobile?: boolean }) {
+function setPerformanceOptions(options: {
+  reducedMotion?: boolean;
+  isMobile?: boolean;
+  performanceLevel?: string;
+  adaptiveQuality?: boolean;
+}) {
   if (options.reducedMotion !== undefined) {
     reducedMotion = options.reducedMotion;
   }
   if (options.isMobile !== undefined) {
     isMobile = options.isMobile;
   }
+  if (options.performanceLevel !== undefined) {
+    performanceLevel = options.performanceLevel;
+  }
+  if (options.adaptiveQuality !== undefined) {
+    adaptiveQuality = options.adaptiveQuality;
+  }
+
+  console.log('Performance options updated:', { reducedMotion, isMobile, performanceLevel, adaptiveQuality });
 
   // 重新创建粒子以应用新的性能设置
   createParticles();
