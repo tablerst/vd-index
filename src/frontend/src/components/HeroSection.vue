@@ -209,7 +209,6 @@ const initRingParticles = (): (() => void) => {
   )
 
   // 发送性能设置
-  const performanceConfig = performanceOptimizer.getCurrentConfig()
   particleWorker.postMessage({
     type: 'setPerformance',
     options: {
