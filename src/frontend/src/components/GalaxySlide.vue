@@ -64,6 +64,15 @@ const DISPLAY_DURATION     = 5000  // 一条线完整 0→1→0 用时 5 s
 const LINKS_PER_BATCH      = 8     // 每批点亮数量
 // ===============================
 
+/* ======== 连线样式参数 ======== */
+const CONNECTION_COLORS = [
+  { r: 170, g: 131, b: 255 },  // --primary: #AA83FF
+  { r: 212, g: 222, b: 199 },  // --secondary: #D4DEC7
+  { r: 63, g: 125, b: 251 }    // --accent-blue: #3F7DFB
+]
+const MAX_ALPHA = 1.0           // 提高最高亮度到1.0
+// ===============================
+
 const props = defineProps<Props>()
 
 // 设备检测
@@ -229,6 +238,30 @@ const scheduleNextBatch = (now: number) => {
   })
 }
 
+/* ======== 连线颜色混合函数 ======== */
+const getConnectionColor = (linkId: string, alpha: number) => {
+  // 基于连接线ID生成稳定的混合权重
+  const hash = linkId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+
+  // 生成三个主题色的混合权重（确保总和为1）
+  const weight1 = (Math.sin(hash * 0.1) * 0.5 + 0.5) * 0.6 + 0.2  // 0.2-0.8
+  const weight2 = (Math.sin(hash * 0.2) * 0.5 + 0.5) * 0.6 + 0.2  // 0.2-0.8
+  const weight3 = (Math.sin(hash * 0.3) * 0.5 + 0.5) * 0.6 + 0.2  // 0.2-0.8
+  const totalWeight = weight1 + weight2 + weight3
+
+  // 归一化权重
+  const w1 = weight1 / totalWeight
+  const w2 = weight2 / totalWeight
+  const w3 = weight3 / totalWeight
+
+  // 混合三种主题色
+  const r = CONNECTION_COLORS[0].r * w1 + CONNECTION_COLORS[1].r * w2 + CONNECTION_COLORS[2].r * w3
+  const g = CONNECTION_COLORS[0].g * w1 + CONNECTION_COLORS[1].g * w2 + CONNECTION_COLORS[2].g * w3
+  const b = CONNECTION_COLORS[0].b * w1 + CONNECTION_COLORS[1].b * w2 + CONNECTION_COLORS[2].b * w3
+
+  return `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${alpha})`
+}
+
 
 
 // 节点数据管理
@@ -323,8 +356,8 @@ const updateConnectionLinks = () => {
     if (t >= 0 && t <= 1) {
       // 三角波：0-1-0
       const tri = 1 - Math.abs(t * 2 - 1)
-      // 把 α 临时存在 link 里供 draw 使用
-      ;(link as any).alpha = tri * 0.8           // 0-0.8-0
+      // 把 α 临时存在 link 里供 draw 使用，使用更高的最大亮度
+      ;(link as any).alpha = tri * MAX_ALPHA     // 0-1.0-0
     } else {
       ;(link as any).alpha = 0
     }
@@ -418,7 +451,7 @@ const drawConnections = () => {
 
     // 绘制曲线连接线
     ctx.beginPath()
-    ctx.strokeStyle = `rgba(170, 131, 255, ${alpha})`
+    ctx.strokeStyle = getConnectionColor(link.id, alpha)
     ctx.lineWidth = 2
     ctx.lineCap = 'round'
 
