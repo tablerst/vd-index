@@ -1,13 +1,24 @@
 """
 评论API响应模式定义
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class CommentResponse(BaseModel):
     """评论信息响应模型"""
+    model_config = ConfigDict(
+        # 确保datetime字段序列化为ISO格式并包含时区信息
+        json_encoders={
+            datetime: lambda v: (
+                v.replace(tzinfo=timezone.utc).isoformat().replace('+00:00', 'Z')
+                if v and v.tzinfo is None
+                else v.isoformat().replace('+00:00', 'Z')
+            ) if v else None
+        }
+    )
+
     id: int = Field(description="评论ID")
     member_id: int = Field(description="关联的成员ID")
     content: str = Field(description="评论内容")

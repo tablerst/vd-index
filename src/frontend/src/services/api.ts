@@ -622,6 +622,7 @@ export const activityApi = {
 
   // 格式化活动日期
   formatDate(dateString: string): string {
+    // 后端现在返回ISO格式的时间字符串，包含时区信息
     const date = new Date(dateString)
     return date.toLocaleDateString('zh-CN', {
       year: 'numeric',
@@ -632,6 +633,7 @@ export const activityApi = {
 
   // 格式化活动日期（简短格式）
   formatDateShort(dateString: string): { day: string; month: string } {
+    // 后端现在返回ISO格式的时间字符串，包含时区信息
     const date = new Date(dateString)
     return {
       day: date.getDate().toString().padStart(2, '0'),
@@ -678,6 +680,7 @@ export const commentApi = {
 
   // 格式化评论时间
   formatTime(dateString: string): string {
+    // 后端现在返回ISO格式的时间字符串，包含时区信息
     const date = new Date(dateString)
     const now = new Date()
     const diff = now.getTime() - date.getTime()

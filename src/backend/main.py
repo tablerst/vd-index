@@ -4,6 +4,7 @@ FastAPI主应用
 import time
 import logging
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
@@ -11,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.encoders import jsonable_encoder
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -192,6 +194,9 @@ async def lifespan(app: FastAPI):
     # 关闭时执行
     logger.info("🛑 关闭后端服务...")
     await db_service.teardown()
+
+
+
 
 
 # 创建FastAPI应用

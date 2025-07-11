@@ -2,9 +2,10 @@
 评论数据模型
 匿名评论系统的核心数据结构
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from sqlmodel import SQLModel, Field
+from pydantic import field_serializer
 
 
 class Comment(SQLModel, table=True):
@@ -36,9 +37,9 @@ class Comment(SQLModel, table=True):
     # 软删除标记
     is_deleted: bool = Field(default=False, description="是否已删除")
     
-    # 时间戳
-    created_at: datetime = Field(default_factory=datetime.utcnow, description="创建时间")
-    updated_at: datetime = Field(default_factory=datetime.utcnow, description="更新时间")
+    # 时间戳 - 存储UTC时间但不包含时区信息（数据库字段为TIMESTAMP WITHOUT TIME ZONE）
+    created_at: datetime = Field(default_factory=lambda: datetime.utcnow(), description="创建时间")
+    updated_at: datetime = Field(default_factory=lambda: datetime.utcnow(), description="更新时间")
 
 
 class CommentCreate(SQLModel):
@@ -60,6 +61,14 @@ class CommentRead(SQLModel):
     is_deleted: bool
     created_at: datetime
     updated_at: datetime
+
+    @field_serializer('created_at', 'updated_at')
+    def serialize_datetime(self, dt: datetime) -> str:
+        """将UTC时间序列化为ISO格式字符串（带时区信息）"""
+        if dt.tzinfo is None:
+            # 如果没有时区信息，假设是UTC时间
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.isoformat()
 
 
 class CommentUpdate(SQLModel):

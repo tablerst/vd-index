@@ -1,9 +1,9 @@
 """
 活动相关的API数据模型
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class ParticipantInfo(BaseModel):
@@ -15,6 +15,17 @@ class ParticipantInfo(BaseModel):
 
 class ActivityResponse(BaseModel):
     """活动响应模型"""
+    model_config = ConfigDict(
+        # 确保datetime字段序列化为ISO格式并包含时区信息
+        json_encoders={
+            datetime: lambda v: (
+                v.replace(tzinfo=timezone.utc).isoformat()
+                if v and v.tzinfo is None
+                else v.isoformat()
+            ) if v else None
+        }
+    )
+
     id: int = Field(description="活动ID")
     title: str = Field(description="活动标题")
     description: str = Field(description="活动描述")

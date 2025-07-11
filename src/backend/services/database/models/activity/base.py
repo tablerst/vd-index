@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 from sqlmodel import SQLModel, Field
 from sqlalchemy import JSON, TypeDecorator, String
@@ -49,8 +49,8 @@ class Activity(SQLModel, table=True):
     # 冗余统计字段，由业务侧在新增/更新时同步
     participants_total: int = Field(default=0, description="冗余成员总数")
 
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.utcnow())
+    updated_at: datetime = Field(default_factory=lambda: datetime.utcnow())
 
 
 class ActivityCreate(SQLModel):
