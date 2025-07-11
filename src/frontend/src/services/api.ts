@@ -94,6 +94,45 @@ export interface ActivityStats {
   unique_participants: number
 }
 
+// 评论接口定义
+export interface Comment {
+  id: number
+  member_id: number
+  content: string
+  likes: number
+  dislikes: number
+  is_anonymous: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface CommentCreateRequest {
+  content: string
+  is_anonymous?: boolean
+}
+
+export interface CommentListResponse {
+  comments: Comment[]
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
+}
+
+export interface CommentActionResponse {
+  success: boolean
+  message: string
+  comment?: Comment
+}
+
+export interface CommentStats {
+  total_comments: number
+  total_likes: number
+  total_dislikes: number
+  active_comments: number
+  deleted_comments: number
+}
+
 export interface CacheStats {
   hits: number
   misses: number
@@ -391,6 +430,52 @@ class ApiClient {
   async healthCheck(): Promise<{ status: string; timestamp: number }> {
     return this.request('/health')
   }
+
+  // 评论相关方法
+  // 获取成员评论列表
+  async getMemberComments(
+    memberId: number,
+    page: number = 1,
+    pageSize: number = 20
+  ): Promise<CommentListResponse> {
+    return this.request<CommentListResponse>(
+      `/api/v1/comments/members/${memberId}/comments?page=${page}&page_size=${pageSize}`
+    )
+  }
+
+  // 创建评论
+  async createComment(memberId: number, data: CommentCreateRequest): Promise<Comment> {
+    return this.request<Comment>(`/api/v1/comments/members/${memberId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    })
+  }
+
+  // 点赞评论
+  async likeComment(commentId: number): Promise<CommentActionResponse> {
+    return this.request<CommentActionResponse>(`/api/v1/comments/${commentId}/like`, {
+      method: 'PUT'
+    })
+  }
+
+  // 点踩评论
+  async dislikeComment(commentId: number): Promise<CommentActionResponse> {
+    return this.request<CommentActionResponse>(`/api/v1/comments/${commentId}/dislike`, {
+      method: 'PUT'
+    })
+  }
+
+  // 删除评论（管理员功能）
+  async deleteComment(commentId: number): Promise<CommentActionResponse> {
+    return this.request<CommentActionResponse>(`/api/v1/comments/${commentId}`, {
+      method: 'DELETE'
+    })
+  }
+
+  // 获取评论统计（管理员功能）
+  async getCommentStats(): Promise<CommentStats> {
+    return this.request<CommentStats>('/api/v1/comments/stats')
+  }
 }
 
 // 创建全局API客户端实例
@@ -549,6 +634,78 @@ export const activityApi = {
       day: date.getDate().toString().padStart(2, '0'),
       month: date.toLocaleDateString('zh-CN', { month: 'short' })
     }
+  }
+}
+
+// 评论API便捷函数
+export const commentApi = {
+  // 获取成员评论列表
+  async getMemberComments(
+    memberId: number,
+    page: number = 1,
+    pageSize: number = 20
+  ): Promise<CommentListResponse> {
+    return apiClient.getMemberComments(memberId, page, pageSize)
+  },
+
+  // 创建评论
+  async createComment(memberId: number, content: string, isAnonymous: boolean = true): Promise<Comment> {
+    return apiClient.createComment(memberId, { content, is_anonymous: isAnonymous })
+  },
+
+  // 点赞评论
+  async likeComment(commentId: number): Promise<CommentActionResponse> {
+    return apiClient.likeComment(commentId)
+  },
+
+  // 点踩评论
+  async dislikeComment(commentId: number): Promise<CommentActionResponse> {
+    return apiClient.dislikeComment(commentId)
+  },
+
+  // 删除评论（管理员功能）
+  async deleteComment(commentId: number): Promise<CommentActionResponse> {
+    return apiClient.deleteComment(commentId)
+  },
+
+  // 获取评论统计（管理员功能）
+  async getStats(): Promise<CommentStats> {
+    return apiClient.getCommentStats()
+  },
+
+  // 格式化评论时间
+  formatTime(dateString: string): string {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diff = now.getTime() - date.getTime()
+
+    const minutes = Math.floor(diff / (1000 * 60))
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
+    if (minutes < 1) return '刚刚'
+    if (minutes < 60) return `${minutes}分钟前`
+    if (hours < 24) return `${hours}小时前`
+    if (days < 7) return `${days}天前`
+
+    return date.toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  },
+
+  // 验证评论内容
+  validateContent(content: string): { valid: boolean; message?: string } {
+    if (!content || content.trim().length === 0) {
+      return { valid: false, message: '评论内容不能为空' }
+    }
+
+    if (content.length > 500) {
+      return { valid: false, message: '评论内容不能超过500字符' }
+    }
+
+    return { valid: true }
   }
 }
 

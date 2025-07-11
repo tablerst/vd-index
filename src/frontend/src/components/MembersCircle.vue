@@ -105,6 +105,14 @@
           <CalendarIcon class="cal-icon" />
           <span>{{ formatDate(selectedMember.joinDate) }}</span>
         </div>
+
+        <!-- 评论区域 -->
+        <div class="member-comments">
+          <CommentSection
+            :member-id="selectedMember.id"
+            :can-delete="false"
+          />
+        </div>
       </div>
     </div>
   </section>
@@ -126,6 +134,7 @@ import DeepSpaceBackground from './DeepSpaceBackground.vue'
 import PaginationArrows from './PaginationArrows.vue'
 import MemberStarfield from './MemberStarfield.vue'
 import CalendarIcon from './icons/CalendarIcon.vue'
+import { CommentSection } from './Comment'
 
 // 注册GSAP插件
 gsap.registerPlugin(ScrollTrigger)
@@ -719,8 +728,9 @@ onUnmounted(() => {
 
 .modal-content {
   position: relative;
-  max-width: 420px;
-  width: 90%;
+  max-width: 900px;
+  width: 95%;
+  max-height: 90vh;
   background: linear-gradient(135deg,
     rgba(170, 131, 255, 0.15) 0%,
     rgba(212, 222, 199, 0.1) 50%,
@@ -735,11 +745,31 @@ onUnmounted(() => {
     0 0 0 1px rgba(255, 255, 255, 0.1) inset,
     0 0 30px rgba(170, 131, 255, 0.2);
   text-align: center;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 
   // 初始状态，由GSAP控制
   opacity: 0;
   transform: scale(0.8) translateY(40px) rotateY(-15deg);
+
+  // 自定义滚动条
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(170, 131, 255, 0.5);
+    border-radius: 4px;
+
+    &:hover {
+      background: rgba(170, 131, 255, 0.7);
+    }
+  }
 }
 
 .modal-close {
@@ -867,11 +897,58 @@ onUnmounted(() => {
   box-shadow: 0 2px 8px rgba(65, 105, 225, 0.3);
 }
 
+// 评论区域样式
+.member-comments {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: left;
+
+  // 重置评论组件的一些样式以适应弹窗
+  :deep(.comment-section) {
+    padding: 0;
+    max-width: none;
+  }
+
+  :deep(.section-header) {
+    margin-bottom: 20px;
+
+    .section-title {
+      font-size: 18px;
+      justify-content: flex-start;
+    }
+  }
+
+  :deep(.comment-input) {
+    padding: 0;
+
+    .input-container {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  :deep(.comment-timeline) {
+    padding: 0;
+
+    .timeline-container {
+      padding-left: 30px;
+    }
+
+    .comment-box {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+  }
+}
+
 // 响应式设计
 @media (max-width: 768px) {
   .modal-content {
-    max-width: 350px;
-    padding: 24px 20px;
+    max-width: 95%;
+    width: 95%;
+    max-height: 95vh;
+    padding: 20px 16px;
   }
 
   .profile-avatar {
@@ -886,6 +963,35 @@ onUnmounted(() => {
   .join-date {
     padding: 10px 14px;
     font-size: 13px;
+  }
+
+  .member-comments {
+    margin-top: 20px;
+    padding-top: 15px;
+
+    :deep(.section-title) {
+      font-size: 16px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-content {
+    padding: 16px 12px;
+  }
+
+  .member-comments {
+    :deep(.timeline-container) {
+      padding-left: 20px;
+    }
+
+    :deep(.timeline-line) {
+      left: 10px;
+    }
+
+    :deep(.timeline-node) {
+      left: -20px;
+    }
   }
 }
 </style>
