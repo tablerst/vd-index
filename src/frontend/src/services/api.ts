@@ -104,6 +104,9 @@ export interface Comment {
   is_anonymous: boolean
   created_at: string
   updated_at: string
+  // 前端状态字段（可选）
+  userLiked?: boolean
+  userDisliked?: boolean
 }
 
 export interface CommentCreateRequest {

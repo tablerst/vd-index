@@ -86,7 +86,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
 import { commentApi, type Comment } from '@/services/api'
 import { useMessage } from 'naive-ui'
 
@@ -104,7 +103,7 @@ interface Emits {
   (e: 'load-more'): void
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   loading: false,
   hasMore: false,
   canDelete: false
