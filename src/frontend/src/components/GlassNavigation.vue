@@ -31,9 +31,9 @@
               </a>
             </li>
             <li class="nav-item">
-              <router-link to="/badge-preview" class="nav-link">
+              <a href="/badge-preview" target="_blank" class="nav-link" rel="noopener noreferrer">
                 徽章预览
-              </router-link>
+              </a>
             </li>
             <li class="nav-item">
               <a href="#about" class="nav-link" @click="scrollToSection('about')">

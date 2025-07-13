@@ -1,5 +1,5 @@
 <template>
-  <footer class="app-footer">
+  <footer id="about" class="app-footer">
     <!-- 几何线条装饰 -->
     <div class="geometric-lines">
       <svg class="line-pattern" viewBox="0 0 1200 100" preserveAspectRatio="none">

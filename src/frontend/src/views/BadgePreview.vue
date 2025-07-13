@@ -1,8 +1,5 @@
 <template>
   <div class="badge-preview">
-    <!-- 顶部导航 -->
-    <GlassNavigation />
-
     <!-- 主要内容区域 -->
     <main class="main-content">
       <!-- 页面标题 -->
@@ -350,7 +347,6 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-import GlassNavigation from '@/components/GlassNavigation.vue'
 import GlobalParticles from '@/components/GlobalParticles.vue'
 
 // 响应式数据
