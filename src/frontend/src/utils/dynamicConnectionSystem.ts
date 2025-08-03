@@ -323,7 +323,7 @@ export class DynamicConnectionSystem {
   /**
    * 清理过期的最近连接记录
    */
-  private cleanupRecentConnections(currentTime: number): void {
+  private cleanupRecentConnections(_currentTime: number): void {
     // 简单的清理策略：定期清空所有记录
     if (this.recentConnections.size > 20) {
       this.recentConnections.clear()

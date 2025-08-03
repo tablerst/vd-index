@@ -110,7 +110,9 @@ class PerformanceProfiler {
     // 限制标记数量
     if (this.marks.size > this.config.maxMarks) {
       const firstKey = this.marks.keys().next().value
-      this.marks.delete(firstKey)
+      if (firstKey) {
+        this.marks.delete(firstKey)
+      }
     }
 
     this.log('debug', `Performance mark started: ${name}`)
@@ -146,10 +148,10 @@ class PerformanceProfiler {
    * 记录组件性能指标
    */
   recordComponent(
-    componentName: string, 
+    componentName: string,
     type: 'render' | 'update' | 'mount' | 'unmount',
     duration: number,
-    metadata?: Record<string, any>
+    _metadata?: Record<string, any>
   ): void {
     if (!this.config.enabled || !this.config.enableComponentTracking) return
 
@@ -363,7 +365,10 @@ class PerformanceProfiler {
     const messageLevelIndex = levels.indexOf(level)
 
     if (messageLevelIndex <= currentLevelIndex && messageLevelIndex > 0) {
-      console[level as keyof Console](`[PerformanceProfiler] ${message}`)
+      const logMethod = console[level as keyof Console] as Function
+      if (typeof logMethod === 'function') {
+        logMethod(`[PerformanceProfiler] ${message}`)
+      }
     }
   }
 }

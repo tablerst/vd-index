@@ -367,6 +367,3 @@ export const PerformanceUtils = {
     performanceConfig.applyPreset('minimal')
   }
 }
-
-// 导出类型
-export type { PerformanceSettings }

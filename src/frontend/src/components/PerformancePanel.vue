@@ -136,7 +136,6 @@ const toggleMinimize = () => {
 
 const toggleMonitoring = () => {
   isMonitoring.value = !isMonitoring.value
-  const settings = performanceConfig.getSettings()
   performanceConfig.updateSettings({ enabled: isMonitoring.value })
 }
 
