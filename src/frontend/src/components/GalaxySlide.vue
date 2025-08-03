@@ -35,6 +35,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useDeviceDetection } from '../composables/useDeviceDetection'
+import { performanceProfiler } from '../utils/performanceProfiler'
 import type { Member } from '../stores/members'
 
 // 连接线数据结构
@@ -372,6 +373,8 @@ watch(canvasSize, () => {
 
 // 绘制连接线
 const drawConnections = () => {
+  performanceProfiler.mark('draw-connections')
+
   const canvas = connectionsCanvas.value
   if (!canvas) return
 
@@ -476,6 +479,8 @@ const drawConnections = () => {
   if (import.meta.env.DEV && Math.random() < 0.1) {
     console.log(`📈 [连接线绘制] 总激活: ${totalActiveConnections}, 实际绘制: ${drawnConnections}, 绘制率: ${((drawnConnections / Math.max(totalActiveConnections, 1)) * 100).toFixed(1)}%`)
   }
+
+  performanceProfiler.measure('draw-connections')
 }
 
 // 监听成员变化，重新生成连接线
@@ -490,6 +495,9 @@ let animationId: number | null = null
 let frameCount = 0
 
 const animate = () => {
+  // 性能标记开始
+  performanceProfiler.mark('galaxy-slide-frame')
+
   // 每帧更新动画时间
   animationTime.value = performance.now()
 
@@ -501,11 +509,16 @@ const animate = () => {
 
   // 每 10 帧重新生成一次连接线，避免性能问题
   if (++frameCount % 600 === 0) {
+    performanceProfiler.mark('connection-regeneration')
     generateConnectionLinks()
+    performanceProfiler.measure('connection-regeneration')
   }
 
   // 每帧绘制连接线（确保跟随头像实时位置）
   drawConnections()
+
+  // 性能标记结束
+  performanceProfiler.measure('galaxy-slide-frame')
 
   animationId = requestAnimationFrame(animate)
 }

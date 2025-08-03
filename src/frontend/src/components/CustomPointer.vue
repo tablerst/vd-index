@@ -9,12 +9,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, inject, watch } from 'vue'
+import { performanceProfiler } from '../utils/performanceProfiler'
 
 const pointerRef = ref<HTMLElement>()
 const isPressed = ref(false)
 const isVisible = ref(true)
 const isMouseInWindow = ref(true)
+const isPaused = ref(false) // 新增：暂停状态
 
 let mouseX = 0
 let mouseY = 0
@@ -24,74 +26,41 @@ let animationId: number | null = null
 let isAnimating = false
 let isInitialized = false
 
-// 性能监控相关
-let lastFrameTime = 0
-let frameCount = 0
-let averageFPS = 60
-let performanceMode = 'normal' // 'normal' | 'degraded'
-let lastPerformanceCheck = 0
+// 简化的性能配置
+const EASE_NORMAL = 0.25
+const EASE_FAST = 0.4
+const SPEED_THRESHOLD = 50
 
-// 性能监控和帧率计算
-const updatePerformanceMetrics = (currentTime: number) => {
-  if (lastFrameTime === 0) {
-    lastFrameTime = currentTime
-    return
+// 模态框状态监听
+const modalState = inject('modalState', ref(false))
+
+// 监听模态框状态变化
+watch(modalState, (isOpen: boolean) => {
+  if (isOpen) {
+    pauseAnimation()
+  } else {
+    resumeAnimation()
   }
+}, { immediate: false })
 
-  const deltaTime = currentTime - lastFrameTime
-  const currentFPS = 1000 / deltaTime
-
-  frameCount++
-  averageFPS = (averageFPS * (frameCount - 1) + currentFPS) / frameCount
-
-  // 每秒检查一次性能
-  if (currentTime - lastPerformanceCheck > 1000) {
-    if (averageFPS < 30 && performanceMode === 'normal') {
-      performanceMode = 'degraded'
-      console.warn('CustomPointer: 性能下降，切换到降级模式')
-    } else if (averageFPS > 45 && performanceMode === 'degraded') {
-      performanceMode = 'normal'
-      console.log('CustomPointer: 性能恢复，切换到正常模式')
-    }
-    lastPerformanceCheck = currentTime
-    frameCount = 0 // 重置计数器
-  }
-
-  lastFrameTime = currentTime
-}
-
-// 动态计算ease值，快速移动时提高跟随速度
+// 简化的ease计算
 const calculateEase = () => {
-  const distance = Math.sqrt(Math.pow(mouseX - currentX, 2) + Math.pow(mouseY - currentY, 2))
+  const dx = mouseX - currentX
+  const dy = mouseY - currentY
+  const distance = Math.sqrt(dx * dx + dy * dy)
 
-  // 根据性能模式调整参数
-  const baseEase = performanceMode === 'degraded' ? 0.15 : 0.25
-  const maxEase = performanceMode === 'degraded' ? 0.25 : 0.4
-  const speedThreshold = 50
-
-  return distance > speedThreshold ? maxEase : baseEase
+  return distance > SPEED_THRESHOLD ? EASE_FAST : EASE_NORMAL
 }
 
-// 平滑跟随动画 - 添加性能监控和降级机制
-const animatePointer = (currentTime?: number) => {
-  if (!isAnimating || !isVisible.value || !isMouseInWindow.value || !isInitialized) {
+// 优化的平滑跟随动画
+const animatePointer = () => {
+  if (!isAnimating || !isVisible.value || !isMouseInWindow.value || !isInitialized || isPaused.value) {
     animationId = null
     return
   }
 
-  // 更新性能指标
-  if (currentTime) {
-    updatePerformanceMetrics(currentTime)
-  }
-
-  // 在降级模式下，降低更新频率
-  if (performanceMode === 'degraded') {
-    const now = performance.now()
-    if (now - lastFrameTime < 33) { // 限制到30fps
-      animationId = requestAnimationFrame(animatePointer)
-      return
-    }
-  }
+  // 性能标记开始
+  performanceProfiler.mark('pointer-animation-frame')
 
   const ease = calculateEase()
   currentX += (mouseX - currentX) * ease
@@ -100,19 +69,21 @@ const animatePointer = (currentTime?: number) => {
   if (pointerRef.value) {
     // 使用transform3d确保硬件加速
     pointerRef.value.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`
-    // 确保光标可见
-    pointerRef.value.style.opacity = '1'
   }
+
+  // 性能标记结束
+  performanceProfiler.measure('pointer-animation-frame')
 
   animationId = requestAnimationFrame(animatePointer)
 }
 
 // 启动动画
 const startAnimation = () => {
-  if (!isInitialized) return
+  if (!isInitialized || isPaused.value) return
 
   if (!isAnimating && isVisible.value && isMouseInWindow.value) {
     isAnimating = true
+    performanceProfiler.mark('pointer-animation-start')
     animatePointer()
   }
 }
@@ -123,19 +94,41 @@ const stopAnimation = () => {
   if (animationId) {
     cancelAnimationFrame(animationId)
     animationId = null
+    performanceProfiler.measure('pointer-animation-start')
+  }
+}
+
+// 暂停/恢复动画
+const pauseAnimation = () => {
+  isPaused.value = true
+  stopAnimation()
+}
+
+const resumeAnimation = () => {
+  isPaused.value = false
+  if (isVisible.value && isMouseInWindow.value && isInitialized) {
+    startAnimation()
   }
 }
 
 // 重置光标状态
 const resetPointer = () => {
   if (pointerRef.value) {
-    // 重置位置到当前鼠标位置
     currentX = mouseX
     currentY = mouseY
     pointerRef.value.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`
     pointerRef.value.style.opacity = '1'
   }
 }
+
+// 暴露控制方法给父组件
+defineExpose({
+  pause: pauseAnimation,
+  resume: resumeAnimation,
+  reset: resetPointer,
+  isAnimating: () => isAnimating,
+  isPaused: () => isPaused.value
+})
 
 // 鼠标移动事件
 const handleMouseMove = (e: MouseEvent) => {
@@ -188,21 +181,14 @@ const handleMouseLeaveWindow = (e: MouseEvent) => {
   }
 }
 
-// 页面可见性变化 - 添加性能重置
+// 页面可见性变化
 const handleVisibilityChange = () => {
   const wasVisible = isVisible.value
   isVisible.value = !document.hidden
 
   if (isVisible.value && isMouseInWindow.value && isInitialized) {
-    // 页面重新可见时，重置性能指标
     if (!wasVisible) {
       resetPointer()
-      // 重置性能监控
-      lastFrameTime = 0
-      frameCount = 0
-      averageFPS = 60
-      performanceMode = 'normal'
-      lastPerformanceCheck = 0
     }
     setTimeout(() => {
       startAnimation()

@@ -123,6 +123,7 @@ import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useMembersStore } from '../stores/members'
 import { useDeviceDetection } from '../composables/useDeviceDetection'
+import { performanceProfiler } from '../utils/performanceProfiler'
 // import { usePerformanceMonitor } from '../composables/usePerformanceMonitor' // 暂时注释
 import ProgressBar from './ProgressBar.vue'
 import GalaxySlide from './GalaxySlide.vue'
@@ -199,11 +200,15 @@ const onSwiperInit = (swiper: any) => {
 }
 
 const onSlideChange = (swiper: any) => {
+  performanceProfiler.mark('slide-change-start')
+
   const previousSlide = currentSlide.value
   currentSlide.value = swiper.activeIndex
 
   // GSAP切屏动效
   animateSlideTransition(previousSlide, currentSlide.value)
+
+  performanceProfiler.measure('slide-change-start')
 }
 
 // 分页控制方法
@@ -223,6 +228,7 @@ const goToNextPage = () => {
 const animateSlideTransition = (fromIndex: number, toIndex: number) => {
   if (isTransitioning.value) return
 
+  performanceProfiler.mark('slide-transition-start')
   isTransitioning.value = true
 
   const slides = document.querySelectorAll('.galaxy-slide-container')
@@ -231,6 +237,7 @@ const animateSlideTransition = (fromIndex: number, toIndex: number) => {
 
   if (!currentSlideEl) {
     isTransitioning.value = false
+    performanceProfiler.measure('slide-transition-start')
     return
   }
 
@@ -241,6 +248,7 @@ const animateSlideTransition = (fromIndex: number, toIndex: number) => {
   const tl = gsap.timeline({
     onComplete: () => {
       isTransitioning.value = false
+      performanceProfiler.measure('slide-transition-start')
     }
   })
 
@@ -298,6 +306,7 @@ const animateSlideTransition = (fromIndex: number, toIndex: number) => {
 
 // 成员交互处理
 const handleMemberSelect = (member: Member) => {
+  performanceProfiler.mark('member-modal-open-start')
   selectedMember.value = member
   showMemberInfo.value = true
 
@@ -311,7 +320,11 @@ const handleMemberSelect = (member: Member) => {
 const openMemberModal = () => {
   if (!modalContent.value) return
 
-  const tl = gsap.timeline()
+  const tl = gsap.timeline({
+    onComplete: () => {
+      performanceProfiler.measure('member-modal-open-start')
+    }
+  })
 
   // 遮罩淡入
   tl.fromTo('.member-modal',
