@@ -36,15 +36,8 @@
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useDeviceDetection } from '../composables/useDeviceDetection'
 import { performanceProfiler } from '../utils/performanceProfiler'
+import { DynamicConnectionSystem } from '../utils/dynamicConnectionSystem'
 import type { Member } from '../stores/members'
-
-// 连接线数据结构
-interface ConnectionLink {
-  id: string
-  source: string  // 源头像成员ID
-  target: string  // 目标头像成员ID
-  lastActivationTime: number // 本轮激活起点
-}
 
 // 节点数据结构
 interface Node {
@@ -59,19 +52,12 @@ interface Props {
   index: number
 }
 
-/* ======== 连线节奏参数 ======== */
-const BATCH_INTERVAL       = 3000  // 每 3 s 推出下一批
-const DISPLAY_DURATION     = 5000  // 一条线完整 0→1→0 用时 5 s
-const LINKS_PER_BATCH      = 8     // 每批点亮数量
-// ===============================
-
 /* ======== 连线样式参数 ======== */
 const CONNECTION_COLORS = [
   { r: 170, g: 131, b: 255 },  // --primary: #AA83FF
   { r: 212, g: 222, b: 199 },  // --secondary: #D4DEC7
   { r: 63, g: 125, b: 251 }    // --accent-blue: #3F7DFB
 ]
-const MAX_ALPHA = 1.0           // 提高最高亮度到1.0
 // ===============================
 
 const props = defineProps<Props>()
@@ -212,32 +198,18 @@ const formatDate = (dateString: string) => {
 // 统一动画时间管理
 const animationTime = ref(0)
 
-// 连接线管理
-const connectionLinks = ref<ConnectionLink[]>([])
+// 动态连接线系统 - 根据设备类型调整配置
+const connectionSystem = new DynamicConnectionSystem({
+  maxActiveConnections: deviceInfo.value.isMobile ? 4 : 8,
+  minActiveConnections: deviceInfo.value.isMobile ? 2 : 3,
+  creationInterval: deviceInfo.value.isMobile ? 2000 : 2500, // 移动端更快创建
+  creationBatchSize: deviceInfo.value.isMobile ? 1 : 2,
+  activeDuration: deviceInfo.value.isMobile ? 4000 : 4000, // 移动端保持相同持续时间
+  creationDuration: deviceInfo.value.isMobile ? 500 : 800, // 移动端更快淡入
+  fadeDuration: deviceInfo.value.isMobile ? 800 : 1200 // 移动端更快淡出
+})
 
-/* 批调度器：每 3 s 把上一批之外的线随机点亮 */
-let lastBatchTime = 0
 
-const scheduleNextBatch = (now: number) => {
-  if (now - lastBatchTime < BATCH_INTERVAL) return
-  lastBatchTime = now
-
-  // 可选池：上一轮 5 s 波段已结束的线
-  const pool = connectionLinks.value.filter(
-    l => now - l.lastActivationTime > DISPLAY_DURATION
-  )
-  if (!pool.length) return
-
-  // 随机洗牌
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[pool[i], pool[j]] = [pool[j], pool[i]]
-  }
-
-  pool.slice(0, LINKS_PER_BATCH).forEach(l => {
-    l.lastActivationTime = now      // 重新起一轮三角波
-  })
-}
 
 /* ======== 连线颜色混合函数 ======== */
 const getConnectionColor = (linkId: string, alpha: number) => {
@@ -298,76 +270,27 @@ const updateNodePositions = () => {
   })
 }
 
-// 生成连接线
-const generateConnectionLinks = () => {
-  console.log('🔗 [连接线生成] 开始生成连接线，成员数量:', props.members.length)
+// 更新成员位置信息到连接线系统
+const updateMemberPositions = () => {
+  const positions = new Map<string, { x: number, y: number, r: number }>()
 
-  const newLinks: ConnectionLink[] = []
-  const maxConnections = 3 // 每个成员最多连接3条线
-
-  props.members.forEach((member, i) => {
-    // 计算到其他成员的距离
-    const distances = props.members
-      .map((otherMember, j) => {
-        if (i === j) return null
-
-        const pos1 = getVogelSpiralPosition(i, props.members.length)
-        const pos2 = getVogelSpiralPosition(j, props.members.length)
-        const distance = Math.sqrt(
-          Math.pow(pos1.x - pos2.x, 2) + Math.pow(pos1.y - pos2.y, 2)
-        )
-
-        return { index: j, member: otherMember, distance }
-      })
-      .filter(item => item !== null)
-      .sort((a, b) => a!.distance - b!.distance)
-      .slice(0, maxConnections)
-
-    distances.forEach(({ member: targetMember }) => {
-      // 避免重复连接
-      const linkExists = newLinks.some(link =>
-        (link.source === member.id.toString() && link.target === targetMember.id.toString()) ||
-        (link.source === targetMember.id.toString() && link.target === member.id.toString())
-      )
-
-      if (!linkExists) {
-        const newLink: ConnectionLink = {
-          id: `${member.id}-${targetMember.id}`,
-          source: member.id.toString(),
-          target: targetMember.id.toString(),
-          lastActivationTime: -Infinity     // 还没进入任何批次
-        }
-        newLinks.push(newLink)
-      }
-    })
+  nodes.value.forEach(node => {
+    positions.set(node.id, { x: node.x, y: node.y, r: node.r })
   })
 
-  connectionLinks.value = newLinks
-  console.log('✅ [连接线生成] 生成完成，连接线数量:', newLinks.length)
+  connectionSystem.updateMemberPositions(positions)
 }
 
-/* ======== 更新连线（仅负责计算 α） ======== */
+// 更新连接线系统
 const updateConnectionLinks = () => {
   const now = performance.now()
-
-  scheduleNextBatch(now)            // 可能启动下一批
-
-  connectionLinks.value.forEach(link => {
-    const t = (now - link.lastActivationTime) / DISPLAY_DURATION
-    if (t >= 0 && t <= 1) {
-      // 三角波：0-1-0
-      const tri = 1 - Math.abs(t * 2 - 1)
-      // 把 α 临时存在 link 里供 draw 使用，使用更高的最大亮度
-      ;(link as any).alpha = tri * MAX_ALPHA     // 0-1.0-0
-    } else {
-      ;(link as any).alpha = 0
-    }
-  })
+  connectionSystem.update(now)
 }
 // 首次拿到有效 canvasSize 后 / 窗口尺寸变化时刷新
 watch(canvasSize, () => {
   if (canvasSize.value.width > 0 && canvasSize.value.height > 0) {
-    generateConnectionLinks()
+    // 重置连接线系统
+    connectionSystem.reset()
   }
 }, { immediate: true })
 
@@ -385,16 +308,16 @@ const drawConnections = () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height)
 
   let drawnConnections = 0
-  let totalActiveConnections = 0
+  const activeConnections = connectionSystem.getActiveConnections()
 
   /* ======== 绘制连线 ======== */
-  connectionLinks.value.forEach((link, index) => {
-    const alpha = (link as any).alpha || 0
+  activeConnections.forEach((connection) => {
+    const alpha = connection.alpha
     if (alpha < 0.05) return          // 不足阈值直接跳过
 
     // 查找对应的成员头像位置
-    const sourceMemberIndex = props.members.findIndex(m => m.id.toString() === link.source)
-    const targetMemberIndex = props.members.findIndex(m => m.id.toString() === link.target)
+    const sourceMemberIndex = props.members.findIndex(m => m.id.toString() === connection.sourceId)
+    const targetMemberIndex = props.members.findIndex(m => m.id.toString() === connection.targetId)
 
     if (sourceMemberIndex === -1 || targetMemberIndex === -1) return
 
@@ -409,8 +332,6 @@ const drawConnections = () => {
     const sourceCenterY = sourceNode.y
     const targetCenterX = targetNode.x
     const targetCenterY = targetNode.y
-
-    totalActiveConnections++
 
     // 计算头像中心之间的距离和方向
     const dx = targetCenterX - sourceCenterX
@@ -441,21 +362,15 @@ const drawConnections = () => {
       return // 头像重叠时跳过绘制
     }
 
-    // 连接线监控（仅在开发模式下）
-    if (import.meta.env.DEV && index < 2 && drawnConnections < 2) {
-      console.log(`🎯 [连接线${index}] 头像中心连接:`, {
-        source: `成员${link.source}`,
-        target: `成员${link.target}`,
-        direction: `(${ux.toFixed(3)}, ${uy.toFixed(3)})`,
-        distance: dist.toFixed(1),
-        alpha: alpha.toFixed(3)
-      })
-    }
+
 
     // 绘制曲线连接线
     ctx.beginPath()
-    ctx.strokeStyle = getConnectionColor(link.id, alpha)
-    ctx.lineWidth = 2
+    const strokeColor = getConnectionColor(connection.id, alpha)
+    ctx.strokeStyle = strokeColor
+    // 移动端使用更粗的线条以确保可见性
+    const lineWidth = deviceInfo.value.isMobile ? 4 : 2
+    ctx.lineWidth = lineWidth
     ctx.lineCap = 'round'
 
     // 计算控制点（创建弯曲效果）
@@ -467,6 +382,8 @@ const drawConnections = () => {
     const cpX = midX + perpX
     const cpY = midY + perpY
 
+
+
     // 绘制二次贝塞尔曲线
     ctx.moveTo(sx, sy)
     ctx.quadraticCurveTo(cpX, cpY, tx, ty)
@@ -477,22 +394,37 @@ const drawConnections = () => {
 
   // 连接线绘制统计（开发模式）
   if (import.meta.env.DEV && Math.random() < 0.1) {
-    console.log(`📈 [连接线绘制] 总激活: ${totalActiveConnections}, 实际绘制: ${drawnConnections}, 绘制率: ${((drawnConnections / Math.max(totalActiveConnections, 1)) * 100).toFixed(1)}%`)
+    console.log(`📈 [连接线绘制] 设备: ${deviceInfo.value.type}, 总激活: ${activeConnections.length}, 实际绘制: ${drawnConnections}, 绘制率: ${((drawnConnections / Math.max(activeConnections.length, 1)) * 100).toFixed(1)}%`)
   }
 
   performanceProfiler.measure('draw-connections')
 }
 
-// 监听成员变化，重新生成连接线
+// 监听成员变化，重置连接线系统
 watch(() => props.members, () => {
   nextTick(() => {
-    generateConnectionLinks() // 成员列表变化时，重新生成连接线
+    connectionSystem.reset() // 成员列表变化时，重置连接线系统
   })
 }, { immediate: true })
 
+// 监听设备信息变化，重新配置连接线系统
+watch(() => deviceInfo.value.type, (newType) => {
+  // 根据设备类型重新配置连接线系统
+  const isMobile = newType === 'mobile'
+  connectionSystem.updateConfig({
+    maxActiveConnections: isMobile ? 4 : 8,
+    minActiveConnections: isMobile ? 2 : 3,
+    creationInterval: isMobile ? 3000 : 2500,
+    creationBatchSize: isMobile ? 1 : 2,
+    activeDuration: isMobile ? 3000 : 4000
+  })
+
+  // 重置系统以应用新配置
+  connectionSystem.reset()
+})
+
 // 统一动画循环
 let animationId: number | null = null
-let frameCount = 0
 
 const animate = () => {
   // 性能标记开始
@@ -504,15 +436,11 @@ const animate = () => {
   // 每帧更新节点位置（包含浮动偏移）
   updateNodePositions()
 
+  // 更新成员位置到连接线系统
+  updateMemberPositions()
+
   // 每帧更新连接线状态（呼吸效果和激活管理）
   updateConnectionLinks()
-
-  // 每 10 帧重新生成一次连接线，避免性能问题
-  if (++frameCount % 600 === 0) {
-    performanceProfiler.mark('connection-regeneration')
-    generateConnectionLinks()
-    performanceProfiler.measure('connection-regeneration')
-  }
 
   // 每帧绘制连接线（确保跟随头像实时位置）
   drawConnections()
@@ -528,16 +456,8 @@ onMounted(() => {
   nextTick(() => {
     updateCanvasSize()
 
-    // 生成初始连接线
-    generateConnectionLinks()
-
-    // 立即激活一些连接线，首屏就能看到效果
-    const now = performance.now()
-    connectionLinks.value.forEach((link, index) => {
-      if (index < 3) { // 激活前3条连接线
-        link.lastActivationTime = now
-      }
-    })
+    // 初始化连接线系统（动态系统会自动开始创建连接线）
+    connectionSystem.reset()
 
     // 启动统一的动画循环
     animate()

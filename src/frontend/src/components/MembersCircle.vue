@@ -63,9 +63,6 @@
       :aria-labelledby="`member-${selectedMember.id}-title`"
     >
       <div class="modal-content" ref="modalContent">
-        <!-- Three.js 星粒子背景 -->
-        <MemberStarfield />
-
         <!-- 关闭按钮 -->
         <button
           class="modal-close"
@@ -129,7 +126,6 @@ import ProgressBar from './ProgressBar.vue'
 import GalaxySlide from './GalaxySlide.vue'
 import GalaxyInfoWidget from './GalaxyInfoWidget.vue'
 import PaginationArrows from './PaginationArrows.vue'
-import MemberStarfield from './MemberStarfield.vue'
 import CalendarIcon from './icons/CalendarIcon.vue'
 import { CommentSection } from './Comment'
 
@@ -351,12 +347,7 @@ const openMemberModal = () => {
     0.1 // 稍微延迟开始
   )
 
-  // 星粒子背景淡入
-  tl.fromTo('.starfield-canvas',
-    { opacity: 0 },
-    { opacity: 0.8, duration: 0.3, ease: 'power2.out' },
-    0.2
-  )
+
 }
 
 const handleMemberHover = (_member: Member, _event: MouseEvent) => {
@@ -759,19 +750,15 @@ onUnmounted(() => {
   max-width: 900px;
   width: 95%;
   max-height: 90vh;
-  background: linear-gradient(135deg,
-    rgba(170, 131, 255, 0.15) 0%,
-    rgba(212, 222, 199, 0.1) 50%,
-    rgba(63, 125, 251, 0.15) 100%
-  );
-  backdrop-filter: blur(25px);
-  border: 1px solid rgba(170, 131, 255, 0.3);
+  // 简洁毛玻璃背景效果
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 20px;
   padding: 32px 28px;
   box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.1) inset,
-    0 0 30px rgba(170, 131, 255, 0.2);
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
   text-align: center;
   overflow-y: auto;
   overflow-x: hidden;
