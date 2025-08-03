@@ -444,7 +444,115 @@ const Transfer = {
   extraTextColor: 'rgba(255, 255, 255, 0.7)'
 }
 
-// 导出主题配置
+// 白色主题配置
+const lightCommon = {
+  ...common,
+  // 白色主题背景
+  baseColor: '#FFFFFF',
+  bodyColor: '#FFFFFF',
+
+  // 文本颜色 - 浅色主题
+  textColorBase: 'rgba(0, 0, 0, 0.95)',
+  textColor1: 'rgba(0, 0, 0, 0.95)',
+  textColor2: 'rgba(0, 0, 0, 0.7)',
+  textColor3: 'rgba(0, 0, 0, 0.5)',
+  textColorDisabled: 'rgba(0, 0, 0, 0.3)',
+
+  // 图标颜色
+  iconColor: 'rgba(0, 0, 0, 0.7)',
+  iconColorHover: 'rgba(0, 0, 0, 0.9)',
+  iconColorPressed: 'rgba(0, 0, 0, 0.8)',
+  iconColorDisabled: 'rgba(0, 0, 0, 0.3)',
+
+  // 背景色 - 浅色主题
+  cardColor: 'rgba(0, 0, 0, 0.08)',
+  modalColor: 'rgba(255, 255, 255, 0.95)',
+  popoverColor: 'rgba(255, 255, 255, 0.95)',
+  tableColor: 'rgba(0, 0, 0, 0.05)',
+
+  // 边框色
+  borderColor: 'rgba(0, 0, 0, 0.12)',
+  tableHeaderColor: 'rgba(0, 0, 0, 0.08)',
+
+  // 分割线
+  dividerColor: 'rgba(0, 0, 0, 0.12)',
+
+  // 代码色
+  codeColor: 'rgba(0, 0, 0, 0.05)',
+
+  // 标签色
+  tagColor: 'rgba(0, 0, 0, 0.08)',
+
+  // 其他颜色
+  tabColor: 'rgba(0, 0, 0, 0.08)',
+  actionColor: 'rgba(0, 0, 0, 0.08)',
+  hoverColor: 'rgba(0, 0, 0, 0.08)',
+  tableColorHover: 'rgba(0, 0, 0, 0.08)',
+  tableColorStriped: 'rgba(0, 0, 0, 0.03)',
+  pressedColor: 'rgba(0, 0, 0, 0.06)',
+  inputColorDisabled: 'rgba(0, 0, 0, 0.05)',
+  buttonColor2: 'rgba(0, 0, 0, 0.08)',
+  buttonColor2Hover: 'rgba(0, 0, 0, 0.12)',
+  buttonColor2Pressed: 'rgba(0, 0, 0, 0.06)',
+
+  // 阴影 - 浅色主题
+  boxShadow1: '0 1px 2px -2px rgba(0, 0, 0, 0.16), 0 3px 6px 0 rgba(0, 0, 0, 0.12), 0 5px 12px 4px rgba(0, 0, 0, 0.09)',
+  boxShadow2: '0 3px 6px -4px rgba(0, 0, 0, 0.16), 0 6px 16px 0 rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05)',
+  boxShadow3: '0 6px 16px -9px rgba(0, 0, 0, 0.16), 0 9px 28px 0 rgba(0, 0, 0, 0.12), 0 12px 48px 16px rgba(0, 0, 0, 0.05)',
+
+  // 关闭按钮
+  closeColorHover: 'rgba(0, 0, 0, 0.12)',
+  closeColorPressed: 'rgba(0, 0, 0, 0.08)',
+}
+
+// 白色主题卡片配置
+const lightCard = {
+  ...Card,
+  color: 'rgba(0, 0, 0, 0.08)',
+  colorModal: 'rgba(255, 255, 255, 0.95)',
+  colorPopover: 'rgba(255, 255, 255, 0.95)',
+  colorTarget: 'rgba(0, 0, 0, 0.08)',
+  colorEmbedded: 'rgba(0, 0, 0, 0.05)',
+  textColor: 'rgba(0, 0, 0, 0.95)',
+  titleTextColor: 'rgba(0, 0, 0, 0.95)',
+  borderColor: 'rgba(0, 0, 0, 0.12)',
+  actionColor: 'rgba(0, 0, 0, 0.08)',
+  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), 0 0 20px rgba(170, 131, 255, 0.05)',
+}
+
+// 白色主题输入框配置
+const lightInput = {
+  ...Input,
+  color: 'rgba(0, 0, 0, 0.05)',
+  colorFocus: 'rgba(0, 0, 0, 0.08)',
+  colorDisabled: 'rgba(0, 0, 0, 0.03)',
+  textColor: 'rgba(0, 0, 0, 0.95)',
+  textColorDisabled: 'rgba(0, 0, 0, 0.3)',
+  placeholderColor: 'rgba(0, 0, 0, 0.5)',
+  placeholderColorDisabled: 'rgba(0, 0, 0, 0.25)',
+  borderColor: 'rgba(0, 0, 0, 0.15)',
+  borderColorHover: 'rgba(0, 0, 0, 0.25)',
+  borderColorFocus: '#AA83FF',
+  borderColorDisabled: 'rgba(0, 0, 0, 0.1)',
+  boxShadowFocus: '0 0 0 2px rgba(170, 131, 255, 0.2)',
+}
+
+// 白色主题菜单配置
+const lightMenu = {
+  ...Menu,
+  color: 'transparent',
+  itemTextColor: 'rgba(0, 0, 0, 0.95)',
+  itemTextColorHover: 'rgba(0, 0, 0, 0.95)',
+  itemTextColorActive: 'rgba(0, 0, 0, 0.95)',
+  itemTextColorChildActive: 'rgba(0, 0, 0, 0.95)',
+  itemColorHover: 'rgba(0, 0, 0, 0.05)',
+  itemColorActive: 'rgba(170, 131, 255, 0.15)',
+  itemColorActiveHover: 'rgba(170, 131, 255, 0.2)',
+  groupTextColor: 'rgba(0, 0, 0, 0.7)',
+  dividerColor: 'rgba(0, 0, 0, 0.12)'
+}
+
+// 导出深色主题配置
 export const nebulaTheme: GlobalTheme = {
   name: 'nebulaTheme',
   common,
@@ -455,6 +563,22 @@ export const nebulaTheme: GlobalTheme = {
   Form,
   Select,
   Menu,
+  Breadcrumb,
+  Tag,
+  Transfer
+}
+
+// 导出白色主题配置
+export const nebulaLightTheme: GlobalTheme = {
+  name: 'nebulaLightTheme',
+  common: lightCommon,
+  Button,
+  Card: lightCard,
+  Input: lightInput,
+  DataTable,
+  Form,
+  Select,
+  Menu: lightMenu,
   Breadcrumb,
   Tag,
   Transfer

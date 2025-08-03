@@ -1,7 +1,7 @@
 <template>
   <n-config-provider
     :theme="null"
-    :theme-overrides="themeOverrides"
+    :theme-overrides="currentThemeOverrides"
     :locale="zhCN"
     :date-locale="dateZhCN"
   >
@@ -19,21 +19,25 @@
 </template>
 
 <script setup lang="ts">
-import { 
-  NConfigProvider, 
-  NMessageProvider, 
-  NDialogProvider, 
+import { computed } from 'vue'
+import {
+  NConfigProvider,
+  NMessageProvider,
+  NDialogProvider,
   NNotificationProvider,
   NLoadingBarProvider,
   NGlobalStyle,
   zhCN,
   dateZhCN
 } from 'naive-ui'
-// import { nebulaTheme } from '@/config/theme'
 import type { GlobalThemeOverrides } from 'naive-ui'
+import { useThemeStore } from '@/stores/theme'
 
-// 主题覆盖配置 - 基于 Nebula Linear 主题
-const themeOverrides: GlobalThemeOverrides = {
+// 获取主题store
+const themeStore = useThemeStore()
+
+// 深色主题覆盖配置
+const darkThemeOverrides: GlobalThemeOverrides = {
   common: {
     // 使用首页的主题色彩
     primaryColor: '#AA83FF',
@@ -228,6 +232,98 @@ const themeOverrides: GlobalThemeOverrides = {
     extraTextColor: 'rgba(255, 255, 255, 0.7)'
   }
 }
+
+// 白色主题覆盖配置
+const lightThemeOverrides: GlobalThemeOverrides = {
+  common: {
+    // 使用首页的主题色彩
+    primaryColor: '#AA83FF',
+    primaryColorHover: '#B99AFD',
+    primaryColorPressed: '#8F6BFF',
+    primaryColorSuppl: 'rgba(170, 131, 255, 0.1)',
+
+    // 白色背景
+    bodyColor: '#FFFFFF',
+
+    // 玻璃态效果 - 浅色主题
+    cardColor: 'rgba(0, 0, 0, 0.08)',
+    modalColor: 'rgba(255, 255, 255, 0.95)',
+    popoverColor: 'rgba(255, 255, 255, 0.95)',
+
+    // 文本颜色 - 浅色主题
+    textColorBase: 'rgba(0, 0, 0, 0.95)',
+    textColor1: 'rgba(0, 0, 0, 0.95)',
+    textColor2: 'rgba(0, 0, 0, 0.7)',
+    textColor3: 'rgba(0, 0, 0, 0.5)',
+
+    // 边框颜色
+    borderColor: 'rgba(0, 0, 0, 0.12)',
+    dividerColor: 'rgba(0, 0, 0, 0.12)',
+
+    // 圆角
+    borderRadius: '8px',
+    borderRadiusSmall: '4px'
+  },
+
+  // 针对特定组件的覆盖
+  Button: {
+    borderRadiusMedium: '8px',
+    fontWeightStrong: '600'
+  },
+
+  Card: {
+    borderRadius: '12px',
+    paddingMedium: '20px 24px',
+    color: 'rgba(0, 0, 0, 0.08)',
+    textColor: 'rgba(0, 0, 0, 0.95)',
+    titleTextColor: 'rgba(0, 0, 0, 0.95)',
+    borderColor: 'rgba(0, 0, 0, 0.12)',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), 0 0 20px rgba(170, 131, 255, 0.05)'
+  },
+
+  DataTable: {
+    borderRadius: '12px',
+    thFontWeight: '600'
+  },
+
+  Modal: {
+    borderRadius: '12px',
+    color: 'rgba(255, 255, 255, 0.95)',
+    maskColor: 'rgba(0, 0, 0, 0.4)',
+    textColor: 'rgba(0, 0, 0, 0.95)',
+    titleTextColor: 'rgba(0, 0, 0, 0.95)',
+    borderColor: 'rgba(0, 0, 0, 0.15)',
+    boxShadow: '0 12px 32px rgba(0, 0, 0, 0.15), 0 0 20px rgba(170, 131, 255, 0.05)'
+  },
+
+  Tag: {
+    borderRadius: '6px',
+    color: 'rgba(0, 0, 0, 0.08)',
+    textColor: 'rgba(0, 0, 0, 0.95)',
+    border: '1px solid rgba(0, 0, 0, 0.12)',
+    closeIconColor: 'rgba(0, 0, 0, 0.6)',
+    closeIconColorHover: 'rgba(0, 0, 0, 0.9)',
+    closeIconColorPressed: 'rgba(0, 0, 0, 0.7)'
+  },
+
+  Transfer: {
+    borderRadius: '8px',
+    listColor: 'rgba(0, 0, 0, 0.08)',
+    headerColor: 'rgba(0, 0, 0, 0.12)',
+    titleTextColor: 'rgba(0, 0, 0, 0.9)',
+    itemTextColor: 'rgba(0, 0, 0, 0.8)',
+    itemTextColorDisabled: 'rgba(0, 0, 0, 0.3)',
+    borderColor: 'rgba(0, 0, 0, 0.15)',
+    itemColorPending: 'rgba(170, 131, 255, 0.1)',
+    itemColorPendingHover: 'rgba(170, 131, 255, 0.15)',
+    extraTextColor: 'rgba(0, 0, 0, 0.7)'
+  }
+}
+
+// 根据当前主题动态选择主题配置
+const currentThemeOverrides = computed(() => {
+  return themeStore.isDark ? darkThemeOverrides : lightThemeOverrides
+})
 </script>
 
 <style scoped>

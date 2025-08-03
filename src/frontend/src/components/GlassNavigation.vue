@@ -47,7 +47,7 @@
         <div class="nav-actions">
           <!-- 语言切换 -->
           <div class="language-switcher">
-            <button 
+            <button
               class="language-btn interactive"
               @click="toggleLanguage"
               :aria-label="`切换到${currentLanguage === 'zh' ? 'English' : '中文'}`"
@@ -55,6 +55,33 @@
               <span class="language-text">{{ currentLanguage === 'zh' ? '中' : 'EN' }}</span>
               <div class="language-indicator"></div>
             </button>
+          </div>
+
+          <!-- 主题切换 -->
+          <div class="theme-switcher">
+            <n-switch
+              :value="isDarkTheme"
+              @update:value="handleThemeChange"
+              size="medium"
+              :rail-style="railStyle"
+              :checked-value="true"
+              :unchecked-value="false"
+            >
+              <template #checked>
+                <n-icon size="14" color="#FFFFFF">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3a6 6 0 0 0 9 5.2A9 9 0 1 1 8.8 3A6 6 0 0 0 12 3Z"/>
+                  </svg>
+                </n-icon>
+              </template>
+              <template #unchecked>
+                <n-icon size="14" color="#FFD700">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2.25a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-1.5 0V3a.75.75 0 0 1 .75-.75ZM7.5 12a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM18.894 6.166a.75.75 0 0 0-1.06-1.06l-1.591 1.59a.75.75 0 1 0 1.06 1.061l1.591-1.59ZM21.75 12a.75.75 0 0 1-.75.75h-2.25a.75.75 0 0 1 0-1.5H21a.75.75 0 0 1 .75.75ZM17.834 18.894a.75.75 0 0 0 1.06-1.06l-1.59-1.591a.75.75 0 1 0-1.061 1.06l1.59 1.591ZM12 18a.75.75 0 0 1 .75.75V21a.75.75 0 0 1-1.5 0v-2.25A.75.75 0 0 1 12 18ZM7.758 17.303a.75.75 0 0 0-1.061-1.06l-1.591 1.59a.75.75 0 0 0 1.06 1.061l1.591-1.59ZM6 12a.75.75 0 0 1-.75.75H3a.75.75 0 0 1 0-1.5h2.25A.75.75 0 0 1 6 12ZM6.697 7.757a.75.75 0 0 0 1.06-1.06l-1.59-1.591a.75.75 0 0 0-1.061 1.06l1.59 1.591Z"/>
+                  </svg>
+                </n-icon>
+              </template>
+            </n-switch>
           </div>
 
           <!-- 移动端菜单按钮 -->
@@ -82,11 +109,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { NSwitch, NIcon } from 'naive-ui'
+import { useThemeStore } from '@/stores/theme'
 
 const isScrolled = ref(false)
 const isMobileMenuOpen = ref(false)
 const currentLanguage = ref<'zh' | 'en'>('zh')
+
+// 主题store
+const themeStore = useThemeStore()
+
+// 主题状态，使用computed确保响应式
+const isDarkTheme = computed(() => themeStore.isDark)
 
 // 滚动监听
 const handleScroll = () => {
@@ -97,6 +132,28 @@ const handleScroll = () => {
 const toggleLanguage = () => {
   currentLanguage.value = currentLanguage.value === 'zh' ? 'en' : 'zh'
   // 这里可以添加实际的语言切换逻辑
+}
+
+// 主题切换处理
+const handleThemeChange = (value: boolean) => {
+  console.log('Theme switch clicked, new value:', value)
+  themeStore.toggleTheme()
+}
+
+// Switch组件的轨道样式
+const railStyle = ({ focused, checked }: { focused: boolean; checked: boolean }) => {
+  const style: Record<string, string> = {}
+  if (checked) {
+    style.background = 'linear-gradient(135deg, #AA83FF 0%, #8F6BFF 100%)'
+    style.boxShadow = '0 0 8px rgba(170, 131, 255, 0.3)'
+  } else {
+    style.background = 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)'
+    style.boxShadow = '0 0 8px rgba(255, 215, 0, 0.3)'
+  }
+  if (focused) {
+    style.boxShadow = '0 0 0 2px rgba(170, 131, 255, 0.3)'
+  }
+  return style
 }
 
 // 切换移动端菜单
@@ -344,6 +401,43 @@ onUnmounted(() => {
       transition: all var(--transition-base);
       opacity: 0.7;
     }
+  }
+}
+
+.theme-switcher {
+  display: flex;
+  align-items: center;
+
+  :deep(.n-switch) {
+    --n-rail-height: 24px;
+    --n-rail-width: 48px;
+    --n-button-width: 20px;
+    --n-button-height: 20px;
+
+    .n-switch__rail {
+      border: 1px solid var(--glass-border);
+      transition: all var(--transition-base) var(--ease-hover);
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(170, 131, 255, 0.2);
+      }
+    }
+
+    .n-switch__button {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      transition: all var(--transition-base) var(--ease-hover);
+
+      &:hover {
+        transform: scale(1.1);
+      }
+    }
+  }
+
+  @include media-down(md) {
+    order: -1; // 在移动端将主题切换放在最前面
   }
 }
 
