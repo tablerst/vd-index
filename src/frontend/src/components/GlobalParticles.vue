@@ -17,6 +17,22 @@
         class="center-particle"
         :style="getCenterParticleStyle(i)"
       ></div>
+
+      <!-- 深空星云粒子 - 为MembersCircle区域提供深空效果 -->
+      <div
+        v-for="i in deepSpaceParticleCount"
+        :key="`deepspace-${i}`"
+        class="deepspace-particle"
+        :style="getDeepSpaceParticleStyle(i)"
+      ></div>
+
+      <!-- 流动星尘粒子 - 快速移动的小粒子 -->
+      <div
+        v-for="i in stardustParticleCount"
+        :key="`stardust-${i}`"
+        class="stardust-particle"
+        :style="getStardustParticleStyle(i)"
+      ></div>
     </div>
   </Teleport>
 </template>
@@ -29,12 +45,14 @@ interface Props {
   intensity?: number // 粒子强度 0-1
   centerX?: number   // 星际门中心X位置 (视口百分比)
   centerY?: number   // 星际门中心Y位置 (视口百分比)
+  enableDeepSpace?: boolean // 是否启用深空效果
 }
 
 const props = withDefaults(defineProps<Props>(), {
   intensity: 0.8,
   centerX: 25,  // 左侧25%位置
-  centerY: 50   // 垂直居中
+  centerY: 50,  // 垂直居中
+  enableDeepSpace: true
 })
 
 // 响应式状态
@@ -43,6 +61,12 @@ const isActive = ref(false)
 // 计算粒子数量
 const globalParticleCount = computed(() => Math.floor(80 * props.intensity))
 const centerParticleCount = computed(() => Math.floor(40 * props.intensity))
+const deepSpaceParticleCount = computed(() =>
+  props.enableDeepSpace ? Math.floor(60 * props.intensity) : 0
+)
+const stardustParticleCount = computed(() =>
+  props.enableDeepSpace ? Math.floor(30 * props.intensity) : 0
+)
 
 // 生成全局粒子样式
 const getGlobalParticleStyle = (index: number) => {
@@ -116,6 +140,67 @@ const getCenterParticleStyle = (index: number) => {
   }
 }
 
+// 生成深空星云粒子样式
+const getDeepSpaceParticleStyle = (index: number) => {
+  const seed = index * 0.618033988749895
+
+  // 在整个视口范围内分布，但在下半部分（MembersCircle区域）密度更高
+  const x = (Math.sin(seed * 23) * 0.5 + 0.5) * 100
+  const yBias = Math.sin(seed * 29) * 0.3 + 0.7 // 偏向下半部分
+  const y = yBias * 100
+
+  // 大小和颜色变化
+  const size = (Math.sin(seed * 37) * 0.5 + 0.5) * 4 + 2
+  const hue = Math.floor((Math.sin(seed * 41) * 0.5 + 0.5) * 60 + 240) // 蓝紫色调
+  const saturation = Math.floor((Math.sin(seed * 43) * 0.5 + 0.5) * 40 + 60)
+  const lightness = Math.floor((Math.sin(seed * 47) * 0.5 + 0.5) * 30 + 50)
+
+  // 动画参数
+  const duration = (Math.sin(seed * 53) * 0.5 + 0.5) * 8 + 12
+  const delay = (Math.sin(seed * 59) * 0.5 + 0.5) * 5
+
+  return {
+    left: `${x}%`,
+    top: `${y}%`,
+    width: `${size}px`,
+    height: `${size}px`,
+    background: `hsl(${hue}, ${saturation}%, ${lightness}%)`,
+    animationDelay: `${delay}s`,
+    animationDuration: `${duration}s`
+  }
+}
+
+// 生成星尘粒子样式
+const getStardustParticleStyle = (index: number) => {
+  const seed = index * 0.618033988749895
+
+  // 随机分布
+  const x = (Math.sin(seed * 61) * 0.5 + 0.5) * 100
+  const y = (Math.sin(seed * 67) * 0.5 + 0.5) * 100
+
+  // 小尺寸粒子
+  const size = (Math.sin(seed * 71) * 0.5 + 0.5) * 2 + 1
+
+  // 快速移动
+  const duration = (Math.sin(seed * 73) * 0.5 + 0.5) * 3 + 2
+  const delay = (Math.sin(seed * 79) * 0.5 + 0.5) * 3
+
+  // 移动距离
+  const driftX = (Math.sin(seed * 83) * 0.5 + 0.5) * 200 - 100
+  const driftY = (Math.sin(seed * 89) * 0.5 + 0.5) * 200 - 100
+
+  return {
+    left: `${x}%`,
+    top: `${y}%`,
+    width: `${size}px`,
+    height: `${size}px`,
+    animationDelay: `${delay}s`,
+    animationDuration: `${duration}s`,
+    '--drift-x': `${driftX}px`,
+    '--drift-y': `${driftY}px`
+  }
+}
+
 // 生命周期
 onMounted(() => {
   // 延迟激活以确保平滑过渡
@@ -177,6 +262,35 @@ onUnmounted(() => {
   animation: centerOrbit linear infinite;
 }
 
+.deepspace-particle {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(1px);
+  will-change: transform, opacity;
+  animation: deepSpaceFloat linear infinite;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: -100%;
+    width: 300%;
+    height: 300%;
+    background: radial-gradient(circle, currentColor 0%, transparent 60%);
+    border-radius: 50%;
+    opacity: 0.4;
+  }
+}
+
+.stardust-particle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
+  filter: blur(0.2px);
+  will-change: transform;
+  animation: stardustFlow linear infinite;
+}
+
 // 全局粒子漂浮动画
 @keyframes globalFloat {
   0% {
@@ -225,6 +339,42 @@ onUnmounted(() => {
   }
 }
 
+// 深空粒子漂浮动画
+@keyframes deepSpaceFloat {
+  0% {
+    transform: translate(0, 0) scale(0.9);
+    opacity: 0.4;
+  }
+  33% {
+    transform: translate(20px, -30px) scale(1.1);
+    opacity: 0.7;
+  }
+  66% {
+    transform: translate(-15px, 25px) scale(1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate(0, 0) scale(0.9);
+    opacity: 0.4;
+  }
+}
+
+// 星尘流动动画
+@keyframes stardustFlow {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate(var(--drift-x), var(--drift-y)) scale(0.5);
+    opacity: 0.3;
+  }
+  100% {
+    transform: translate(calc(var(--drift-x) * 2), calc(var(--drift-y) * 2)) scale(0);
+    opacity: 0;
+  }
+}
+
 // 响应式优化
 @media (max-width: 768px) {
   .global-particles {
@@ -235,12 +385,20 @@ onUnmounted(() => {
     .center-particle:nth-child(n+21) {
       display: none;
     }
+    .deepspace-particle:nth-child(n+31) {
+      display: none;
+    }
+    .stardust-particle:nth-child(n+16) {
+      display: none;
+    }
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .global-particle,
-  .center-particle {
+  .center-particle,
+  .deepspace-particle,
+  .stardust-particle {
     animation: none;
   }
 }

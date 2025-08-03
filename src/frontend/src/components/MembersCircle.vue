@@ -1,8 +1,5 @@
 <template>
   <section id="members" class="members-galaxy" ref="sectionRef">
-    <!-- 深空背景 -->
-    <DeepSpaceBackground />
-
     <!-- 交互式信息控件 -->
     <GalaxyInfoWidget
       :total-members="totalMembers"
@@ -130,7 +127,6 @@ import { useDeviceDetection } from '../composables/useDeviceDetection'
 import ProgressBar from './ProgressBar.vue'
 import GalaxySlide from './GalaxySlide.vue'
 import GalaxyInfoWidget from './GalaxyInfoWidget.vue'
-import DeepSpaceBackground from './DeepSpaceBackground.vue'
 import PaginationArrows from './PaginationArrows.vue'
 import MemberStarfield from './MemberStarfield.vue'
 import CalendarIcon from './icons/CalendarIcon.vue'
@@ -587,8 +583,26 @@ onUnmounted(() => {
 .members-galaxy {
   position: relative;
   min-height: 100vh;
-  background: var(--base-dark);
+  background: transparent; // 移除独立背景，使用全局背景
   overflow: hidden;
+
+  // 添加微妙的渐变覆盖层，增强深空感
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(63, 125, 251, 0.05) 0%,
+      rgba(170, 131, 255, 0.03) 30%,
+      transparent 70%
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
 }
 
 .galaxy-info {
@@ -698,6 +712,7 @@ onUnmounted(() => {
   position: relative;
   width: 100%;
   height: 100vh;
+  z-index: 1; // 确保内容在背景覆盖层之上
 }
 
 .galaxy-swiper {
