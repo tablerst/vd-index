@@ -242,13 +242,13 @@ const lightThemeOverrides: GlobalThemeOverrides = {
     primaryColorPressed: '#6D28D9', // 按下状态
     primaryColorSuppl: 'rgba(124, 58, 237, 0.12)', // 12% 透明度
 
-    // 白色背景
-    bodyColor: '#FFFFFF',
+    // 稍微暗一些的背景，让绿色更突出
+    bodyColor: '#F8FAFC',           // 浅灰背景，而非纯白
 
     // 玻璃态效果 - 使用实色背景而非透明度
     cardColor: '#F1F5F9',           // 浅灰表面
-    modalColor: 'rgba(255, 255, 255, 0.95)',
-    popoverColor: 'rgba(255, 255, 255, 0.95)',
+    modalColor: 'rgba(248, 250, 252, 0.95)',
+    popoverColor: 'rgba(248, 250, 252, 0.95)',
 
     // 文本颜色 - 使用足够深的颜色确保可读性
     textColorBase: '#1F2937',       // 深灰色，接近黑色

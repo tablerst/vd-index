@@ -447,9 +447,9 @@ const Transfer = {
 // 白色主题配置
 const lightCommon = {
   ...common,
-  // 白色主题背景
-  baseColor: '#FFFFFF',
-  bodyColor: '#FFFFFF',
+  // 浅灰主题背景，让绿色更突出
+  baseColor: '#F8FAFC',
+  bodyColor: '#F8FAFC',
 
   // 文本颜色 - 浅色主题（增强对比度）
   textColorBase: 'rgba(0, 0, 0, 0.88)',

@@ -184,8 +184,8 @@ export const LIGHT_THEME_COLORS: ThemeColors = {
   accentLight: `${THEME_PALETTE.light.accent}20`,        // 12.5% 透明度
 
   // 背景色系统 - 使用OKLCH科学Surface规则
-  baseDark: '#FFFFFF',          // 纯白背景
-  baseLight: '#F8FAFC',         // 极浅灰背景，增加层次
+  baseDark: '#F8FAFC',          // 浅灰背景，让绿色更突出
+  baseLight: '#F1F5F9',         // 稍深的浅灰背景，增加层次
   // 使用OKLCH动态Surface系统 (基于明度0.9的科学计算)
   ...oklchColorSystem.generateSurfaceColors(false, 0.9),
   

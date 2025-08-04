@@ -164,13 +164,30 @@ export class OKLCHColorSystem {
       light: {
         // 使用OKLCH算法生成浅色主题 (同步版本)
         primary: this.darkToLightSync(baseColors.primary),
-        secondary: this.darkToLightSync(baseColors.secondary),
+        // 绿色使用特殊参数，让它在浅色主题下更浓
+        secondary: this.darkToLightSync(baseColors.secondary, {
+          lightnessK: 0.95,           // 进一步降低明度映射系数，让绿色更深
+          minLightness: 0.05,         // 进一步降低最小明度，允许更深的绿色
+          chromaBaseRetention: 0.95,  // 进一步提高色度保留，让绿色更饱和
+          chromaLightnessGain: 0.8    // 进一步降低明度增益，避免过亮
+        }),
         accent: this.darkToLightSync(baseColors.accent),
         // 生成浅色主题的变体
         primaryHover: this.darkToLightSync(this.adjustLightness(baseColors.primary, 0.1)),
         primaryPressed: this.darkToLightSync(this.adjustLightness(baseColors.primary, -0.1)),
-        secondaryHover: this.darkToLightSync(this.adjustLightness(baseColors.secondary, 0.1)),
-        secondaryPressed: this.darkToLightSync(this.adjustLightness(baseColors.secondary, -0.1)),
+        // 绿色变体也使用特殊参数
+        secondaryHover: this.darkToLightSync(this.adjustLightness(baseColors.secondary, 0.1), {
+          lightnessK: 0.95,
+          minLightness: 0.05,
+          chromaBaseRetention: 0.95,
+          chromaLightnessGain: 0.8
+        }),
+        secondaryPressed: this.darkToLightSync(this.adjustLightness(baseColors.secondary, -0.1), {
+          lightnessK: 0.95,
+          minLightness: 0.05,
+          chromaBaseRetention: 0.95,
+          chromaLightnessGain: 0.8
+        }),
         accentHover: this.darkToLightSync(this.adjustLightness(baseColors.accent, 0.1)),
         accentPressed: this.darkToLightSync(this.adjustLightness(baseColors.accent, -0.1))
       }

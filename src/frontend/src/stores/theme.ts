@@ -106,10 +106,10 @@ export const useThemeStore = defineStore('theme', () => {
 
     // 主题特定的渐变和阴影
     if (theme === 'light') {
-      // 浅色主题渐变（增强层次感）
-      root.style.setProperty('--bg-gradient', 'linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 30%, #E9ECEF 70%, #DEE2E6 100%)')
-      root.style.setProperty('--hero-gradient', `radial-gradient(ellipse at center, ${colors.primaryLight} 0%, rgba(255, 255, 255, 0.9) 40%, rgba(248, 249, 250, 0.95) 70%, ${colors.baseDark} 100%)`)
-      root.style.setProperty('--space-gradient', `radial-gradient(ellipse at center, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.98) 30%, rgba(233, 236, 239, 0.99) 60%, ${colors.baseDark} 100%)`)
+      // 浅色主题渐变（使用浅灰背景，让绿色更突出）
+      root.style.setProperty('--bg-gradient', 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 30%, #E2E8F0 70%, #CBD5E1 100%)')
+      root.style.setProperty('--hero-gradient', `radial-gradient(ellipse at center, ${colors.primaryLight} 0%, rgba(248, 250, 252, 0.9) 40%, rgba(241, 245, 249, 0.95) 70%, ${colors.baseDark} 100%)`)
+      root.style.setProperty('--space-gradient', `radial-gradient(ellipse at center, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.98) 30%, rgba(226, 232, 240, 0.99) 60%, ${colors.baseDark} 100%)`)
 
       // 浅色主题阴影（增强深度感）
       root.style.setProperty('--shadow-soft', '0 4px 16px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04)')
