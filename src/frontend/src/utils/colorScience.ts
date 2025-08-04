@@ -196,15 +196,9 @@ export function convertTransparentColor(
   isLightTheme: boolean = false
 ): string {
   if (isLightTheme) {
-    // 浅色主题：使用黑色基调，降低透明度
-    const hsl = hexToHsl(darkColor)
-    const newHsl: HSL = {
-      h: hsl.h,
-      s: hsl.s * 0.6, // 降低饱和度
-      l: Math.min(hsl.l * 0.3, 0.2) // 大幅降低明度
-    }
-    const newAlpha = alpha * 0.6 // 降低透明度
-    const rgb = hslToRgb(newHsl)
+    // 浅色主题：保持原色，适当调整透明度
+    const rgb = hexToRgb(darkColor)
+    const newAlpha = alpha * 1.2 // 稍微增加透明度以增强可见性
     return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${newAlpha})`
   } else {
     // 深色主题：保持原有逻辑
@@ -238,22 +232,23 @@ export function generateLightThemePalette(darkPalette: {
   secondary: string
   accent: string
 }): ThemeColorPalette {
-  const primary = convertToLightTheme(darkPalette.primary, { 
-    lightnessK: 0.65, 
-    saturationK: 0.75,
-    minLightness: 0.75 
+  // 进一步降低亮度、提高饱和度，增强在白色背景下的对比度
+  const primary = convertToLightTheme(darkPalette.primary, {
+    lightnessK: 0.45,   // 0.55 → 0.45  进一步降低亮度
+    saturationK: 0.95,  // 0.85 → 0.95  提高饱和度
+    minLightness: 0.65  // 0.72 → 0.65  降低最小亮度
   })
-  
-  const secondary = convertToLightTheme(darkPalette.secondary, { 
-    lightnessK: 0.7, 
-    saturationK: 0.8,
-    minLightness: 0.8 
+
+  const secondary = convertToLightTheme(darkPalette.secondary, {
+    lightnessK: 0.50,   // 0.60 → 0.50  进一步降低亮度
+    saturationK: 1.0,   // 0.90 → 1.0   保持最大饱和度
+    minLightness: 0.70  // 0.78 → 0.70  降低最小亮度
   })
-  
-  const accent = convertToLightTheme(darkPalette.accent, { 
-    lightnessK: 0.6, 
-    saturationK: 0.7,
-    minLightness: 0.7 
+
+  const accent = convertToLightTheme(darkPalette.accent, {
+    lightnessK: 0.40,   // 0.50 → 0.40  进一步降低亮度
+    saturationK: 0.90,  // 0.80 → 0.90  提高饱和度
+    minLightness: 0.62  // 0.70 → 0.62  降低最小亮度
   })
 
   return {

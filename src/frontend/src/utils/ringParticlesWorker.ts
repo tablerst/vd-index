@@ -29,6 +29,13 @@ let frameSkipCounter = 0;
 let fpsHistory: number[] = [];
 const fpsHistorySize = 30;
 
+// 主题颜色配置
+let themeColors = {
+  primary: '#AA83FF',
+  secondary: '#D4DEC7',
+  accent: '#3F7DFB'
+};
+
 // Polyfill requestAnimationFrame in worker
 self.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 1000 / 60) as any;
 self.cancelAnimationFrame = (id: number) => clearTimeout(id as any);
@@ -151,7 +158,7 @@ function createParticles() {
         angle: tor, angleY: pol, angleZ: deterministicRandom(seed * 53) * Math.PI * 2,
         radius: majorR,
         baseSize: size, baseOpacity: opacity,
-        color: ['#D4DEC7', '#AA83FF', '#3F7DFB'][idx],
+        color: [themeColors.secondary, themeColors.primary, themeColors.accent][idx],
         layer: idx + 1, pulse: deterministicRandom(seed * 57) * Math.PI * 2,
         speed, speedY, speedZ
       });
@@ -292,6 +299,16 @@ function setPerformanceOptions(options: {
   createParticles();
 }
 
+// 更新主题颜色
+function updateThemeColors(colors: { primary: string; secondary: string; accent: string }) {
+  themeColors = { ...colors };
+  // 更新现有粒子的颜色
+  particles.forEach((particle, index) => {
+    const layerIndex = particle.layer - 1;
+    particle.color = [themeColors.secondary, themeColors.primary, themeColors.accent][layerIndex] || themeColors.primary;
+  });
+}
+
 // Message handler
 self.onmessage = (e: MessageEvent) => {
   try {
@@ -306,6 +323,7 @@ self.onmessage = (e: MessageEvent) => {
         console.log('Resizing ring particles worker:', d.width, 'x', d.height);
         return resize(d.width, d.height);
       case 'updateCenter': return updateCenter(d.x, d.y);
+      case 'updateThemeColors': return updateThemeColors(d.colors);
       case 'setPerformance': return setPerformanceOptions(d.options);
       case 'pause': return pause();
       case 'resume': return resume();

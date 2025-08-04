@@ -206,9 +206,9 @@ const breathingHalo = ref<SVGCircleElement>()
 
 // 脉冲环数据
 const pulseRings = ref([
-  { radius: 0.55, color: '#AA83FF', width: 2, opacity: 0 },
-  { radius: 0.65, color: '#D4DEC7', width: 2, opacity: 0 },
-  { radius: 0.75, color: '#3F7DFB', width: 2, opacity: 0 }
+  { radius: 0.55, color: 'var(--primary)', width: 2, opacity: 0 },
+  { radius: 0.65, color: 'var(--secondary)', width: 2, opacity: 0 },
+  { radius: 0.75, color: 'var(--accent-blue)', width: 2, opacity: 0 }
 ])
 
 const pulseRefs = ref<(SVGCircleElement | null)[]>([])

@@ -65,13 +65,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { performanceOptimizer } from '../utils/performanceOptimizer'
 import Ring2D from './Ring2D.vue'
+import { useThemeStore } from '@/stores/theme'
+import { DARK_THEME_COLORS, LIGHT_THEME_COLORS } from '@/utils/themeColors'
 
 const ringContainer = ref<HTMLElement>()
 const ring2d = ref<{ getCenter: () => { x: number; y: number } }>()
 const ringParticlesCanvas = ref<HTMLCanvasElement>()
+
+// 主题支持
+const themeStore = useThemeStore()
 
 // 响应式计算
 const isMobile = computed(() => {
@@ -82,6 +87,11 @@ const isMobile = computed(() => {
 const ringSize = computed(() => {
   if (isMobile.value) return 320
   return 520
+})
+
+// 主题响应的颜色
+const themeColors = computed(() => {
+  return themeStore.isDark ? DARK_THEME_COLORS : LIGHT_THEME_COLORS
 })
 
 // 同步粒子中心位置
@@ -107,6 +117,20 @@ const syncParticleCenter = () => {
 }
 
 let particleWorker: Worker | null = null
+
+// 更新粒子系统的主题颜色
+const updateParticleThemeColors = () => {
+  if (particleWorker) {
+    particleWorker.postMessage({
+      type: 'updateThemeColors',
+      colors: {
+        primary: themeColors.value.primary,
+        secondary: themeColors.value.secondary,
+        accent: themeColors.value.accent
+      }
+    })
+  }
+}
 
 // 检测浏览器兼容性
 const checkBrowserCompatibility = () => {
@@ -177,6 +201,8 @@ const initRingParticles = (): (() => void) => {
         return initRingParticlesFallback()
       } else if (type === 'initialized') {
         console.log('Ring particles worker initialized successfully')
+        // 初始化完成后设置主题颜色
+        updateParticleThemeColors()
       }
     }
 
@@ -361,6 +387,11 @@ onMounted(() => {
     // 初始化完成后同步粒子中心
     setTimeout(syncParticleCenter, 100)
   }, 100)
+
+  // 监听主题变化
+  watch(() => themeStore.isDark, () => {
+    updateParticleThemeColors()
+  })
 })
 
 onUnmounted(() => {

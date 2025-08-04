@@ -175,14 +175,14 @@ export const LIGHT_THEME_COLORS: ThemeColors = {
   accentPressed: LIGHT_THEME_PALETTE.accentPressed,
   accentLight: LIGHT_THEME_PALETTE.accentLight,
   
-  // 背景色系统 - 反转逻辑
+  // 背景色系统 - 反转逻辑，加深表面色透明度
   baseDark: DARK_THEME_BASE.baseLight,  // 白色背景
   baseLight: '#F8F9FA',                 // 浅灰背景
-  surface1: 'rgba(0, 0, 0, 0.04)',      // 极浅的黑色透明
-  surface2: 'rgba(0, 0, 0, 0.06)',
-  surface3: 'rgba(0, 0, 0, 0.08)',
-  surfaceHover: 'rgba(0, 0, 0, 0.12)',
-  surfacePressed: 'rgba(0, 0, 0, 0.03)',
+  surface1: 'rgba(0, 0, 0, 0.06)',      // 0.04 → 0.06  加深透明度
+  surface2: 'rgba(0, 0, 0, 0.08)',      // 保持原值
+  surface3: 'rgba(0, 0, 0, 0.10)',      // 0.08 → 0.10  加深透明度
+  surfaceHover: 'rgba(0, 0, 0, 0.14)',  // 0.12 → 0.14  加深透明度
+  surfacePressed: 'rgba(0, 0, 0, 0.05)', // 0.03 → 0.05  加深透明度
   
   // 文本颜色系统 - 反转
   textPrimary: 'rgba(0, 0, 0, 0.95)',
@@ -204,13 +204,13 @@ export const LIGHT_THEME_COLORS: ThemeColors = {
   glassBgStrong: 'rgba(255, 255, 255, 0.85)',
   glassBorder: 'rgba(0, 0, 0, 0.08)',
   
-  // 特殊效果颜色 - 科学调整
-  starColor: convertTransparentColor('#000000', 0.4, true),
-  nebulaColor: convertTransparentColor(LIGHT_THEME_PALETTE.primary, 0.15, true),
-  cosmicDust: convertTransparentColor(LIGHT_THEME_PALETTE.secondary, 0.1, true),
-  particlePrimary: convertTransparentColor(LIGHT_THEME_PALETTE.primary, 0.7, true),
-  particleSecondary: convertTransparentColor(LIGHT_THEME_PALETTE.secondary, 0.6, true),
-  particleAccent: convertTransparentColor(LIGHT_THEME_PALETTE.accent, 0.5, true),
+  // 特殊效果颜色 - 增强可见性
+  starColor: convertTransparentColor('#000000', 0.6, true),  // 0.4 → 0.6 增强星星可见性
+  nebulaColor: convertTransparentColor(LIGHT_THEME_PALETTE.primary, 0.25, true),  // 0.15 → 0.25 增强光环效果
+  cosmicDust: convertTransparentColor(LIGHT_THEME_PALETTE.secondary, 0.18, true),  // 0.1 → 0.18 增强尘埃效果
+  particlePrimary: convertTransparentColor(LIGHT_THEME_PALETTE.primary, 0.85, true),  // 0.7 → 0.85 增强主粒子
+  particleSecondary: convertTransparentColor(LIGHT_THEME_PALETTE.secondary, 0.75, true),  // 0.6 → 0.75 增强次粒子
+  particleAccent: convertTransparentColor(LIGHT_THEME_PALETTE.accent, 0.65, true),  // 0.5 → 0.65 增强强调粒子
   
   // 状态颜色 - 适度调整
   error: convertToLightTheme('#FF4150', { lightnessK: 0.8, saturationK: 0.8 }),
