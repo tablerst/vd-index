@@ -64,24 +64,14 @@
               <li><a href="#about" class="nav-link">关于我们</a></li>
             </ul>
           </div>
-          
+
           <div class="nav-section">
             <h4 class="nav-title">社区</h4>
             <ul class="nav-list">
-              <li><a href="#" class="nav-link">加入我们</a></li>
-              <li><a href="#" class="nav-link">贡献指南</a></li>
-              <li><a href="#" class="nav-link">行为准则</a></li>
-              <li><a href="#" class="nav-link">帮助中心</a></li>
-            </ul>
-          </div>
-          
-          <div class="nav-section">
-            <h4 class="nav-title">资源</h4>
-            <ul class="nav-list">
-              <li><a href="#" class="nav-link">技术博客</a></li>
-              <li><a href="#" class="nav-link">设计资源</a></li>
-              <li><a href="#" class="nav-link">开源项目</a></li>
-              <li><a href="#" class="nav-link">API 文档</a></li>
+              <li><a href="#" class="nav-link">加入群聊</a></li>
+              <li><a href="#" class="nav-link">群规说明</a></li>
+              <li><a href="#" class="nav-link">活动报名</a></li>
+              <li><a href="#" class="nav-link">意见反馈</a></li>
             </ul>
           </div>
         </div>
@@ -316,9 +306,9 @@ onUnmounted(() => {
 
 .footer-nav {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--spacing-xl);
-  
+
   @include media-down(md) {
     grid-template-columns: 1fr;
     gap: var(--spacing-lg);

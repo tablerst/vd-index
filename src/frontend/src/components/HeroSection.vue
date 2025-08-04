@@ -42,7 +42,11 @@
               </svg>
             </button>
 
-            <button class="secondary-button interactive">
+            <button
+              class="secondary-button interactive"
+              @click="scrollToAbout"
+              aria-label="了解更多关于VRC Division"
+            >
               <span>了解更多</span>
             </button>
           </div>
@@ -368,7 +372,18 @@ let particleCleanup: (() => void) | null = null
 const scrollToMembers = () => {
   const membersSection = document.getElementById('members')
   if (membersSection) {
-    membersSection.scrollIntoView({ 
+    membersSection.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    })
+  }
+}
+
+// 滚动到关于我们区域（Footer）
+const scrollToAbout = () => {
+  const aboutSection = document.getElementById('about')
+  if (aboutSection) {
+    aboutSection.scrollIntoView({
       behavior: 'smooth',
       block: 'start'
     })
