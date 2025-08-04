@@ -9,16 +9,16 @@ import { getThemeColors } from '../utils/themeColors'
 export type ThemeMode = 'dark' | 'light'
 
 export const useThemeStore = defineStore('theme', () => {
-  // 状态
-  const currentTheme = ref<ThemeMode>('dark')
-  
+  // 状态 - 默认为亮色主题
+  const currentTheme = ref<ThemeMode>('light')
+
   // 从localStorage获取保存的主题设置
   const getStoredTheme = (): ThemeMode => {
     try {
       const stored = localStorage.getItem('vd-theme')
-      return (stored === 'light' || stored === 'dark') ? stored : 'dark'
+      return (stored === 'light' || stored === 'dark') ? stored : 'light'
     } catch {
-      return 'dark'
+      return 'light'
     }
   }
   
