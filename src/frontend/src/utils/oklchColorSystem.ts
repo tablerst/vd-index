@@ -10,17 +10,19 @@
  */
 
 // 真正的OKLCH实现 - 使用culori库
-let culoriConverter: any = null
+let culoriOklch: any = null
+let culoriRgb: any = null
 let culoriFormatHex: any = null
 
 // 动态导入culori (支持可选依赖)
 async function initCulori() {
-  if (culoriConverter && culoriFormatHex) return
+  if (culoriOklch && culoriRgb && culoriFormatHex) return
 
   try {
-    // @ts-ignore - 动态导入，类型检查忽略
+    // 正确导入culori的方式
     const culori = await import('culori')
-    culoriConverter = culori.converter
+    culoriOklch = culori.oklch
+    culoriRgb = culori.rgb
     culoriFormatHex = culori.formatHex
   } catch (error) {
     console.warn('culori库未安装，使用近似OKLCH实现')
@@ -91,10 +93,14 @@ export class OKLCHColorSystem {
 
     let oklch: OKLCHColor
 
-    if (culoriConverter) {
+    if (culoriOklch) {
       // 使用真正的OKLCH转换
-      const toOklch = culoriConverter('oklch')
-      oklch = toOklch(darkHex)
+      const oklchColor = culoriOklch(darkHex)
+      oklch = {
+        l: oklchColor.l,
+        c: oklchColor.c,
+        h: oklchColor.h || 0 // 处理无色相的情况
+      }
     } else {
       // 使用近似实现
       oklch = this.hexToOKLCH(darkHex)
@@ -110,10 +116,10 @@ export class OKLCHColorSystem {
     // 3. 色相保持不变 (OKLCH核心优势)
     const newH = oklch.h
 
-    if (culoriFormatHex && culoriConverter) {
+    if (culoriFormatHex && culoriRgb) {
       // 使用真正的OKLCH转换
-      const fromOklch = culoriConverter('srgb')
-      return culoriFormatHex(fromOklch({ l: newL, c: newC, h: newH }))
+      const rgbColor = culoriRgb({ mode: 'oklch', l: newL, c: newC, h: newH })
+      return culoriFormatHex(rgbColor)
     } else {
       // 使用近似实现
       return this.oklchToHex({ l: newL, c: newC, h: newH })
