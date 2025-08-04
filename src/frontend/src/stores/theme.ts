@@ -4,6 +4,7 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
+import { getThemeColors, type ThemeColors } from '../utils/themeColors'
 
 export type ThemeMode = 'dark' | 'light'
 
@@ -36,159 +37,111 @@ export const useThemeStore = defineStore('theme', () => {
     updateCSSVariables(currentTheme.value)
   }
   
-  // 更新CSS变量
+  // 更新CSS变量 - 使用科学配色算法
   const updateCSSVariables = (theme: ThemeMode) => {
     const root = document.documentElement
+    const colors = getThemeColors(theme === 'dark')
 
+    // 核心主题色彩
+    root.style.setProperty('--primary', colors.primary)
+    root.style.setProperty('--primary-hover', colors.primaryHover)
+    root.style.setProperty('--primary-pressed', colors.primaryPressed)
+    root.style.setProperty('--primary-light', colors.primaryLight)
+    root.style.setProperty('--primary-lighter', colors.primaryLighter)
+
+    root.style.setProperty('--secondary', colors.secondary)
+    root.style.setProperty('--secondary-hover', colors.secondaryHover)
+    root.style.setProperty('--secondary-pressed', colors.secondaryPressed)
+    root.style.setProperty('--secondary-light', colors.secondaryLight)
+    root.style.setProperty('--secondary-lighter', colors.secondaryLighter)
+
+    root.style.setProperty('--accent-blue', colors.accent)
+    root.style.setProperty('--accent-blue-hover', colors.accentHover)
+    root.style.setProperty('--accent-blue-pressed', colors.accentPressed)
+    root.style.setProperty('--accent-blue-light', colors.accentLight)
+
+    // 背景色系统
+    root.style.setProperty('--base-dark', colors.baseDark)
+    root.style.setProperty('--base-light', colors.baseLight)
+    root.style.setProperty('--surface-1', colors.surface1)
+    root.style.setProperty('--surface-2', colors.surface2)
+    root.style.setProperty('--surface-3', colors.surface3)
+    root.style.setProperty('--surface-hover', colors.surfaceHover)
+    root.style.setProperty('--surface-pressed', colors.surfacePressed)
+
+    // 文本颜色系统
+    root.style.setProperty('--text-primary', colors.textPrimary)
+    root.style.setProperty('--text-secondary', colors.textSecondary)
+    root.style.setProperty('--text-tertiary', colors.textTertiary)
+    root.style.setProperty('--text-quaternary', colors.textQuaternary)
+    root.style.setProperty('--text-disabled', colors.textDisabled)
+    root.style.setProperty('--text-accent', colors.textAccent)
+    root.style.setProperty('--text-inverse', colors.textInverse)
+
+    // 边框和分割线
+    root.style.setProperty('--border-primary', colors.borderPrimary)
+    root.style.setProperty('--border-secondary', colors.borderSecondary)
+    root.style.setProperty('--border-focus', colors.borderFocus)
+    root.style.setProperty('--divider', colors.divider)
+
+    // 玻璃态效果系统
+    root.style.setProperty('--glass-bg', colors.glassBg)
+    root.style.setProperty('--glass-bg-strong', colors.glassBgStrong)
+    root.style.setProperty('--glass-border', colors.glassBorder)
+    root.style.setProperty('--glass-layer', colors.glassBg)
+
+    // 特殊效果颜色
+    root.style.setProperty('--star-color', colors.starColor)
+    root.style.setProperty('--nebula-color', colors.nebulaColor)
+    root.style.setProperty('--cosmic-dust', colors.cosmicDust)
+    root.style.setProperty('--particle-primary', colors.particlePrimary)
+    root.style.setProperty('--particle-secondary', colors.particleSecondary)
+    root.style.setProperty('--particle-accent', colors.particleAccent)
+
+    // 状态颜色
+    root.style.setProperty('--error-alert', colors.error)
+    root.style.setProperty('--warning', colors.warning)
+    root.style.setProperty('--success', colors.success)
+    root.style.setProperty('--info', colors.info)
+
+    // 主题特定的渐变和阴影
     if (theme === 'light') {
-      // ========== 浅色主题配置 ==========
-
-      // 核心主题色彩（保持不变）
-      root.style.setProperty('--primary', '#AA83FF')
-      root.style.setProperty('--primary-hover', '#B99AFD')
-      root.style.setProperty('--primary-pressed', '#8F6BFF')
-      root.style.setProperty('--primary-light', 'rgba(170, 131, 255, 0.1)')
-      root.style.setProperty('--primary-lighter', 'rgba(170, 131, 255, 0.05)')
-
-      root.style.setProperty('--secondary', '#D4DEC7')
-      root.style.setProperty('--secondary-hover', '#E8F2DB')
-      root.style.setProperty('--secondary-pressed', '#C0CA9F')
-      root.style.setProperty('--secondary-light', 'rgba(212, 222, 199, 0.1)')
-      root.style.setProperty('--secondary-lighter', 'rgba(212, 222, 199, 0.05)')
-
-      root.style.setProperty('--accent-blue', '#3F7DFB')
-      root.style.setProperty('--accent-blue-hover', '#5A8FFC')
-      root.style.setProperty('--accent-blue-pressed', '#2A6BFA')
-      root.style.setProperty('--accent-blue-light', 'rgba(63, 125, 251, 0.1)')
-
-      // 背景色系统
-      root.style.setProperty('--base-dark', '#FFFFFF')
-      root.style.setProperty('--base-light', '#F8F9FA')
-      root.style.setProperty('--surface-1', 'rgba(0, 0, 0, 0.05)')
-      root.style.setProperty('--surface-2', 'rgba(0, 0, 0, 0.08)')
-      root.style.setProperty('--surface-3', 'rgba(0, 0, 0, 0.12)')
-      root.style.setProperty('--surface-hover', 'rgba(0, 0, 0, 0.15)')
-      root.style.setProperty('--surface-pressed', 'rgba(0, 0, 0, 0.06)')
-
-      // 文本颜色系统
-      root.style.setProperty('--text-primary', 'rgba(0, 0, 0, 0.95)')
-      root.style.setProperty('--text-secondary', 'rgba(0, 0, 0, 0.7)')
-      root.style.setProperty('--text-tertiary', 'rgba(0, 0, 0, 0.5)')
-      root.style.setProperty('--text-quaternary', 'rgba(0, 0, 0, 0.3)')
-      root.style.setProperty('--text-disabled', 'rgba(0, 0, 0, 0.2)')
-      root.style.setProperty('--text-accent', '#D4DEC7')
-      root.style.setProperty('--text-inverse', 'rgba(255, 255, 255, 0.95)')
-
-      // 边框和分割线
-      root.style.setProperty('--border-primary', 'rgba(0, 0, 0, 0.12)')
-      root.style.setProperty('--border-secondary', 'rgba(0, 0, 0, 0.08)')
-      root.style.setProperty('--divider', 'rgba(0, 0, 0, 0.12)')
-
-      // 玻璃态效果系统
-      root.style.setProperty('--glass-bg', 'rgba(0, 0, 0, 0.08)')
-      root.style.setProperty('--glass-bg-strong', 'rgba(0, 0, 0, 0.12)')
-      root.style.setProperty('--glass-border', 'rgba(0, 0, 0, 0.12)')
-      root.style.setProperty('--glass-layer', 'rgba(0, 0, 0, 0.08)')
-
-      // 渐变系统 - 浅色主题优化
+      // 浅色主题渐变
       root.style.setProperty('--bg-gradient', 'linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 50%, #DEE2E6 100%)')
-      root.style.setProperty('--hero-gradient', 'radial-gradient(ellipse at center, rgba(170, 131, 255, 0.06) 0%, rgba(248, 249, 250, 0.95) 50%, var(--base-dark) 100%)')
-      root.style.setProperty('--space-gradient', 'radial-gradient(ellipse at center, rgba(248, 249, 250, 0.95) 0%, rgba(233, 236, 239, 0.98) 40%, rgba(222, 226, 230, 0.99) 70%, var(--base-dark) 100%)')
-      root.style.setProperty('--primary-gradient', 'linear-gradient(135deg, #B99AFD 0%, #AA83FF 33%, #8F6BFF 66%)')
-      root.style.setProperty('--secondary-gradient', 'linear-gradient(135deg, #E8F2DB 0%, #D4DEC7 50%, #C0CA9F 100%)')
-      root.style.setProperty('--mixed-gradient', 'linear-gradient(135deg, #AA83FF 0%, #D4DEC7 50%, #AA83FF 100%)')
+      root.style.setProperty('--hero-gradient', `radial-gradient(ellipse at center, ${colors.primaryLight} 0%, rgba(248, 249, 250, 0.95) 50%, ${colors.baseDark} 100%)`)
+      root.style.setProperty('--space-gradient', `radial-gradient(ellipse at center, rgba(248, 249, 250, 0.95) 0%, rgba(233, 236, 239, 0.98) 40%, rgba(222, 226, 230, 0.99) 70%, ${colors.baseDark} 100%)`)
 
-      // 阴影系统（浅色主题适配）
-      root.style.setProperty('--shadow-soft', '0 8px 32px rgba(0, 0, 0, 0.1)')
-      root.style.setProperty('--shadow-medium', '0 12px 48px rgba(0, 0, 0, 0.15)')
-      root.style.setProperty('--shadow-strong', '0 16px 64px rgba(0, 0, 0, 0.2)')
-      root.style.setProperty('--shadow-glow', '0 0 20px rgba(170, 131, 255, 0.2)')
-      root.style.setProperty('--shadow-glow-strong', '0 0 32px rgba(170, 131, 255, 0.3)')
-      root.style.setProperty('--shadow-secondary-glow', '0 0 16px rgba(212, 222, 199, 0.3)')
-      root.style.setProperty('--shadow-mixed-glow', '0 0 24px rgba(170, 131, 255, 0.15), 0 0 12px rgba(212, 222, 199, 0.2)')
-      root.style.setProperty('--shadow-blue-glow', '0 0 20px rgba(63, 125, 251, 0.2)')
-
-      // 特殊效果颜色 - 浅色主题优化
-      root.style.setProperty('--star-color', 'rgba(0, 0, 0, 0.4)')
-      root.style.setProperty('--nebula-color', 'rgba(170, 131, 255, 0.15)')
-      root.style.setProperty('--cosmic-dust', 'rgba(170, 131, 255, 0.1)')
-      root.style.setProperty('--particle-primary', 'rgba(170, 131, 255, 0.6)')
-      root.style.setProperty('--particle-secondary', 'rgba(212, 222, 199, 0.5)')
-      root.style.setProperty('--particle-accent', 'rgba(63, 125, 251, 0.4)')
+      // 浅色主题阴影
+      root.style.setProperty('--shadow-soft', '0 8px 32px rgba(0, 0, 0, 0.08)')
+      root.style.setProperty('--shadow-medium', '0 12px 48px rgba(0, 0, 0, 0.12)')
+      root.style.setProperty('--shadow-strong', '0 16px 64px rgba(0, 0, 0, 0.16)')
+      root.style.setProperty('--shadow-glow', `0 0 20px ${colors.primaryLight}`)
+      root.style.setProperty('--shadow-glow-strong', `0 0 32px ${colors.primaryLight}`)
+      root.style.setProperty('--shadow-secondary-glow', `0 0 16px ${colors.secondaryLight}`)
+      root.style.setProperty('--shadow-mixed-glow', `0 0 24px ${colors.primaryLight}, 0 0 12px ${colors.secondaryLight}`)
+      root.style.setProperty('--shadow-blue-glow', `0 0 20px ${colors.accentLight}`)
 
     } else {
-      // ========== 深色主题配置（恢复默认值）==========
-
-      // 核心主题色彩
-      root.style.setProperty('--primary', '#AA83FF')
-      root.style.setProperty('--primary-hover', '#B99AFD')
-      root.style.setProperty('--primary-pressed', '#8F6BFF')
-      root.style.setProperty('--primary-light', 'rgba(170, 131, 255, 0.1)')
-      root.style.setProperty('--primary-lighter', 'rgba(170, 131, 255, 0.05)')
-
-      root.style.setProperty('--secondary', '#D4DEC7')
-      root.style.setProperty('--secondary-hover', '#E8F2DB')
-      root.style.setProperty('--secondary-pressed', '#C0CA9F')
-      root.style.setProperty('--secondary-light', 'rgba(212, 222, 199, 0.1)')
-      root.style.setProperty('--secondary-lighter', 'rgba(212, 222, 199, 0.05)')
-
-      root.style.setProperty('--accent-blue', '#3F7DFB')
-      root.style.setProperty('--accent-blue-hover', '#5A8FFC')
-      root.style.setProperty('--accent-blue-pressed', '#2A6BFA')
-      root.style.setProperty('--accent-blue-light', 'rgba(63, 125, 251, 0.1)')
-
-      // 背景色系统
-      root.style.setProperty('--base-dark', '#0E1016')
-      root.style.setProperty('--base-light', '#FFFFFF')
-      root.style.setProperty('--surface-1', 'rgba(255, 255, 255, 0.05)')
-      root.style.setProperty('--surface-2', 'rgba(255, 255, 255, 0.08)')
-      root.style.setProperty('--surface-3', 'rgba(255, 255, 255, 0.12)')
-      root.style.setProperty('--surface-hover', 'rgba(255, 255, 255, 0.15)')
-      root.style.setProperty('--surface-pressed', 'rgba(255, 255, 255, 0.06)')
-
-      // 文本颜色系统
-      root.style.setProperty('--text-primary', 'rgba(255, 255, 255, 0.95)')
-      root.style.setProperty('--text-secondary', 'rgba(255, 255, 255, 0.7)')
-      root.style.setProperty('--text-tertiary', 'rgba(255, 255, 255, 0.5)')
-      root.style.setProperty('--text-quaternary', 'rgba(255, 255, 255, 0.3)')
-      root.style.setProperty('--text-disabled', 'rgba(255, 255, 255, 0.2)')
-      root.style.setProperty('--text-accent', '#D4DEC7')
-      root.style.setProperty('--text-inverse', 'rgba(0, 0, 0, 0.95)')
-
-      // 边框和分割线
-      root.style.setProperty('--border-primary', 'rgba(255, 255, 255, 0.12)')
-      root.style.setProperty('--border-secondary', 'rgba(255, 255, 255, 0.08)')
-      root.style.setProperty('--divider', 'rgba(255, 255, 255, 0.12)')
-
-      // 玻璃态效果系统
-      root.style.setProperty('--glass-bg', 'rgba(255, 255, 255, 0.08)')
-      root.style.setProperty('--glass-bg-strong', 'rgba(255, 255, 255, 0.12)')
-      root.style.setProperty('--glass-border', 'rgba(255, 255, 255, 0.12)')
-      root.style.setProperty('--glass-layer', 'rgba(255, 255, 255, 0.08)')
-
-      // 渐变系统
+      // 深色主题渐变
       root.style.setProperty('--bg-gradient', 'linear-gradient(135deg, #0E1016 0%, #1A1D29 50%, #252A3A 100%)')
-      root.style.setProperty('--hero-gradient', 'radial-gradient(ellipse at center, rgba(170, 131, 255, 0.1) 0%, rgba(14, 16, 22, 0.8) 50%, var(--base-dark) 100%)')
-      root.style.setProperty('--space-gradient', 'radial-gradient(ellipse at center, rgba(14, 16, 22, 0.8) 0%, rgba(14, 16, 22, 0.9) 40%, rgba(14, 16, 22, 0.95) 70%, var(--base-dark) 100%)')
+      root.style.setProperty('--hero-gradient', `radial-gradient(ellipse at center, ${colors.primaryLight} 0%, rgba(14, 16, 22, 0.8) 50%, ${colors.baseDark} 100%)`)
+      root.style.setProperty('--space-gradient', `radial-gradient(ellipse at center, rgba(14, 16, 22, 0.8) 0%, rgba(14, 16, 22, 0.9) 40%, rgba(14, 16, 22, 0.95) 70%, ${colors.baseDark} 100%)`)
 
-      // 阴影系统
+      // 深色主题阴影
       root.style.setProperty('--shadow-soft', '0 8px 32px rgba(0, 0, 0, 0.3)')
       root.style.setProperty('--shadow-medium', '0 12px 48px rgba(0, 0, 0, 0.4)')
       root.style.setProperty('--shadow-strong', '0 16px 64px rgba(0, 0, 0, 0.5)')
-      root.style.setProperty('--shadow-glow', '0 0 20px rgba(170, 131, 255, 0.3)')
-      root.style.setProperty('--shadow-glow-strong', '0 0 32px rgba(170, 131, 255, 0.4)')
-      root.style.setProperty('--shadow-secondary-glow', '0 0 16px rgba(212, 222, 199, 0.4)')
-      root.style.setProperty('--shadow-mixed-glow', '0 0 24px rgba(170, 131, 255, 0.2), 0 0 12px rgba(212, 222, 199, 0.3)')
-      root.style.setProperty('--shadow-blue-glow', '0 0 20px rgba(63, 125, 251, 0.3)')
-
-      // 特殊效果颜色 - 深色主题
-      root.style.setProperty('--star-color', 'rgba(255, 255, 255, 0.8)')
-      root.style.setProperty('--nebula-color', 'rgba(170, 131, 255, 0.3)')
-      root.style.setProperty('--cosmic-dust', 'rgba(212, 222, 199, 0.2)')
-      root.style.setProperty('--particle-primary', 'var(--primary)')
-      root.style.setProperty('--particle-secondary', 'var(--secondary)')
-      root.style.setProperty('--particle-accent', 'var(--accent-blue)')
+      root.style.setProperty('--shadow-glow', `0 0 20px ${colors.primaryLight}`)
+      root.style.setProperty('--shadow-glow-strong', `0 0 32px ${colors.primaryLight}`)
+      root.style.setProperty('--shadow-secondary-glow', `0 0 16px ${colors.secondaryLight}`)
+      root.style.setProperty('--shadow-mixed-glow', `0 0 24px ${colors.primaryLight}, 0 0 12px ${colors.secondaryLight}`)
+      root.style.setProperty('--shadow-blue-glow', `0 0 20px ${colors.accentLight}`)
     }
+
+    // 通用渐变（基于当前主题色彩）
+    root.style.setProperty('--primary-gradient', `linear-gradient(135deg, ${colors.primaryHover} 0%, ${colors.primary} 33%, ${colors.primaryPressed} 66%)`)
+    root.style.setProperty('--secondary-gradient', `linear-gradient(135deg, ${colors.secondaryHover} 0%, ${colors.secondary} 50%, ${colors.secondaryPressed} 100%)`)
+    root.style.setProperty('--mixed-gradient', `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 50%, ${colors.primary} 100%)`)
   }
   
   // 计算属性
