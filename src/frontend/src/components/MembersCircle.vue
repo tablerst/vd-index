@@ -752,8 +752,8 @@ onUnmounted(() => {
   max-width: 900px;
   width: 95%;
   max-height: 90vh;
-  // 简洁毛玻璃背景效果
-  background: var(--glass-bg);
+  // 主题感知的背景效果 - 使用更强的玻璃效果确保可读性
+  background: var(--glass-bg-strong);
   backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
   border-radius: 20px;
@@ -791,8 +791,8 @@ onUnmounted(() => {
   position: absolute;
   top: 20px;
   right: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   color: var(--text-secondary);
   cursor: pointer;
   padding: 8px;
@@ -802,8 +802,8 @@ onUnmounted(() => {
 
   &:hover {
     color: var(--text-primary);
-    background: rgba(170, 131, 255, 0.2);
-    border-color: rgba(170, 131, 255, 0.4);
+    background: var(--primary-light);
+    border-color: var(--primary);
     transform: scale(1.05);
   }
 }
@@ -814,10 +814,8 @@ onUnmounted(() => {
   margin: 0 auto 20px;
   border-radius: 50%;
   overflow: hidden;
-  border: 3px solid rgba(170, 131, 255, 0.4);
-  box-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  border: 3px solid var(--primary-light);
+  box-shadow: var(--shadow-medium);
   position: relative;
 
   img {
@@ -837,14 +835,14 @@ onUnmounted(() => {
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 8px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  // 移除文字阴影，在浅色主题下不需要
 }
 
 .profile-subname {
   font-size: 14px;
   color: var(--text-secondary);
   margin-bottom: 16px;
-  opacity: 0.8;
+  // 移除opacity，使用主题变量已经包含透明度
 }
 
 .profile-role {
@@ -859,7 +857,7 @@ onUnmounted(() => {
   gap: 8px;
   margin-top: 20px;
   padding: 12px 16px;
-  background: var(--glass-border);
+  background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: 12px;
   font-size: 14px;
@@ -904,7 +902,7 @@ onUnmounted(() => {
 .member-comments {
   margin-top: 30px;
   padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--glass-border);
   text-align: left;
 
   // 重置评论组件的一些样式以适应弹窗
@@ -926,8 +924,9 @@ onUnmounted(() => {
     padding: 0;
 
     .input-container {
-      background: var(--primary-lighter);
+      background: var(--glass-bg);
       border-color: var(--glass-border);
+      color: var(--text-primary);
     }
   }
 
@@ -939,8 +938,9 @@ onUnmounted(() => {
     }
 
     .comment-box {
-      background: var(--primary-lighter);
+      background: var(--glass-bg);
       border-color: var(--glass-border);
+      color: var(--text-primary);
     }
   }
 }

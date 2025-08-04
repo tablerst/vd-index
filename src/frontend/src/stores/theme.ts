@@ -150,12 +150,28 @@ export const useThemeStore = defineStore('theme', () => {
       root.style.setProperty('--glass-border', colors.glassBorder)
       root.style.setProperty('--glass-shadow', '0 4px 16px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04) inset')
       root.style.setProperty('--modal-overlay', 'rgba(0, 0, 0, 0.6)')
+
+      // 浅色主题角色徽章颜色 - 确保足够对比度
+      root.style.setProperty('--role-owner', 'linear-gradient(135deg, #F59E0B, #D97706)')
+      root.style.setProperty('--role-admin', 'linear-gradient(135deg, #059669, #047857)')
+      root.style.setProperty('--role-member', 'linear-gradient(135deg, #2563EB, #1D4ED8)')
+      root.style.setProperty('--role-owner-shadow', 'rgba(245, 158, 11, 0.3)')
+      root.style.setProperty('--role-admin-shadow', 'rgba(5, 150, 105, 0.3)')
+      root.style.setProperty('--role-member-shadow', 'rgba(37, 99, 235, 0.3)')
     } else {
       // 深色主题：保持原有的白色玻璃效果
       root.style.setProperty('--glass-bg', colors.glassBg)
       root.style.setProperty('--glass-border', colors.glassBorder)
       root.style.setProperty('--glass-shadow', '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset')
       root.style.setProperty('--modal-overlay', 'rgba(0, 0, 0, 0.85)')
+
+      // 深色主题角色徽章颜色 - 保持原有配色
+      root.style.setProperty('--role-owner', 'linear-gradient(135deg, #FFD700, #FFA500)')
+      root.style.setProperty('--role-admin', 'linear-gradient(135deg, #4CAF50, #66BB6A)')
+      root.style.setProperty('--role-member', 'linear-gradient(135deg, #4169E1, #1E90FF)')
+      root.style.setProperty('--role-owner-shadow', 'rgba(255, 215, 0, 0.3)')
+      root.style.setProperty('--role-admin-shadow', 'rgba(76, 175, 80, 0.3)')
+      root.style.setProperty('--role-member-shadow', 'rgba(65, 105, 225, 0.3)')
     }
   }
   

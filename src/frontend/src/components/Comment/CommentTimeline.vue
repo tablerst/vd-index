@@ -182,13 +182,13 @@ const loadMore = () => {
   width: 3px;
   background: linear-gradient(
     to bottom,
-    var(--primary-color, #AA83FF) 0%,
-    var(--secondary-color, #D4DEC7) 50%,
-    var(--accent-color, #3F7DFB) 100%
+    var(--primary) 0%,
+    var(--secondary) 50%,
+    var(--accent-blue) 100%
   );
   border-radius: 2px;
   opacity: 0.8;
-  box-shadow: 0 0 8px rgba(170, 131, 255, 0.3);
+  box-shadow: var(--shadow-glow);
 }
 
 .comments-list {
@@ -237,11 +237,11 @@ const loadMore = () => {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--primary-color, #AA83FF);
-  border: 4px solid rgba(255, 255, 255, 0.9);
+  background: var(--primary);
+  border: 4px solid var(--base-light);
   box-shadow:
-    0 0 0 2px var(--primary-color, #AA83FF),
-    0 0 20px rgba(170, 131, 255, 0.6);
+    0 0 0 2px var(--primary),
+    var(--shadow-glow);
   animation: nodePulse 3s ease-in-out infinite;
 }
 
@@ -252,7 +252,7 @@ const loadMore = () => {
   right: -4px;
   bottom: -4px;
   border-radius: 50%;
-  border: 2px solid var(--primary-color, #AA83FF);
+  border: 2px solid var(--primary);
   opacity: 0;
   animation: pulseRing 2s ease-out infinite;
 }
@@ -261,14 +261,14 @@ const loadMore = () => {
   0%, 100% {
     transform: scale(1);
     box-shadow:
-      0 0 0 2px var(--primary-color, #AA83FF),
-      0 0 20px rgba(170, 131, 255, 0.6);
+      0 0 0 2px var(--primary),
+      var(--shadow-glow);
   }
   50% {
     transform: scale(1.1);
     box-shadow:
-      0 0 0 2px var(--primary-color, #AA83FF),
-      0 0 30px rgba(170, 131, 255, 0.8);
+      0 0 0 2px var(--primary),
+      var(--shadow-glow);
   }
 }
 
@@ -314,8 +314,8 @@ const loadMore = () => {
   height: 2px;
   background: linear-gradient(
     to right,
-    var(--primary-color, #AA83FF) 0%,
-    rgba(170, 131, 255, 0.6) 100%
+    var(--primary) 0%,
+    var(--primary-light) 100%
   );
   margin-left: 0px;
   border-radius: 1px;
@@ -332,8 +332,8 @@ const loadMore = () => {
     bottom: -1px;
     background: linear-gradient(
       to right,
-      var(--primary-color, #AA83FF) 0%,
-      rgba(170, 131, 255, 0.4) 100%
+      var(--primary) 0%,
+      var(--primary-lighter) 100%
     );
     border-radius: 2px;
     opacity: 0;
@@ -344,8 +344,8 @@ const loadMore = () => {
 .comment-box {
   flex: 1;
   margin-left: 8px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   border-radius: 16px;
   padding: 20px;
   backdrop-filter: blur(15px);
@@ -353,12 +353,10 @@ const loadMore = () => {
   position: relative;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(170, 131, 255, 0.4);
+    background: var(--glass-bg-strong);
+    border-color: var(--primary);
     transform: translateY(-3px) translateX(5px);
-    box-shadow:
-      0 12px 35px rgba(0, 0, 0, 0.3),
-      0 0 25px rgba(170, 131, 255, 0.2);
+    box-shadow: var(--shadow-glow);
   }
 }
 
@@ -371,17 +369,17 @@ const loadMore = () => {
 }
 
 .comment-author {
-  color: var(--primary-color, #AA83FF);
+  color: var(--primary);
   font-weight: 500;
 }
 
 .comment-time {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary);
   font-size: 12px;
 }
 
 .comment-content {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary);
   line-height: 1.6;
   margin-bottom: 16px;
   word-wrap: break-word;
@@ -399,10 +397,10 @@ const loadMore = () => {
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--glass-border);
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(255, 255, 255, 0.7);
+  background: var(--surface-1);
+  color: var(--text-secondary);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -420,18 +418,18 @@ const loadMore = () => {
     background: linear-gradient(
       90deg,
       transparent,
-      rgba(255, 255, 255, 0.1),
+      var(--surface-1),
       transparent
     );
     transition: left 0.5s ease;
   }
 
   &:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.3);
-    color: rgba(255, 255, 255, 0.95);
+    background: var(--surface-2);
+    border-color: var(--glass-border);
+    color: var(--text-primary);
     transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-medium);
 
     &::before {
       left: 100%;
@@ -449,10 +447,10 @@ const loadMore = () => {
   }
 
   &.active {
-    background: var(--primary-color, #AA83FF);
-    border-color: var(--primary-color, #AA83FF);
+    background: var(--primary);
+    border-color: var(--primary);
     color: white;
-    box-shadow: 0 0 15px rgba(170, 131, 255, 0.4);
+    box-shadow: var(--shadow-glow);
   }
 }
 
@@ -470,14 +468,14 @@ const loadMore = () => {
 
 .like-btn {
   &.active {
-    background: linear-gradient(135deg, #4CAF50, #45a049);
-    border-color: #4CAF50;
+    background: linear-gradient(135deg, var(--success), #45a049);
+    border-color: var(--success);
     box-shadow: 0 0 15px rgba(76, 175, 80, 0.4);
   }
 
   &:hover:not(.active) {
     border-color: rgba(76, 175, 80, 0.5);
-    color: #4CAF50;
+    color: var(--success);
   }
 
   &:hover .action-icon {
@@ -487,14 +485,14 @@ const loadMore = () => {
 
 .dislike-btn {
   &.active {
-    background: linear-gradient(135deg, #f44336, #d32f2f);
-    border-color: #f44336;
+    background: linear-gradient(135deg, var(--error-alert), #d32f2f);
+    border-color: var(--error-alert);
     box-shadow: 0 0 15px rgba(244, 67, 54, 0.4);
   }
 
   &:hover:not(.active) {
     border-color: rgba(244, 67, 54, 0.5);
-    color: #f44336;
+    color: var(--error-alert);
   }
 
   &:hover .action-icon {
@@ -503,12 +501,12 @@ const loadMore = () => {
 }
 
 .delete-btn {
-  color: #f44336;
+  color: var(--error-alert);
 
   &:hover {
     background: rgba(244, 67, 54, 0.1);
-    border-color: #f44336;
-    color: #ff6b6b;
+    border-color: var(--error-alert);
+    color: var(--error-alert);
   }
 
   &:hover .action-icon {
@@ -523,15 +521,15 @@ const loadMore = () => {
 
 .load-more-btn {
   padding: 12px 24px;
-  border: 1px solid var(--primary-color, #AA83FF);
+  border: 1px solid var(--primary);
   border-radius: 8px;
   background: transparent;
-  color: var(--primary-color, #AA83FF);
+  color: var(--primary);
   cursor: pointer;
   transition: all 0.3s ease;
-  
+
   &:hover {
-    background: var(--primary-color, #AA83FF);
+    background: var(--primary);
     color: white;
   }
   
@@ -544,7 +542,7 @@ const loadMore = () => {
 .empty-state {
   text-align: center;
   padding: 60px 20px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary);
 }
 
 .empty-icon {

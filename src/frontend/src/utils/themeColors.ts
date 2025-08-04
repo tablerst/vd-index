@@ -189,13 +189,13 @@ export const LIGHT_THEME_COLORS: ThemeColors = {
   // 使用OKLCH动态Surface系统 (基于明度0.9的科学计算)
   ...oklchColorSystem.generateSurfaceColors(false, 0.9),
   
-  // 文本颜色系统 - 使用足够深的颜色确保可读性
-  textPrimary: '#1F2937',       // 深灰色，接近黑色，确保最佳可读性
-  textSecondary: '#4B5563',     // 中灰色，良好的次要文本对比度
-  textTertiary: '#6B7280',      // 浅灰色，用于辅助信息
-  textQuaternary: '#9CA3AF',    // 更浅的灰色，用于占位符
-  textDisabled: '#D1D5DB',      // 禁用状态的浅灰色
-  textAccent: '#517029',        // 使用科学优化的绿色作为强调文本
+  // 文本颜色系统 - 使用更深的颜色确保最佳可读性
+  textPrimary: '#000000',       // 纯黑色，确保最佳可读性
+  textSecondary: '#1F2937',     // 深灰色，良好的次要文本对比度
+  textTertiary: '#4B5563',      // 中灰色，用于辅助信息
+  textQuaternary: '#6B7280',    // 浅灰色，用于占位符
+  textDisabled: '#9CA3AF',      // 禁用状态的浅灰色
+  textAccent: '#059669',        // 使用更深的绿色作为强调文本，确保对比度
   textInverse: '#FFFFFF',       // 反向文本（深色背景上的白色）
 
   // 边框和分割线 - 使用足够深的颜色确保可见性
@@ -204,10 +204,10 @@ export const LIGHT_THEME_COLORS: ThemeColors = {
   borderFocus: THEME_PALETTE.light.primary,  // 焦点边框使用OKLCH主色
   divider: '#E5E7EB',           // 分割线颜色
 
-  // 玻璃态效果 - 基于OKLCH Surface规则优化
-  glassBg: 'rgba(248, 250, 252, 0.8)',      // 使用浅灰色玻璃，而非白色
-  glassBgStrong: 'rgba(241, 245, 249, 0.9)', // 更强的玻璃效果
-  glassBorder: 'rgba(203, 213, 225, 0.6)',   // 可见的玻璃边框
+  // 玻璃态效果 - 基于OKLCH Surface规则优化，增强浅色主题层次感
+  glassBg: 'rgba(255, 255, 255, 0.7)',      // 使用白色玻璃，增强层次感
+  glassBgStrong: 'rgba(255, 255, 255, 0.9)', // 更强的玻璃效果
+  glassBorder: 'rgba(203, 213, 225, 0.8)',   // 更明显的玻璃边框
   
   // 特殊效果颜色 - 基于OKLCH算法生成，确保色相一致性
   starColor: 'rgba(107, 114, 128, 0.8)',     // 使用深灰色星星，确保可见性

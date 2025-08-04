@@ -250,11 +250,11 @@ const lightThemeOverrides: GlobalThemeOverrides = {
     modalColor: 'rgba(248, 250, 252, 0.95)',
     popoverColor: 'rgba(248, 250, 252, 0.95)',
 
-    // 文本颜色 - 使用足够深的颜色确保可读性
-    textColorBase: '#1F2937',       // 深灰色，接近黑色
-    textColor1: '#1F2937',          // 主要文本
-    textColor2: '#4B5563',          // 次要文本
-    textColor3: '#6B7280',          // 辅助文本
+    // 文本颜色 - 使用更深的颜色确保最佳可读性
+    textColorBase: '#000000',       // 纯黑色，确保最佳可读性
+    textColor1: '#000000',          // 主要文本使用纯黑色
+    textColor2: '#1F2937',          // 次要文本使用深灰色
+    textColor3: '#4B5563',          // 辅助文本使用中灰色
 
     // 边框颜色 - 使用实色而非透明度
     borderColor: '#D1D5DB',         // 明确的边框色
@@ -275,8 +275,8 @@ const lightThemeOverrides: GlobalThemeOverrides = {
     borderRadius: '12px',
     paddingMedium: '20px 24px',
     color: 'rgba(255, 255, 255, 0.85)',
-    textColor: 'rgba(0, 0, 0, 0.88)',
-    titleTextColor: 'rgba(0, 0, 0, 0.88)',
+    textColor: '#000000',
+    titleTextColor: '#000000',
     borderColor: 'rgba(0, 0, 0, 0.08)',
     boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04) inset, 0 1px 0 rgba(255, 255, 255, 0.8) inset'
   },
@@ -295,8 +295,8 @@ const lightThemeOverrides: GlobalThemeOverrides = {
     borderRadius: '12px',
     color: 'rgba(255, 255, 255, 0.95)',
     maskColor: 'rgba(0, 0, 0, 0.4)',
-    textColor: 'rgba(0, 0, 0, 0.95)',
-    titleTextColor: 'rgba(0, 0, 0, 0.95)',
+    textColor: '#000000',
+    titleTextColor: '#000000',
     borderColor: 'rgba(0, 0, 0, 0.15)',
     boxShadow: '0 12px 32px rgba(0, 0, 0, 0.15), 0 0 20px rgba(170, 131, 255, 0.05)'
   },
@@ -305,7 +305,7 @@ const lightThemeOverrides: GlobalThemeOverrides = {
     borderRadius: '6px',
     // 默认标签
     color: 'rgba(0, 0, 0, 0.08)',
-    textColor: 'rgba(0, 0, 0, 0.95)',
+    textColor: '#000000',
     border: '1px solid rgba(0, 0, 0, 0.12)',
     // 主要标签 - 使用新的紫色
     colorPrimary: 'rgba(124, 58, 237, 0.12)',

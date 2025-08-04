@@ -234,11 +234,11 @@ defineExpose({
   align-items: center;
   justify-content: center;
   gap: 12px;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary);
   font-size: 24px;
   font-weight: 600;
   margin: 0;
-  
+
   .icon-comments::before {
     content: '💬';
     font-size: 28px;
@@ -246,7 +246,7 @@ defineExpose({
 }
 
 .comment-count {
-  color: var(--primary-color, #AA83FF);
+  color: var(--primary);
   font-size: 18px;
   font-weight: 500;
 }
@@ -261,14 +261,14 @@ defineExpose({
   align-items: center;
   justify-content: center;
   padding: 60px 20px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary);
 }
 
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(170, 131, 255, 0.3);
-  border-top: 3px solid var(--primary-color, #AA83FF);
+  border: 3px solid var(--primary-light);
+  border-top: 3px solid var(--primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 16px;

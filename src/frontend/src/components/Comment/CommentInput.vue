@@ -176,16 +176,16 @@ defineExpose({
 }
 
 .input-container {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   border-radius: 16px;
   padding: 20px;
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
-  
+
   &:focus-within {
-    border-color: rgba(170, 131, 255, 0.5);
-    box-shadow: 0 0 20px rgba(170, 131, 255, 0.2);
+    border-color: var(--primary);
+    box-shadow: var(--shadow-glow);
   }
 }
 
@@ -197,7 +197,7 @@ defineExpose({
 }
 
 .input-title {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary);
   font-size: 18px;
   font-weight: 600;
   margin: 0;
@@ -225,25 +225,25 @@ defineExpose({
   min-height: 120px;
   max-height: 300px;
   padding: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.9);
+  background: var(--surface-1);
+  color: var(--text-primary);
   font-size: 14px;
   line-height: 1.6;
   resize: vertical;
   transition: all 0.3s ease;
-  
+
   &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-tertiary);
   }
-  
+
   &:focus {
     outline: none;
-    border-color: rgba(170, 131, 255, 0.5);
-    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--primary);
+    background: var(--surface-2);
   }
-  
+
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
@@ -259,14 +259,14 @@ defineExpose({
 
 .char-count {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.6);
-  
+  color: var(--text-secondary);
+
   .warning {
-    color: #ff9800;
+    color: var(--warning);
   }
-  
+
   .error {
-    color: #f44336;
+    color: var(--error-alert);
   }
 }
 
