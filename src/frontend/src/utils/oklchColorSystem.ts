@@ -45,26 +45,26 @@ interface RGBColor {
  * OKLCH配色系统配置选项
  */
 export interface OKLCHColorOptions {
-  /** 明度映射系数 (Material You推荐: 0.65) */
+  /** 明度降低系数 (0.8 = 降低20%明度，适合浅色主题) */
   lightnessK?: number
-  /** 最小明度阈值 (确保主色够亮: 0.8) */
+  /** 最大明度限制 (0.15 表示最大85%明度，确保适中深度) */
   minLightness?: number
-  /** 色度基础保留率 (防发灰: 0.75) */
+  /** 色度基础保留率 (浅色主题需要更饱和: 0.8) */
   chromaBaseRetention?: number
-  /** 色度明度增益 (浅色增强: 0.25) */
+  /** 色度深度增益 (更深的颜色需要更多饱和度: 0.3) */
   chromaLightnessGain?: number
   /** Surface透明度系数 (层次感: 0.04) */
   surfaceAlphaFactor?: number
 }
 
 /**
- * 默认OKLCH配置 (基于Material You标准)
+ * 默认OKLCH配置 (修正后的浅色主题配色逻辑)
  */
 export const DEFAULT_OKLCH_OPTIONS: Required<OKLCHColorOptions> = {
-  lightnessK: 0.65,           // Material You明度映射系数
-  minLightness: 0.8,          // 确保主色足够亮
-  chromaBaseRetention: 0.75,  // 基础色度保留
-  chromaLightnessGain: 0.25,  // 明度增益
+  lightnessK: 0.8,            // 明度降低系数 (0.8 = 降低20%明度)
+  minLightness: 0.15,         // 最大明度限制 (1-0.15=0.85，确保不超过85%明度)
+  chromaBaseRetention: 0.85,  // 基础色度保留 (浅一些的颜色需要更多饱和度)
+  chromaLightnessGain: 0.25,  // 色度增益 (适中的增益)
   surfaceAlphaFactor: 0.04    // Surface透明度系数
 }
 
@@ -80,6 +80,10 @@ export class OKLCHColorSystem {
 
   /**
    * 深色主题 → 浅色主题转换 (核心算法)
+   *
+   * 正确的逻辑：
+   * - 深色主题：黑色背景 + 亮色元素
+   * - 浅色主题：白色背景 + 深色元素
    *
    * @param darkHex 深色主题颜色 (如: '#AA83FF')
    * @param options 可选的转换参数
@@ -106,12 +110,13 @@ export class OKLCHColorSystem {
       oklch = this.hexToOKLCH(darkHex)
     }
 
-    // 1. Material You明度曲线映射
-    let newL = 1 - (1 - oklch.l) * opts.lightnessK
-    newL = Math.max(newL, opts.minLightness)
+    // 1. 正确的明度映射：浅色主题需要更深的颜色
+    // 原理：深色主题的亮色元素 → 浅色主题的深色元素
+    let newL = oklch.l * opts.lightnessK  // 直接降低明度
+    newL = Math.min(newL, 1 - opts.minLightness)  // 确保不会太亮
 
-    // 2. 智能色度压缩 (防发灰核心算法)
-    const newC = oklch.c * (opts.chromaBaseRetention + opts.chromaLightnessGain * newL)
+    // 2. 智能色度增强 (浅色主题需要更饱和的颜色确保可见性)
+    const newC = oklch.c * (opts.chromaBaseRetention + opts.chromaLightnessGain * (1 - newL))
 
     // 3. 色相保持不变 (OKLCH核心优势)
     const newH = oklch.h
@@ -133,12 +138,12 @@ export class OKLCHColorSystem {
     const opts = { ...this.options, ...options }
     const oklch = this.hexToOKLCH(darkHex)
 
-    // Material You明度曲线映射
-    let newL = 1 - (1 - oklch.l) * opts.lightnessK
-    newL = Math.max(newL, opts.minLightness)
+    // 正确的明度映射：浅色主题需要更深的颜色
+    let newL = oklch.l * opts.lightnessK  // 直接降低明度
+    newL = Math.min(newL, 1 - opts.minLightness)  // 确保不会太亮
 
-    // 智能色度压缩
-    const newC = oklch.c * (opts.chromaBaseRetention + opts.chromaLightnessGain * newL)
+    // 智能色度增强 (浅色主题需要更饱和的颜色确保可见性)
+    const newC = oklch.c * (opts.chromaBaseRetention + opts.chromaLightnessGain * (1 - newL))
 
     return this.oklchToHex({ l: newL, c: newC, h: oklch.h })
   }
@@ -170,30 +175,15 @@ export class OKLCHColorSystem {
       light: {
         // 使用OKLCH算法生成浅色主题 (同步版本)
         primary: this.darkToLightSync(baseColors.primary),
-        // 绿色使用特殊参数，让它在浅色主题下更浓
-        secondary: this.darkToLightSync(baseColors.secondary, {
-          lightnessK: 0.95,           // 进一步降低明度映射系数，让绿色更深
-          minLightness: 0.05,         // 进一步降低最小明度，允许更深的绿色
-          chromaBaseRetention: 0.95,  // 进一步提高色度保留，让绿色更饱和
-          chromaLightnessGain: 0.8    // 进一步降低明度增益，避免过亮
-        }),
+        // 绿色使用特殊参数，让它在浅色主题下更深更饱和
+        secondary: this.darkToLightSync(baseColors.secondary),
         accent: this.darkToLightSync(baseColors.accent),
         // 生成浅色主题的变体
         primaryHover: this.darkToLightSync(this.adjustLightness(baseColors.primary, 0.1)),
         primaryPressed: this.darkToLightSync(this.adjustLightness(baseColors.primary, -0.1)),
         // 绿色变体也使用特殊参数
-        secondaryHover: this.darkToLightSync(this.adjustLightness(baseColors.secondary, 0.1), {
-          lightnessK: 0.95,
-          minLightness: 0.05,
-          chromaBaseRetention: 0.95,
-          chromaLightnessGain: 0.8
-        }),
-        secondaryPressed: this.darkToLightSync(this.adjustLightness(baseColors.secondary, -0.1), {
-          lightnessK: 0.95,
-          minLightness: 0.05,
-          chromaBaseRetention: 0.95,
-          chromaLightnessGain: 0.8
-        }),
+        secondaryHover: this.darkToLightSync(this.adjustLightness(baseColors.secondary, 0.1)),
+        secondaryPressed: this.darkToLightSync(this.adjustLightness(baseColors.secondary, -0.1)),
         accentHover: this.darkToLightSync(this.adjustLightness(baseColors.accent, 0.1)),
         accentPressed: this.darkToLightSync(this.adjustLightness(baseColors.accent, -0.1))
       }
