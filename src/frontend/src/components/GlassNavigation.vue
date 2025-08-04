@@ -144,14 +144,16 @@ const handleThemeChange = (value: boolean) => {
 const railStyle = ({ focused, checked }: { focused: boolean; checked: boolean }) => {
   const style: Record<string, string> = {}
   if (checked) {
-    style.background = 'linear-gradient(135deg, #AA83FF 0%, #8F6BFF 100%)'
-    style.boxShadow = '0 0 8px rgba(170, 131, 255, 0.3)'
+    // 深色主题 - 使用紫色渐变
+    style.background = 'var(--primary-gradient)'
+    style.boxShadow = 'var(--shadow-glow)'
   } else {
+    // 浅色主题 - 使用金色渐变
     style.background = 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)'
     style.boxShadow = '0 0 8px rgba(255, 215, 0, 0.3)'
   }
   if (focused) {
-    style.boxShadow = '0 0 0 2px rgba(170, 131, 255, 0.3)'
+    style.boxShadow = 'var(--shadow-glow)'
   }
   return style
 }
@@ -207,6 +209,7 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 @use '../styles/variables.scss' as *;
+@use '../styles/theme-utils.scss' as *;
 
 .glass-navigation {
   position: fixed;
@@ -223,12 +226,12 @@ onUnmounted(() => {
     left: 0;
     right: 0;
     bottom: 0;
-    @include glass-effect(0.05, 10px);
+    @include theme-glass(0.05, 10px);
     transition: all var(--transition-base);
   }
-  
+
   &--scrolled::before {
-    @include glass-effect(0.08, 14px);
+    @include theme-glass(0.08, 14px);
     border-bottom: var(--border-glass);
   }
 }

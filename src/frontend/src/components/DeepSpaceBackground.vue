@@ -30,7 +30,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { useThemeStore } from '../stores/theme'
 
 const starsCanvas = ref<HTMLCanvasElement>()
 const nebulaCanvas = ref<HTMLCanvasElement>()
@@ -82,6 +83,17 @@ const flowingParticles = ref<FlowingParticle[]>([])
 // 动画控制
 let animationId: number
 let isVisible = true
+
+// 主题store
+const themeStore = useThemeStore()
+
+// 监听主题变化
+watch(() => themeStore.currentTheme, () => {
+  // 主题切换时重新初始化粒子
+  initStars()
+  initNebula()
+  initFlowingParticles()
+})
 
 // 初始化星空粒子
 const initStars = () => {
@@ -158,14 +170,17 @@ const drawStars = () => {
 
     ctx.beginPath()
     ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2)
-    ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity * twinkle})`
+    // 使用CSS变量获取星星颜色
+    const starColor = getComputedStyle(document.documentElement).getPropertyValue('--star-color').trim()
+    const starRgba = starColor.replace('rgba(', '').replace(')', '').split(',')
+    ctx.fillStyle = `rgba(${starRgba[0]}, ${starRgba[1]}, ${starRgba[2]}, ${star.opacity * twinkle})`
     ctx.fill()
 
     // 添加光晕效果
     if (star.size > 1.5) {
       ctx.beginPath()
       ctx.arc(star.x, star.y, star.size * 2, 0, Math.PI * 2)
-      ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity * twinkle * 0.1})`
+      ctx.fillStyle = `rgba(${starRgba[0]}, ${starRgba[1]}, ${starRgba[2]}, ${star.opacity * twinkle * 0.1})`
       ctx.fill()
     }
   })
@@ -333,6 +348,9 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
+@use '../styles/variables.scss' as *;
+@use '../styles/theme-utils.scss' as *;
+
 .deep-space-background {
   position: fixed;
   top: 0;
@@ -349,13 +367,7 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(14, 16, 22, 0.8) 0%,
-    rgba(14, 16, 22, 0.9) 40%,
-    rgba(14, 16, 22, 0.95) 70%,
-    var(--base-dark) 100%
-  );
+  @include gradient-bg('space');
 }
 
 .stars-canvas,

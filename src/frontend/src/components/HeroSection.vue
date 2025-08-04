@@ -371,6 +371,7 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 @use '../styles/variables.scss' as *;
+@use '../styles/theme-utils.scss' as *;
 
 .hero-section {
   position: relative;
@@ -380,8 +381,8 @@ onUnmounted(() => {
   justify-content: center;
   overflow: hidden;
   background: var(--base-dark);
-  
-  // 渐变背景
+
+  // 主题感知的渐变背景
   &::before {
     content: '';
     position: absolute;
@@ -389,12 +390,7 @@ onUnmounted(() => {
     left: 0;
     right: 0;
     bottom: 0;
-    background: radial-gradient(
-      ellipse at center,
-      rgba(170, 131, 255, 0.1) 0%,
-      rgba(14, 16, 22, 0.8) 50%,
-      var(--base-dark) 100%
-    );
+    @include gradient-bg('hero');
     z-index: 1;
   }
 }

@@ -38,7 +38,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { useThemeStore } from '../stores/theme'
 
 // Props
 interface Props {
@@ -53,6 +54,18 @@ const props = withDefaults(defineProps<Props>(), {
   centerX: 25,  // 左侧25%位置
   centerY: 50,  // 垂直居中
   enableDeepSpace: true
+})
+
+// 主题store
+const themeStore = useThemeStore()
+
+// 监听主题变化，重新计算粒子样式
+watch(() => themeStore.currentTheme, () => {
+  // 主题切换时，强制重新渲染粒子
+  isActive.value = false
+  setTimeout(() => {
+    isActive.value = true
+  }, 100)
 })
 
 // 响应式状态
@@ -101,7 +114,7 @@ const getGlobalParticleStyle = (index: number) => {
     animationDuration: `${duration}s`,
     '--drift-x': `${driftX}px`,
     '--drift-y': `${driftY}px`,
-    '--particle-color': distanceFromCenter > 0.5 ? 'var(--primary)' : 'var(--secondary)'
+    '--particle-color': distanceFromCenter > 0.5 ? 'var(--particle-primary)' : 'var(--particle-secondary)'
   }
 }
 
@@ -234,7 +247,7 @@ onUnmounted(() => {
 .global-particle {
   position: absolute;
   border-radius: 50%;
-  background: var(--particle-color, var(--primary));
+  background: var(--particle-color, var(--particle-primary));
   filter: blur(0.5px);
   will-change: transform, opacity;
   animation: globalFloat linear infinite;
@@ -248,15 +261,15 @@ onUnmounted(() => {
     height: 200%;
     background: radial-gradient(circle, currentColor 0%, transparent 70%);
     border-radius: 50%;
-    opacity: 0.3;
+    opacity: 0.2;
   }
 }
 
 .center-particle {
   position: absolute;
   border-radius: 50%;
-  background: var(--secondary);
-  box-shadow: 0 0 8px var(--secondary);
+  background: var(--particle-secondary);
+  box-shadow: 0 0 8px var(--particle-secondary);
   filter: blur(0.3px);
   will-change: transform;
   animation: centerOrbit linear infinite;
@@ -265,9 +278,11 @@ onUnmounted(() => {
 .deepspace-particle {
   position: absolute;
   border-radius: 50%;
+  background: var(--particle-accent);
   filter: blur(1px);
   will-change: transform, opacity;
   animation: deepSpaceFloat linear infinite;
+  opacity: 0.6;
 
   &::before {
     content: '';
@@ -278,17 +293,18 @@ onUnmounted(() => {
     height: 300%;
     background: radial-gradient(circle, currentColor 0%, transparent 60%);
     border-radius: 50%;
-    opacity: 0.4;
+    opacity: 0.3;
   }
 }
 
 .stardust-particle {
   position: absolute;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--particle-primary);
   filter: blur(0.2px);
   will-change: transform;
   animation: stardustFlow linear infinite;
+  opacity: 0.7;
 }
 
 // 全局粒子漂浮动画

@@ -35,6 +35,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useDeviceDetection } from '../composables/useDeviceDetection'
+import { useThemeStore } from '../stores/theme'
 import { performanceProfiler } from '../utils/performanceProfiler'
 import { DynamicConnectionSystem } from '../utils/dynamicConnectionSystem'
 import type { Member } from '../stores/members'
@@ -53,17 +54,26 @@ interface Props {
 }
 
 /* ======== 连线样式参数 ======== */
-const CONNECTION_COLORS = [
-  { r: 170, g: 131, b: 255 },  // --primary: #AA83FF
-  { r: 212, g: 222, b: 199 },  // --secondary: #D4DEC7
-  { r: 63, g: 125, b: 251 }    // --accent-blue: #3F7DFB
-]
+// 从CSS变量获取主题颜色
+const getThemeColors = () => {
+  const root = getComputedStyle(document.documentElement)
+  return [
+    { r: 170, g: 131, b: 255 },  // --primary: #AA83FF
+    { r: 212, g: 222, b: 199 },  // --secondary: #D4DEC7
+    { r: 63, g: 125, b: 251 }    // --accent-blue: #3F7DFB
+  ]
+}
+
+const CONNECTION_COLORS = getThemeColors()
 // ===============================
 
 const props = defineProps<Props>()
 
 // 设备检测
 const { responsiveConfig, deviceInfo } = useDeviceDetection()
+
+// 主题store
+const themeStore = useThemeStore()
 
 const slideRef = ref<HTMLElement>()
 const connectionsCanvas = ref<HTMLCanvasElement>()
@@ -420,6 +430,14 @@ watch(() => deviceInfo.value.type, (newType) => {
   })
 
   // 重置系统以应用新配置
+  connectionSystem.reset()
+})
+
+// 监听主题变化，更新连接线颜色
+watch(() => themeStore.currentTheme, () => {
+  // 主题切换时重新获取颜色配置
+  const CONNECTION_COLORS = getThemeColors()
+  // 重置连接系统以应用新颜色
   connectionSystem.reset()
 })
 

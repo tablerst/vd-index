@@ -10,6 +10,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, inject, watch } from 'vue'
+import { useThemeStore } from '../stores/theme'
 import { performanceProfiler } from '../utils/performanceProfiler'
 
 const pointerRef = ref<HTMLElement>()
@@ -33,6 +34,9 @@ const SPEED_THRESHOLD = 50
 
 // 模态框状态监听
 const modalState = inject('modalState', ref(false))
+
+// 主题store
+const themeStore = useThemeStore()
 
 // 监听模态框状态变化
 watch(modalState, (isOpen: boolean) => {
@@ -320,6 +324,7 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 @use '../styles/variables.scss' as *;
+@use '../styles/theme-utils.scss' as *;
 
 .custom-pointer {
   position: fixed;
@@ -329,7 +334,7 @@ onUnmounted(() => {
   height: 20px;
   pointer-events: none;
   z-index: 9999;
-  mix-blend-mode: difference;
+  // 移除 mix-blend-mode，改用主题感知的颜色
   opacity: 1;
   transition: opacity 0.2s ease;
   will-change: transform, opacity;
@@ -346,17 +351,18 @@ onUnmounted(() => {
   left: 50%;
   width: 8px;
   height: 8px;
-  background: var(--secondary);
+  background: var(--particle-secondary);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   transition: all 0.86s var(--ease-pointer);
   animation: breathe 3s ease-in-out infinite;
+  box-shadow: 0 0 8px var(--particle-secondary);
 
   // 按下状态
   &--pressed {
     transform: translate(-50%, -50%) scale(0.75);
-    background: var(--primary);
-    box-shadow: 0 0 20px var(--primary);
+    background: var(--particle-primary);
+    box-shadow: 0 0 20px var(--particle-primary);
   }
 }
 
@@ -368,8 +374,8 @@ onUnmounted(() => {
   height: 40px;
   background: radial-gradient(
     circle,
-    rgba(212, 222, 199, 0.3) 0%,
-    rgba(212, 222, 199, 0.1) 50%,
+    var(--secondary-light) 0%,
+    var(--secondary-lighter) 50%,
     transparent 100%
   );
   border-radius: 50%;
@@ -383,8 +389,8 @@ onUnmounted(() => {
     height: 60px;
     background: radial-gradient(
       circle,
-      rgba(170, 131, 255, 0.4) 0%,
-      rgba(170, 131, 255, 0.2) 50%,
+      var(--primary-light) 0%,
+      var(--primary-lighter) 50%,
       transparent 100%
     );
   }
@@ -395,8 +401,8 @@ onUnmounted(() => {
   .pointer-dot {
     width: 12px;
     height: 12px;
-    background: var(--primary);
-    box-shadow: 0 0 15px var(--primary);
+    background: var(--particle-primary);
+    box-shadow: 0 0 15px var(--particle-primary);
   }
 
   .pointer-glow {
@@ -404,8 +410,8 @@ onUnmounted(() => {
     height: 50px;
     background: radial-gradient(
       circle,
-      rgba(170, 131, 255, 0.4) 0%,
-      rgba(170, 131, 255, 0.2) 50%,
+      var(--primary-light) 0%,
+      var(--primary-lighter) 50%,
       transparent 100%
     );
   }

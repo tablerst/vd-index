@@ -120,29 +120,29 @@ table {
   border: 0;
 }
 
-// 滚动条样式
+// 主题感知的滚动条样式
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-1);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--glass-bg);
+  background: var(--surface-3);
   border-radius: var(--radius-full);
-  
+
   &:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--surface-hover);
   }
 }
 
 // Firefox 滚动条
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--glass-bg) rgba(255, 255, 255, 0.05);
+  scrollbar-color: var(--surface-3) var(--surface-1);
 }
 
 // 自定义光标全局样式 - 确保所有元素都不显示默认光标

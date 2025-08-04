@@ -583,6 +583,7 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 @use '../styles/variables.scss' as *;
+@use '../styles/theme-utils.scss' as *;
 
 .members-galaxy {
   position: relative;
@@ -600,8 +601,8 @@ onUnmounted(() => {
     bottom: 0;
     background: radial-gradient(
       ellipse at center,
-      rgba(63, 125, 251, 0.05) 0%,
-      rgba(170, 131, 255, 0.03) 30%,
+      var(--accent-blue-light) 0%,
+      var(--primary-lighter) 30%,
       transparent 70%
     );
     pointer-events: none;
@@ -885,31 +886,19 @@ onUnmounted(() => {
 }
 
 .role-badge {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  @include role-badge('member');
 }
 
 .role-badge.role-0 {
-  background: linear-gradient(135deg, #FFD700, #FFA500);
-  color: #000;
-  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+  @include role-badge('owner');
 }
 
 .role-badge.role-1 {
-  background: linear-gradient(135deg, #4CAF50, #66BB6A);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+  @include role-badge('admin');
 }
 
 .role-badge.role-2 {
-  background: linear-gradient(135deg, #4169E1, #1E90FF);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(65, 105, 225, 0.3);
+  @include role-badge('member');
 }
 
 // 评论区域样式

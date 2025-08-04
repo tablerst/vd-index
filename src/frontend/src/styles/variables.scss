@@ -5,39 +5,97 @@
 // 基于 DESIGN.md 中的最终确认方案
 
 :root {
-  // 主题色彩 - 默认深色主题
+  // ========== 核心主题色彩 ==========
   // 注意：这些变量会通过 stores/theme.ts 动态更新以支持主题切换
   --primary: #AA83FF;
-  --secondary: #D4DEC7;
-  --base-dark: #0E1016;
-  --glass-layer: rgba(255, 255, 255, 0.08);
-  --accent-blue: #3F7DFB;
-  --error-alert: #FF4150;
+  --primary-hover: #B99AFD;
+  --primary-pressed: #8F6BFF;
+  --primary-light: rgba(170, 131, 255, 0.1);
+  --primary-lighter: rgba(170, 131, 255, 0.05);
 
-  // 渐变基准
+  --secondary: #D4DEC7;
+  --secondary-hover: #E8F2DB;
+  --secondary-pressed: #C0CA9F;
+  --secondary-light: rgba(212, 222, 199, 0.1);
+  --secondary-lighter: rgba(212, 222, 199, 0.05);
+
+  --accent-blue: #3F7DFB;
+  --accent-blue-hover: #5A8FFC;
+  --accent-blue-pressed: #2A6BFA;
+  --accent-blue-light: rgba(63, 125, 251, 0.1);
+
+  --error-alert: #FF4150;
+  --warning: #FFB020;
+  --success: #4CAF50;
+  --info: #2196F3;
+
+  // ========== 背景色系统 ==========
+  --base-dark: #0E1016;
+  --base-light: #FFFFFF;
+  --surface-1: rgba(255, 255, 255, 0.05);
+  --surface-2: rgba(255, 255, 255, 0.08);
+  --surface-3: rgba(255, 255, 255, 0.12);
+  --surface-hover: rgba(255, 255, 255, 0.15);
+  --surface-pressed: rgba(255, 255, 255, 0.06);
+
+  // ========== 文本颜色系统 ==========
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-tertiary: rgba(255, 255, 255, 0.5);
+  --text-quaternary: rgba(255, 255, 255, 0.3);
+  --text-disabled: rgba(255, 255, 255, 0.2);
+  --text-accent: var(--secondary);
+  --text-inverse: rgba(0, 0, 0, 0.95);
+
+  // ========== 边框和分割线 ==========
+  --border-primary: rgba(255, 255, 255, 0.12);
+  --border-secondary: rgba(255, 255, 255, 0.08);
+  --border-focus: var(--primary);
+  --border-error: var(--error-alert);
+  --divider: rgba(255, 255, 255, 0.12);
+
+  // ========== 玻璃态效果系统 ==========
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-bg-strong: rgba(255, 255, 255, 0.12);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-blur: blur(14px);
+  --glass-layer: rgba(255, 255, 255, 0.08);
+
+  // ========== 渐变系统 ==========
   --primary-gradient: linear-gradient(135deg, #B99AFD 0%, #AA83FF 33%, #8F6BFF 66%);
   --secondary-gradient: linear-gradient(135deg, #E8F2DB 0%, #D4DEC7 50%, #C0CA9F 100%);
   --mixed-gradient: linear-gradient(135deg, #AA83FF 0%, #D4DEC7 50%, #AA83FF 100%);
   --bg-gradient: linear-gradient(135deg, #0E1016 0%, #1A1D29 50%, #252A3A 100%);
+  --hero-gradient: radial-gradient(ellipse at center, rgba(170, 131, 255, 0.1) 0%, rgba(14, 16, 22, 0.8) 50%, var(--base-dark) 100%);
+  --space-gradient: radial-gradient(ellipse at center, rgba(14, 16, 22, 0.8) 0%, rgba(14, 16, 22, 0.9) 40%, rgba(14, 16, 22, 0.95) 70%, var(--base-dark) 100%);
 
-  // 文本颜色 - 深色主题
-  --text-primary: rgba(255, 255, 255, 0.95);
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --text-muted: rgba(255, 255, 255, 0.5);
-  --text-accent: var(--secondary);
-
-  // 玻璃态效果 - 深色主题
-  --glass-bg: rgba(255, 255, 255, 0.08);
-  --glass-border: rgba(255, 255, 255, 0.12);
-  --glass-blur: blur(14px);
-  
-  // 阴影
+  // ========== 阴影系统 ==========
   --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --shadow-medium: 0 12px 48px rgba(0, 0, 0, 0.4);
+  --shadow-strong: 0 16px 64px rgba(0, 0, 0, 0.5);
   --shadow-glow: 0 0 20px rgba(170, 131, 255, 0.3);
-  --shadow-green-glow: 0 0 16px rgba(212, 222, 199, 0.4);
+  --shadow-glow-strong: 0 0 32px rgba(170, 131, 255, 0.4);
+  --shadow-secondary-glow: 0 0 16px rgba(212, 222, 199, 0.4);
   --shadow-mixed-glow: 0 0 24px rgba(170, 131, 255, 0.2), 0 0 12px rgba(212, 222, 199, 0.3);
-  
-  // 边框
+  --shadow-blue-glow: 0 0 20px rgba(63, 125, 251, 0.3);
+
+  // ========== 特殊效果颜色 ==========
+  --particle-primary: var(--primary);
+  --particle-secondary: var(--secondary);
+  --particle-accent: var(--accent-blue);
+  --star-color: rgba(255, 255, 255, 0.8);
+  --nebula-color: rgba(170, 131, 255, 0.3);
+  --cosmic-dust: rgba(212, 222, 199, 0.2);
+
+  // ========== 角色徽章颜色 ==========
+  --role-owner: linear-gradient(135deg, #FFD700, #FFA500);
+  --role-admin: linear-gradient(135deg, #4CAF50, #66BB6A);
+  --role-member: linear-gradient(135deg, #4169E1, #1E90FF);
+  --role-owner-shadow: rgba(255, 215, 0, 0.3);
+  --role-admin-shadow: rgba(76, 175, 80, 0.3);
+  --role-member-shadow: rgba(65, 105, 225, 0.3);
+
+  // ========== 边框预设 ==========
   --border-glass: 1px solid var(--glass-border);
   --border-primary: 1px solid var(--primary);
   --border-secondary: 1px solid var(--secondary);
@@ -143,6 +201,128 @@ $breakpoints: (
         @content;
       }
     }
+  }
+}
+
+// ========== 主题系统 SCSS Mixin ==========
+
+// 玻璃态效果 mixin
+@mixin glass-effect($opacity: 0.08, $blur: 14px, $border-opacity: 0.12) {
+  background: rgba(255, 255, 255, $opacity);
+  backdrop-filter: blur($blur);
+  -webkit-backdrop-filter: blur($blur);
+  border: 1px solid rgba(255, 255, 255, $border-opacity);
+}
+
+// 主题感知的玻璃态效果
+@mixin theme-glass($opacity: 0.08, $blur: 14px) {
+  background: var(--glass-bg);
+  backdrop-filter: blur($blur);
+  -webkit-backdrop-filter: blur($blur);
+  border: 1px solid var(--glass-border);
+}
+
+// 渐变背景 mixin
+@mixin gradient-bg($type: 'primary') {
+  @if $type == 'primary' {
+    background: var(--primary-gradient);
+  } @else if $type == 'secondary' {
+    background: var(--secondary-gradient);
+  } @else if $type == 'mixed' {
+    background: var(--mixed-gradient);
+  } @else if $type == 'hero' {
+    background: var(--hero-gradient);
+  } @else if $type == 'space' {
+    background: var(--space-gradient);
+  } @else {
+    background: var(--bg-gradient);
+  }
+}
+
+// 发光效果 mixin
+@mixin glow-effect($color: 'primary', $intensity: 'medium') {
+  @if $color == 'primary' {
+    @if $intensity == 'soft' {
+      box-shadow: var(--shadow-glow);
+    } @else if $intensity == 'strong' {
+      box-shadow: var(--shadow-glow-strong);
+    } @else {
+      box-shadow: var(--shadow-glow);
+    }
+  } @else if $color == 'secondary' {
+    box-shadow: var(--shadow-secondary-glow);
+  } @else if $color == 'blue' {
+    box-shadow: var(--shadow-blue-glow);
+  } @else if $color == 'mixed' {
+    box-shadow: var(--shadow-mixed-glow);
+  }
+}
+
+// 角色徽章样式 mixin
+@mixin role-badge($role: 'member') {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  @if $role == 'owner' {
+    background: var(--role-owner);
+    color: #000;
+    box-shadow: 0 2px 8px var(--role-owner-shadow);
+  } @else if $role == 'admin' {
+    background: var(--role-admin);
+    color: #fff;
+    box-shadow: 0 2px 8px var(--role-admin-shadow);
+  } @else {
+    background: var(--role-member);
+    color: #fff;
+    box-shadow: 0 2px 8px var(--role-member-shadow);
+  }
+}
+
+// 主题感知的文本颜色
+@mixin theme-text($level: 'primary') {
+  @if $level == 'primary' {
+    color: var(--text-primary);
+  } @else if $level == 'secondary' {
+    color: var(--text-secondary);
+  } @else if $level == 'tertiary' {
+    color: var(--text-tertiary);
+  } @else if $level == 'muted' {
+    color: var(--text-quaternary);
+  } @else if $level == 'accent' {
+    color: var(--text-accent);
+  }
+}
+
+// 主题感知的表面颜色
+@mixin theme-surface($level: 1) {
+  @if $level == 1 {
+    background: var(--surface-1);
+  } @else if $level == 2 {
+    background: var(--surface-2);
+  } @else if $level == 3 {
+    background: var(--surface-3);
+  }
+}
+
+// 粒子颜色函数
+@function particle-color($type: 'primary') {
+  @if $type == 'primary' {
+    @return var(--particle-primary);
+  } @else if $type == 'secondary' {
+    @return var(--particle-secondary);
+  } @else if $type == 'accent' {
+    @return var(--particle-accent);
+  } @else if $type == 'star' {
+    @return var(--star-color);
+  } @else if $type == 'nebula' {
+    @return var(--nebula-color);
+  } @else {
+    @return var(--cosmic-dust);
   }
 }
 
