@@ -587,19 +587,27 @@ onUnmounted(() => {
     --n-button-height: 20px;
 
     .n-switch__rail {
-      border: 1px solid var(--glass-border);
+      // 移除边框避免白色像素点问题
+      border: none;
       // 移除CSS transition，使用GSAP控制动效
       transition: none;
       will-change: transform, box-shadow;
+      // 确保圆角正确
+      border-radius: 12px;
     }
 
     .n-switch__button {
       background: var(--glass-bg);
       backdrop-filter: var(--glass-blur);
-      border: 1px solid var(--glass-border);
+      // 移除边框避免白色像素点问题
+      border: none;
       // 移除CSS transition，使用GSAP控制动效
       transition: none;
       will-change: transform;
+      // 确保圆角正确
+      border-radius: 10px;
+      // 添加轻微阴影增强视觉效果
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     }
   }
 

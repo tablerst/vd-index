@@ -549,23 +549,50 @@ onUnmounted(() => {
   width: 48px;
   height: 48px;
   border-radius: var(--radius-full);
-  @include glass-effect();
+  // 使用自定义玻璃态效果，确保圆形
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: none; // 移除边框确保完美圆形
   color: var(--text-primary);
   transition: all var(--transition-base) var(--ease-hover);
-  
+  // 添加flex布局确保内容居中
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  // 确保按钮保持圆形
+  flex-shrink: 0;
+
+  // SVG图标样式
+  svg {
+    width: 24px;
+    height: 24px;
+    transition: all var(--transition-base);
+    flex-shrink: 0;
+  }
+
   &:hover:not(:disabled) {
     @include magnetic-hover(4px);
     box-shadow: var(--shadow-glow);
   }
-  
+
   &:disabled {
     opacity: 0.3;
     cursor: not-allowed;
   }
-  
+
   @include media-down(sm) {
     width: 40px;
     height: 40px;
+    // 确保移动端也保持圆形
+    min-width: 40px;
+    min-height: 40px;
+
+    // 移动端调整SVG图标尺寸
+    svg {
+      width: 18px;
+      height: 18px;
+    }
   }
 }
 
