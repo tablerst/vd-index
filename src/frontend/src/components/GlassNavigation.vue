@@ -58,8 +58,9 @@
           </div>
 
           <!-- 主题切换 -->
-          <div class="theme-switcher">
+          <div class="theme-switcher" ref="themeSwitcherRef">
             <n-switch
+              ref="switchRef"
               :value="isDarkTheme"
               @update:value="handleThemeChange"
               size="medium"
@@ -109,13 +110,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, nextTick, watch } from 'vue'
 import { NSwitch, NIcon } from 'naive-ui'
 import { useThemeStore } from '@/stores/theme'
+import { gsap } from 'gsap'
 
 const isScrolled = ref(false)
 const isMobileMenuOpen = ref(false)
 const currentLanguage = ref<'zh' | 'en'>('zh')
+
+// 组件引用
+const themeSwitcherRef = ref<HTMLElement>()
+const switchRef = ref<InstanceType<typeof NSwitch>>()
 
 // 主题store
 const themeStore = useThemeStore()
@@ -137,7 +143,101 @@ const toggleLanguage = () => {
 // 主题切换处理
 const handleThemeChange = (value: boolean) => {
   console.log('Theme switch clicked, new value:', value)
+
+  // 添加切换动效
+  animateThemeSwitch()
+
   themeStore.toggleTheme()
+}
+
+// 主题切换动效
+const animateThemeSwitch = () => {
+  if (!switchRef.value) return
+
+  const switchElement = switchRef.value.$el
+  const rail = switchElement?.querySelector('.n-switch__rail')
+  const button = switchElement?.querySelector('.n-switch__button')
+
+  if (rail && button) {
+    // 创建切换动效时间线
+    const tl = gsap.timeline()
+
+    // 轨道的脉冲效果
+    tl.to(rail, {
+      scale: 1.05,
+      duration: 0.15,
+      ease: 'power2.out'
+    })
+    .to(rail, {
+      scale: 1,
+      duration: 0.2,
+      ease: 'elastic.out(1, 0.5)'
+    })
+
+    // 按钮的弹跳效果
+    tl.to(button, {
+      scale: 1.1,
+      duration: 0.1,
+      ease: 'power2.out'
+    }, 0)
+    .to(button, {
+      scale: 1,
+      duration: 0.3,
+      ease: 'elastic.out(1, 0.6)'
+    })
+  }
+}
+
+// 初始化主题切换器动效
+const initThemeSwitcherAnimations = () => {
+  if (!switchRef.value) return
+
+  const switchElement = switchRef.value.$el
+  const rail = switchElement?.querySelector('.n-switch__rail')
+  const button = switchElement?.querySelector('.n-switch__button')
+
+  if (rail && button) {
+    // 鼠标悬停动效
+    const handleMouseEnter = () => {
+      gsap.to(rail, {
+        y: -2,
+        boxShadow: '0 6px 20px rgba(170, 131, 255, 0.3)',
+        duration: 0.3,
+        ease: 'power2.out'
+      })
+
+      gsap.to(button, {
+        scale: 1.05,
+        duration: 0.3,
+        ease: 'power2.out'
+      })
+    }
+
+    const handleMouseLeave = () => {
+      gsap.to(rail, {
+        y: 0,
+        boxShadow: '0 4px 12px rgba(170, 131, 255, 0.2)',
+        duration: 0.3,
+        ease: 'power2.out'
+      })
+
+      gsap.to(button, {
+        scale: 1,
+        duration: 0.3,
+        ease: 'power2.out'
+      })
+    }
+
+    // 绑定事件
+    switchElement.addEventListener('mouseenter', handleMouseEnter)
+    switchElement.addEventListener('mouseleave', handleMouseLeave)
+
+    // 返回清理函数
+    return () => {
+      switchElement.removeEventListener('mouseenter', handleMouseEnter)
+      switchElement.removeEventListener('mouseleave', handleMouseLeave)
+    }
+  }
 }
 
 // Switch组件的轨道样式
@@ -188,22 +288,82 @@ const scrollToSection = (sectionId: string) => {
   closeMobileMenu()
 }
 
+let themeSwitcherCleanup: (() => void) | undefined
+
+// 监听主题变化，添加切换动效
+watch(() => themeStore.isDark, (newValue, oldValue) => {
+  if (oldValue !== undefined) {
+    // 主题切换时的全局动效
+    animateThemeTransition(newValue)
+  }
+}, { immediate: false })
+
+// 主题切换过渡动效
+const animateThemeTransition = (isDark: boolean) => {
+  if (!themeSwitcherRef.value) return
+
+  // 创建主题切换的视觉反馈
+  const tl = gsap.timeline()
+
+  // 整个切换器的脉冲效果
+  tl.to(themeSwitcherRef.value, {
+    scale: 1.1,
+    duration: 0.2,
+    ease: 'power2.out'
+  })
+  .to(themeSwitcherRef.value, {
+    scale: 1,
+    duration: 0.4,
+    ease: 'elastic.out(1, 0.5)'
+  })
+
+  // 添加颜色过渡提示
+  const switchElement = switchRef.value?.$el
+  if (switchElement) {
+    const rail = switchElement.querySelector('.n-switch__rail')
+    if (rail) {
+      tl.to(rail, {
+        boxShadow: isDark
+          ? '0 0 20px rgba(170, 131, 255, 0.6)'
+          : '0 0 20px rgba(255, 215, 0, 0.6)',
+        duration: 0.3,
+        ease: 'power2.out'
+      }, 0)
+      .to(rail, {
+        boxShadow: '0 4px 12px rgba(170, 131, 255, 0.2)',
+        duration: 0.5,
+        ease: 'power2.out'
+      })
+    }
+  }
+}
+
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
-  
+
   // 键盘导航支持
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape' && isMobileMenuOpen.value) {
       closeMobileMenu()
     }
   }
-  
+
   document.addEventListener('keydown', handleKeyDown)
+
+  // 初始化主题切换器动效
+  nextTick(() => {
+    themeSwitcherCleanup = initThemeSwitcherAnimations()
+  })
 })
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
   document.body.style.overflow = ''
+
+  // 清理主题切换器动效
+  if (themeSwitcherCleanup) {
+    themeSwitcherCleanup()
+  }
 })
 </script>
 
@@ -428,23 +588,18 @@ onUnmounted(() => {
 
     .n-switch__rail {
       border: 1px solid var(--glass-border);
-      transition: all var(--transition-base) var(--ease-hover);
-
-      &:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(170, 131, 255, 0.2);
-      }
+      // 移除CSS transition，使用GSAP控制动效
+      transition: none;
+      will-change: transform, box-shadow;
     }
 
     .n-switch__button {
       background: var(--glass-bg);
       backdrop-filter: var(--glass-blur);
       border: 1px solid var(--glass-border);
-      transition: all var(--transition-base) var(--ease-hover);
-
-      &:hover {
-        transform: scale(1.1);
-      }
+      // 移除CSS transition，使用GSAP控制动效
+      transition: none;
+      will-change: transform;
     }
   }
 

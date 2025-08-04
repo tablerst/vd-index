@@ -411,19 +411,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: var(--base-dark);
-
-  // 主题感知的渐变背景
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    @include gradient-bg('hero');
-    z-index: 1;
-  }
+  background: transparent; // 使用透明背景，与全局背景保持一致
 }
 
 .hero-content {
