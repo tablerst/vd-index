@@ -617,13 +617,14 @@ onUnmounted(() => {
   z-index: 100;
   max-width: 300px;
   padding: 20px;
-  background: rgba(14, 16, 22, 0.9);
+  background: var(--glass-bg);
   backdrop-filter: blur(15px);
-  border: 1px solid rgba(170, 131, 255, 0.2);
+  border: 1px solid var(--primary-light);
   border-radius: 16px;
   opacity: 0;
   transform: translateX(-20px);
   transition: all var(--transition-base) var(--ease-hover);
+  box-shadow: var(--glass-shadow);
 
   &--visible {
     opacity: 1;
@@ -671,9 +672,9 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   padding: 8px 12px;
-  background: rgba(170, 131, 255, 0.1);
+  background: var(--primary-light);
   border-radius: 8px;
-  border: 1px solid rgba(170, 131, 255, 0.2);
+  border: 1px solid var(--primary-lighter);
 }
 
 .stat-number {
@@ -695,8 +696,8 @@ onUnmounted(() => {
 .search-input {
   width: 100%;
   padding: 8px 12px;
-  background: rgba(170, 131, 255, 0.1);
-  border: 1px solid rgba(170, 131, 255, 0.3);
+  background: var(--primary-light);
+  border: 1px solid var(--primary-lighter);
   border-radius: 8px;
   color: var(--text-primary);
   font-size: 14px;
@@ -709,7 +710,7 @@ onUnmounted(() => {
   &:focus {
     outline: none;
     border-color: var(--secondary);
-    box-shadow: 0 0 0 2px rgba(170, 131, 255, 0.2);
+    box-shadow: 0 0 0 2px var(--primary-light);
   }
 }
 
@@ -737,7 +738,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: var(--modal-overlay);
   backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
@@ -752,14 +753,12 @@ onUnmounted(() => {
   width: 95%;
   max-height: 90vh;
   // 简洁毛玻璃背景效果
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--glass-bg);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--glass-border);
   border-radius: 20px;
   padding: 32px 28px;
-  box-shadow:
-    0 20px 40px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  box-shadow: var(--glass-shadow);
   text-align: center;
   overflow-y: auto;
   overflow-x: hidden;
@@ -774,16 +773,16 @@ onUnmounted(() => {
   }
 
   &::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--glass-border);
     border-radius: 4px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: rgba(170, 131, 255, 0.5);
+    background: var(--primary-light);
     border-radius: 4px;
 
     &:hover {
-      background: rgba(170, 131, 255, 0.7);
+      background: var(--primary);
     }
   }
 }
@@ -860,8 +859,8 @@ onUnmounted(() => {
   gap: 8px;
   margin-top: 20px;
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--glass-border);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
   font-size: 14px;
   color: var(--text-primary);
@@ -869,10 +868,10 @@ onUnmounted(() => {
   transition: all 0.3s var(--ease-hover);
 
   &:hover {
-    background: rgba(170, 131, 255, 0.15);
-    border-color: rgba(170, 131, 255, 0.3);
+    background: var(--primary-light);
+    border-color: var(--primary);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(170, 131, 255, 0.2);
+    box-shadow: var(--shadow-glow);
   }
 
   .cal-icon {
@@ -927,8 +926,8 @@ onUnmounted(() => {
     padding: 0;
 
     .input-container {
-      background: rgba(255, 255, 255, 0.03);
-      border-color: rgba(255, 255, 255, 0.08);
+      background: var(--primary-lighter);
+      border-color: var(--glass-border);
     }
   }
 
@@ -940,8 +939,8 @@ onUnmounted(() => {
     }
 
     .comment-box {
-      background: rgba(255, 255, 255, 0.03);
-      border-color: rgba(255, 255, 255, 0.08);
+      background: var(--primary-lighter);
+      border-color: var(--glass-border);
     }
   }
 }

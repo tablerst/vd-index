@@ -106,20 +106,20 @@ export const useThemeStore = defineStore('theme', () => {
 
     // 主题特定的渐变和阴影
     if (theme === 'light') {
-      // 浅色主题渐变
-      root.style.setProperty('--bg-gradient', 'linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 50%, #DEE2E6 100%)')
-      root.style.setProperty('--hero-gradient', `radial-gradient(ellipse at center, ${colors.primaryLight} 0%, rgba(248, 249, 250, 0.95) 50%, ${colors.baseDark} 100%)`)
-      root.style.setProperty('--space-gradient', `radial-gradient(ellipse at center, rgba(248, 249, 250, 0.95) 0%, rgba(233, 236, 239, 0.98) 40%, rgba(222, 226, 230, 0.99) 70%, ${colors.baseDark} 100%)`)
+      // 浅色主题渐变（增强层次感）
+      root.style.setProperty('--bg-gradient', 'linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 30%, #E9ECEF 70%, #DEE2E6 100%)')
+      root.style.setProperty('--hero-gradient', `radial-gradient(ellipse at center, ${colors.primaryLight} 0%, rgba(255, 255, 255, 0.9) 40%, rgba(248, 249, 250, 0.95) 70%, ${colors.baseDark} 100%)`)
+      root.style.setProperty('--space-gradient', `radial-gradient(ellipse at center, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.98) 30%, rgba(233, 236, 239, 0.99) 60%, ${colors.baseDark} 100%)`)
 
-      // 浅色主题阴影
-      root.style.setProperty('--shadow-soft', '0 8px 32px rgba(0, 0, 0, 0.08)')
-      root.style.setProperty('--shadow-medium', '0 12px 48px rgba(0, 0, 0, 0.12)')
-      root.style.setProperty('--shadow-strong', '0 16px 64px rgba(0, 0, 0, 0.16)')
-      root.style.setProperty('--shadow-glow', `0 0 20px ${colors.primaryLight}`)
-      root.style.setProperty('--shadow-glow-strong', `0 0 32px ${colors.primaryLight}`)
-      root.style.setProperty('--shadow-secondary-glow', `0 0 16px ${colors.secondaryLight}`)
-      root.style.setProperty('--shadow-mixed-glow', `0 0 24px ${colors.primaryLight}, 0 0 12px ${colors.secondaryLight}`)
-      root.style.setProperty('--shadow-blue-glow', `0 0 20px ${colors.accentLight}`)
+      // 浅色主题阴影（增强深度感）
+      root.style.setProperty('--shadow-soft', '0 4px 16px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04)')
+      root.style.setProperty('--shadow-medium', '0 8px 24px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.06)')
+      root.style.setProperty('--shadow-strong', '0 12px 32px rgba(0, 0, 0, 0.16), 0 0 0 1px rgba(0, 0, 0, 0.08)')
+      root.style.setProperty('--shadow-glow', `0 0 16px ${colors.primaryLight}, 0 4px 12px rgba(170, 131, 255, 0.15)`)
+      root.style.setProperty('--shadow-glow-strong', `0 0 24px ${colors.primaryLight}, 0 8px 16px rgba(170, 131, 255, 0.2)`)
+      root.style.setProperty('--shadow-secondary-glow', `0 0 12px ${colors.secondaryLight}, 0 4px 8px rgba(212, 222, 199, 0.15)`)
+      root.style.setProperty('--shadow-mixed-glow', `0 0 20px ${colors.primaryLight}, 0 0 8px ${colors.secondaryLight}, 0 4px 12px rgba(170, 131, 255, 0.1)`)
+      root.style.setProperty('--shadow-blue-glow', `0 0 16px ${colors.accentLight}, 0 4px 12px rgba(63, 125, 251, 0.15)`)
 
     } else {
       // 深色主题渐变
@@ -142,6 +142,19 @@ export const useThemeStore = defineStore('theme', () => {
     root.style.setProperty('--primary-gradient', `linear-gradient(135deg, ${colors.primaryHover} 0%, ${colors.primary} 33%, ${colors.primaryPressed} 66%)`)
     root.style.setProperty('--secondary-gradient', `linear-gradient(135deg, ${colors.secondaryHover} 0%, ${colors.secondary} 50%, ${colors.secondaryPressed} 100%)`)
     root.style.setProperty('--mixed-gradient', `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 50%, ${colors.primary} 100%)`)
+
+    // 玻璃态效果变量
+    if (theme === 'light') {
+      root.style.setProperty('--glass-bg', 'rgba(255, 255, 255, 0.85)')
+      root.style.setProperty('--glass-border', 'rgba(0, 0, 0, 0.08)')
+      root.style.setProperty('--glass-shadow', '0 4px 16px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04) inset')
+      root.style.setProperty('--modal-overlay', 'rgba(0, 0, 0, 0.6)')
+    } else {
+      root.style.setProperty('--glass-bg', 'rgba(255, 255, 255, 0.08)')
+      root.style.setProperty('--glass-border', 'rgba(255, 255, 255, 0.12)')
+      root.style.setProperty('--glass-shadow', '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset')
+      root.style.setProperty('--modal-overlay', 'rgba(0, 0, 0, 0.85)')
+    }
   }
   
   // 计算属性

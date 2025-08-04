@@ -226,13 +226,18 @@ onUnmounted(() => {
     left: 0;
     right: 0;
     bottom: 0;
-    @include theme-glass(0.05, 10px);
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
     transition: all var(--transition-base);
   }
 
   &--scrolled::before {
-    @include theme-glass(0.08, 14px);
-    border-bottom: var(--border-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-soft);
   }
 }
 
@@ -295,10 +300,14 @@ onUnmounted(() => {
     right: -100%;
     width: 280px;
     height: 100vh;
-    @include glass-effect();
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-left: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-medium);
     padding: var(--spacing-3xl) var(--spacing-lg);
     transition: right var(--transition-base) var(--ease-hover);
-    
+
     &--open {
       right: 0;
     }

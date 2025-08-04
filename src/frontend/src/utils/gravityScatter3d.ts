@@ -15,6 +15,18 @@ interface ScatterCallbacks {
   onMemberLeave?: () => void
 }
 
+// 主题检测函数
+function getThemeAwareColors() {
+  const isDarkTheme = document.documentElement.classList.contains('dark') ||
+                     document.body.classList.contains('dark') ||
+                     getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() === '#AA83FF'
+
+  return {
+    saturation: isDarkTheme ? 0.7 : 0.85,  // 浅色主题增加饱和度
+    lightness: isDarkTheme ? 0.7 : 0.55    // 浅色主题降低亮度增加对比度
+  }
+}
+
 let scene: THREE.Scene
 let camera: THREE.PerspectiveCamera
 let renderer: THREE.WebGLRenderer
@@ -147,8 +159,9 @@ const updateInstancedMesh = () => {
     dummy.updateMatrix()
     instancedMesh.setMatrixAt(index, dummy.matrix)
     
-    // 设置随机颜色
-    color.setHSL(Math.random(), 0.7, 0.7)
+    // 设置主题感知的随机颜色
+    const themeColors = getThemeAwareColors()
+    color.setHSL(Math.random(), themeColors.saturation, themeColors.lightness)
     instancedMesh.setColorAt(index, color)
   })
   
@@ -296,9 +309,10 @@ const removeHoverEffect = (instanceId: number) => {
   instancedMesh.setMatrixAt(instanceId, dummy.matrix)
   instancedMesh.instanceMatrix.needsUpdate = true
   
-  // 恢复原始颜色
+  // 恢复主题感知的原始颜色
   const color = new THREE.Color()
-  color.setHSL(Math.random(), 0.7, 0.7)
+  const themeColors = getThemeAwareColors()
+  color.setHSL(Math.random(), themeColors.saturation, themeColors.lightness)
   instancedMesh.setColorAt(instanceId, color)
   if (instancedMesh.instanceColor) {
     instancedMesh.instanceColor.needsUpdate = true

@@ -179,7 +179,7 @@ const getParticleStyle = (index: number, direction: 'prev' | 'next') => {
   height: 100%;
   background: var(--glass-bg);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(170, 131, 255, 0.3);
+  border: 1px solid var(--primary-light);
   border-radius: 50%;
   transition: all var(--transition-base);
 }
@@ -207,7 +207,7 @@ const getParticleStyle = (index: number, direction: 'prev' | 'next') => {
   left: -10px;
   right: -10px;
   bottom: -10px;
-  background: radial-gradient(circle, rgba(170, 131, 255, 0.4) 0%, transparent 70%);
+  background: radial-gradient(circle, var(--primary-light) 0%, transparent 70%);
   border-radius: 50%;
   opacity: 0;
   scale: 1;
@@ -247,7 +247,7 @@ const getParticleStyle = (index: number, direction: 'prev' | 'next') => {
     left: -1px;
     right: -1px;
     bottom: -1px;
-    background: rgba(170, 131, 255, 0.5);
+    background: var(--primary);
     border-radius: 50%;
     filter: blur(2px);
   }
@@ -269,9 +269,8 @@ const getParticleStyle = (index: number, direction: 'prev' | 'next') => {
 // 悬停效果
 .arrow-btn:hover:not(.arrow-btn--disabled) {
   .arrow-bg {
-    background: rgba(170, 131, 255, 0.1);
     border-color: var(--secondary);
-    box-shadow: 0 0 20px rgba(170, 131, 255, 0.3);
+    box-shadow: var(--shadow-glow);
   }
 
   .arrow-icon {

@@ -441,7 +441,7 @@ onUnmounted(() => {
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-md);
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--glass-bg);
   backdrop-filter: blur(16px);
   border: var(--border-glass);
   border-radius: var(--radius-xl);
@@ -451,25 +451,26 @@ onUnmounted(() => {
   position: relative;
   overflow: hidden;
   min-height: 44px; // 触摸友好
-  
+  box-shadow: var(--shadow-soft);
+
   &:hover {
-    background: rgba(0, 0, 0, 0.5);
     transform: translateY(-2px);
     box-shadow: var(--shadow-glow);
   }
-  
+
   &:active {
     transform: translateY(0);
   }
-  
+
   &:focus-visible {
     outline: 2px solid var(--secondary);
     outline-offset: 2px;
   }
-  
+
   &--expanded {
-    background: rgba(170, 131, 255, 0.2);
-    border-color: rgba(170, 131, 255, 0.4);
+    background: var(--primary-light);
+    border-color: var(--primary);
+    box-shadow: var(--shadow-glow);
   }
 }
 
@@ -508,7 +509,7 @@ onUnmounted(() => {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle, rgba(170, 131, 255, 0.3) 0%, transparent 70%);
+  background: radial-gradient(circle, var(--primary-light) 0%, transparent 70%);
   border-radius: 50%;
   opacity: 0;
   animation: breathe 3s ease-in-out infinite;
@@ -532,11 +533,12 @@ onUnmounted(() => {
   left: 0;
   min-width: 280px;
   max-width: 320px;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--glass-bg);
   backdrop-filter: blur(20px);
   border: var(--border-glass);
   border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
+  box-shadow: var(--shadow-medium);
   opacity: 0;
   visibility: hidden;
   transform: translateY(-10px) scale(0.95);
@@ -600,9 +602,9 @@ onUnmounted(() => {
 .stat-item {
   text-align: center;
   padding: var(--spacing-md);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--primary-lighter);
   border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
 }
 
 .stat-number {
@@ -639,22 +641,22 @@ onUnmounted(() => {
 .search-input {
   width: 100%;
   padding: var(--spacing-sm) var(--spacing-xl) var(--spacing-sm) var(--spacing-xl);
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--primary-lighter);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   color: var(--text-primary);
   font-size: var(--font-size-sm);
   transition: all var(--transition-base);
-  
+
   &::placeholder {
     color: var(--text-secondary);
   }
-  
+
   &:focus {
     outline: none;
     border-color: var(--primary);
-    background: rgba(255, 255, 255, 0.12);
-    box-shadow: 0 0 0 2px rgba(170, 131, 255, 0.2);
+    background: var(--primary-light);
+    box-shadow: 0 0 0 2px var(--primary-light);
   }
 }
 
@@ -671,7 +673,7 @@ onUnmounted(() => {
   
   &:hover {
     color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--glass-border);
   }
 }
 
@@ -681,7 +683,7 @@ onUnmounted(() => {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--modal-overlay);
   z-index: var(--z-modal-backdrop);
 }
 

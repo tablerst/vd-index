@@ -451,31 +451,31 @@ const lightCommon = {
   baseColor: '#FFFFFF',
   bodyColor: '#FFFFFF',
 
-  // 文本颜色 - 浅色主题
-  textColorBase: 'rgba(0, 0, 0, 0.95)',
-  textColor1: 'rgba(0, 0, 0, 0.95)',
-  textColor2: 'rgba(0, 0, 0, 0.7)',
-  textColor3: 'rgba(0, 0, 0, 0.5)',
-  textColorDisabled: 'rgba(0, 0, 0, 0.3)',
+  // 文本颜色 - 浅色主题（增强对比度）
+  textColorBase: 'rgba(0, 0, 0, 0.88)',
+  textColor1: 'rgba(0, 0, 0, 0.88)',
+  textColor2: 'rgba(0, 0, 0, 0.65)',
+  textColor3: 'rgba(0, 0, 0, 0.45)',
+  textColorDisabled: 'rgba(0, 0, 0, 0.25)',
 
-  // 图标颜色
-  iconColor: 'rgba(0, 0, 0, 0.7)',
-  iconColorHover: 'rgba(0, 0, 0, 0.9)',
-  iconColorPressed: 'rgba(0, 0, 0, 0.8)',
-  iconColorDisabled: 'rgba(0, 0, 0, 0.3)',
+  // 图标颜色（增强对比度）
+  iconColor: 'rgba(0, 0, 0, 0.65)',
+  iconColorHover: 'rgba(0, 0, 0, 0.85)',
+  iconColorPressed: 'rgba(0, 0, 0, 0.75)',
+  iconColorDisabled: 'rgba(0, 0, 0, 0.25)',
 
-  // 背景色 - 浅色主题
-  cardColor: 'rgba(0, 0, 0, 0.08)',
-  modalColor: 'rgba(255, 255, 255, 0.95)',
+  // 背景色 - 浅色主题（增强层次感）
+  cardColor: 'rgba(255, 255, 255, 0.85)',
+  modalColor: 'rgba(255, 255, 255, 0.98)',
   popoverColor: 'rgba(255, 255, 255, 0.95)',
-  tableColor: 'rgba(0, 0, 0, 0.05)',
+  tableColor: 'rgba(255, 255, 255, 0.7)',
 
-  // 边框色
-  borderColor: 'rgba(0, 0, 0, 0.12)',
-  tableHeaderColor: 'rgba(0, 0, 0, 0.08)',
+  // 边框色（增强可见性）
+  borderColor: 'rgba(0, 0, 0, 0.08)',
+  tableHeaderColor: 'rgba(0, 0, 0, 0.04)',
 
-  // 分割线
-  dividerColor: 'rgba(0, 0, 0, 0.12)',
+  // 分割线（增强可见性）
+  dividerColor: 'rgba(0, 0, 0, 0.08)',
 
   // 代码色
   codeColor: 'rgba(0, 0, 0, 0.05)',

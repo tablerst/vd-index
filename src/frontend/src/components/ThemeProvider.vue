@@ -240,25 +240,25 @@ const lightThemeOverrides: GlobalThemeOverrides = {
     primaryColor: '#AA83FF',
     primaryColorHover: '#B99AFD',
     primaryColorPressed: '#8F6BFF',
-    primaryColorSuppl: 'rgba(170, 131, 255, 0.1)',
+    primaryColorSuppl: 'rgba(170, 131, 255, 0.15)',
 
     // 白色背景
     bodyColor: '#FFFFFF',
 
-    // 玻璃态效果 - 浅色主题
-    cardColor: 'rgba(0, 0, 0, 0.08)',
+    // 玻璃态效果 - 浅色主题（增强对比度）
+    cardColor: 'rgba(0, 0, 0, 0.06)',
     modalColor: 'rgba(255, 255, 255, 0.95)',
     popoverColor: 'rgba(255, 255, 255, 0.95)',
 
-    // 文本颜色 - 浅色主题
-    textColorBase: 'rgba(0, 0, 0, 0.95)',
-    textColor1: 'rgba(0, 0, 0, 0.95)',
-    textColor2: 'rgba(0, 0, 0, 0.7)',
-    textColor3: 'rgba(0, 0, 0, 0.5)',
+    // 文本颜色 - 浅色主题（增强对比度）
+    textColorBase: 'rgba(0, 0, 0, 0.88)',
+    textColor1: 'rgba(0, 0, 0, 0.88)',
+    textColor2: 'rgba(0, 0, 0, 0.65)',
+    textColor3: 'rgba(0, 0, 0, 0.45)',
 
-    // 边框颜色
-    borderColor: 'rgba(0, 0, 0, 0.12)',
-    dividerColor: 'rgba(0, 0, 0, 0.12)',
+    // 边框颜色（增强可见性）
+    borderColor: 'rgba(0, 0, 0, 0.08)',
+    dividerColor: 'rgba(0, 0, 0, 0.08)',
 
     // 圆角
     borderRadius: '8px',
@@ -274,16 +274,21 @@ const lightThemeOverrides: GlobalThemeOverrides = {
   Card: {
     borderRadius: '12px',
     paddingMedium: '20px 24px',
-    color: 'rgba(0, 0, 0, 0.08)',
-    textColor: 'rgba(0, 0, 0, 0.95)',
-    titleTextColor: 'rgba(0, 0, 0, 0.95)',
-    borderColor: 'rgba(0, 0, 0, 0.12)',
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), 0 0 20px rgba(170, 131, 255, 0.05)'
+    color: 'rgba(255, 255, 255, 0.85)',
+    textColor: 'rgba(0, 0, 0, 0.88)',
+    titleTextColor: 'rgba(0, 0, 0, 0.88)',
+    borderColor: 'rgba(0, 0, 0, 0.08)',
+    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04) inset, 0 1px 0 rgba(255, 255, 255, 0.8) inset'
   },
 
   DataTable: {
     borderRadius: '12px',
-    thFontWeight: '600'
+    thFontWeight: '600',
+    borderColor: 'rgba(0, 0, 0, 0.08)',
+    thColor: 'rgba(0, 0, 0, 0.04)',
+    tdColor: 'rgba(255, 255, 255, 0.6)',
+    thTextColor: 'rgba(0, 0, 0, 0.75)',
+    tdTextColor: 'rgba(0, 0, 0, 0.85)'
   },
 
   Modal: {

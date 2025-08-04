@@ -45,10 +45,11 @@ const progressPercentage = computed(() => {
   align-items: center;
   gap: 12px;
   padding: 8px 16px;
-  background: rgba(14, 16, 22, 0.8);
+  background: var(--glass-bg);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(170, 131, 255, 0.2);
+  border: 1px solid var(--glass-border);
   border-radius: 20px;
+  box-shadow: var(--shadow-soft);
   opacity: 0;
   transform: translateY(-10px);
   transition: all var(--transition-base) var(--ease-hover);
@@ -69,7 +70,7 @@ const progressPercentage = computed(() => {
 .progress-track {
   width: 80px;
   height: 4px;
-  background: rgba(170, 131, 255, 0.2);
+  background: var(--primary-light);
   border-radius: 2px;
   overflow: hidden;
 
