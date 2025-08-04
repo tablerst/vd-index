@@ -331,15 +331,33 @@ export class DynamicConnectionSystem {
   }
 
   /**
-   * 获取连接线的颜色
+   * 获取连接线的颜色 - 动态读取CSS变量以支持主题切换
    */
   getConnectionColor(connection: DynamicConnection): { r: number, g: number, b: number } {
+    // 动态读取CSS变量
+    const root = getComputedStyle(document.documentElement)
+    const primaryColor = root.getPropertyValue('--primary').trim()
+    const secondaryColor = root.getPropertyValue('--secondary').trim()
+    const accentColor = root.getPropertyValue('--accent-blue').trim()
+
     const colors = [
-      { r: 170, g: 131, b: 255 },  // --primary: #AA83FF
-      { r: 212, g: 222, b: 199 },  // --secondary: #D4DEC7
-      { r: 63, g: 125, b: 251 }    // --accent-blue: #3F7DFB
+      this.hexToRgb(primaryColor || '#AA83FF'),   // 主色
+      this.hexToRgb(secondaryColor || '#D4DEC7'), // 次色
+      this.hexToRgb(accentColor || '#3F7DFB')     // 强调色
     ]
     return colors[connection.colorIndex] || colors[0]
+  }
+
+  /**
+   * 十六进制颜色转RGB
+   */
+  private hexToRgb(hex: string): { r: number, g: number, b: number } {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 170, g: 131, b: 255 } // 默认紫色
   }
 
   /**

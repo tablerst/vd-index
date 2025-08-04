@@ -303,7 +303,7 @@ function setPerformanceOptions(options: {
 function updateThemeColors(colors: { primary: string; secondary: string; accent: string }) {
   themeColors = { ...colors };
   // 更新现有粒子的颜色
-  particles.forEach((particle, index) => {
+  particles.forEach((particle) => {
     const layerIndex = particle.layer - 1;
     particle.color = [themeColors.secondary, themeColors.primary, themeColors.accent][layerIndex] || themeColors.primary;
   });

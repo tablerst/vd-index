@@ -7,6 +7,7 @@
 :root {
   // ========== 核心主题色彩 ==========
   // 注意：这些变量会通过 stores/theme.ts 动态更新以支持主题切换
+  // 默认值为深色主题，浅色主题会被动态覆盖
   --primary: #AA83FF;
   --primary-hover: #B99AFD;
   --primary-pressed: #8F6BFF;

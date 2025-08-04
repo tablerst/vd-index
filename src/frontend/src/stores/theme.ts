@@ -4,7 +4,7 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import { getThemeColors, type ThemeColors } from '../utils/themeColors'
+import { getThemeColors } from '../utils/themeColors'
 
 export type ThemeMode = 'dark' | 'light'
 
@@ -143,15 +143,17 @@ export const useThemeStore = defineStore('theme', () => {
     root.style.setProperty('--secondary-gradient', `linear-gradient(135deg, ${colors.secondaryHover} 0%, ${colors.secondary} 50%, ${colors.secondaryPressed} 100%)`)
     root.style.setProperty('--mixed-gradient', `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 50%, ${colors.primary} 100%)`)
 
-    // 玻璃态效果变量
+    // 玻璃态效果变量 - 使用themeColors.ts中的统一配色
     if (theme === 'light') {
-      root.style.setProperty('--glass-bg', 'rgba(255, 255, 255, 0.85)')
-      root.style.setProperty('--glass-border', 'rgba(0, 0, 0, 0.08)')
+      // 浅色主题：使用浅灰色玻璃效果，确保在白背景下可见
+      root.style.setProperty('--glass-bg', colors.glassBg)
+      root.style.setProperty('--glass-border', colors.glassBorder)
       root.style.setProperty('--glass-shadow', '0 4px 16px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04) inset')
       root.style.setProperty('--modal-overlay', 'rgba(0, 0, 0, 0.6)')
     } else {
-      root.style.setProperty('--glass-bg', 'rgba(255, 255, 255, 0.08)')
-      root.style.setProperty('--glass-border', 'rgba(255, 255, 255, 0.12)')
+      // 深色主题：保持原有的白色玻璃效果
+      root.style.setProperty('--glass-bg', colors.glassBg)
+      root.style.setProperty('--glass-border', colors.glassBorder)
       root.style.setProperty('--glass-shadow', '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset')
       root.style.setProperty('--modal-overlay', 'rgba(0, 0, 0, 0.85)')
     }

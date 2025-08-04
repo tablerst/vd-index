@@ -10,7 +10,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, inject, watch } from 'vue'
-import { useThemeStore } from '../stores/theme'
+// import { useThemeStore } from '../stores/theme' // 暂时未使用
 import { performanceProfiler } from '../utils/performanceProfiler'
 
 const pointerRef = ref<HTMLElement>()
@@ -36,7 +36,7 @@ const SPEED_THRESHOLD = 50
 const modalState = inject('modalState', ref(false))
 
 // 主题store
-const themeStore = useThemeStore()
+// const themeStore = useThemeStore() // 暂时未使用
 
 // 监听模态框状态变化
 watch(modalState, (isOpen: boolean) => {

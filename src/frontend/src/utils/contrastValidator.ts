@@ -3,7 +3,7 @@
  * 确保所有颜色组合满足WCAG可访问性标准
  */
 
-import { getContrastRatio, hexToRgb } from './colorScience'
+import { getContrastRatio } from './colorScience'
 import { LIGHT_THEME_COLORS, DARK_THEME_COLORS } from './themeColors'
 
 export interface ContrastResult {
@@ -213,5 +213,4 @@ export function adjustColorForContrast(
   return whiteRatio > blackRatio ? '#FFFFFF' : '#000000'
 }
 
-// 导出验证函数供需要时调用
-export { generateContrastReport }
+// 函数已在上方导出，无需重复导出

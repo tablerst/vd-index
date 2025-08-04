@@ -233,32 +233,32 @@ const darkThemeOverrides: GlobalThemeOverrides = {
   }
 }
 
-// 白色主题覆盖配置
+// 白色主题覆盖配置 - 使用新的科学优化配色
 const lightThemeOverrides: GlobalThemeOverrides = {
   common: {
-    // 使用首页的主题色彩
-    primaryColor: '#AA83FF',
-    primaryColorHover: '#B99AFD',
-    primaryColorPressed: '#8F6BFF',
-    primaryColorSuppl: 'rgba(170, 131, 255, 0.15)',
+    // 使用优化后的主题色彩，确保足够对比度
+    primaryColor: '#7C3AED',        // 更深的紫色，确保对比度
+    primaryColorHover: '#8B5CF6',   // 悬停状态
+    primaryColorPressed: '#6D28D9', // 按下状态
+    primaryColorSuppl: 'rgba(124, 58, 237, 0.12)', // 12% 透明度
 
     // 白色背景
     bodyColor: '#FFFFFF',
 
-    // 玻璃态效果 - 浅色主题（增强对比度）
-    cardColor: 'rgba(0, 0, 0, 0.06)',
+    // 玻璃态效果 - 使用实色背景而非透明度
+    cardColor: '#F1F5F9',           // 浅灰表面
     modalColor: 'rgba(255, 255, 255, 0.95)',
     popoverColor: 'rgba(255, 255, 255, 0.95)',
 
-    // 文本颜色 - 浅色主题（增强对比度）
-    textColorBase: 'rgba(0, 0, 0, 0.88)',
-    textColor1: 'rgba(0, 0, 0, 0.88)',
-    textColor2: 'rgba(0, 0, 0, 0.65)',
-    textColor3: 'rgba(0, 0, 0, 0.45)',
+    // 文本颜色 - 使用足够深的颜色确保可读性
+    textColorBase: '#1F2937',       // 深灰色，接近黑色
+    textColor1: '#1F2937',          // 主要文本
+    textColor2: '#4B5563',          // 次要文本
+    textColor3: '#6B7280',          // 辅助文本
 
-    // 边框颜色（增强可见性）
-    borderColor: 'rgba(0, 0, 0, 0.08)',
-    dividerColor: 'rgba(0, 0, 0, 0.08)',
+    // 边框颜色 - 使用实色而非透明度
+    borderColor: '#D1D5DB',         // 明确的边框色
+    dividerColor: '#E5E7EB',        // 分割线颜色
 
     // 圆角
     borderRadius: '8px',
@@ -303,9 +303,23 @@ const lightThemeOverrides: GlobalThemeOverrides = {
 
   Tag: {
     borderRadius: '6px',
+    // 默认标签
     color: 'rgba(0, 0, 0, 0.08)',
     textColor: 'rgba(0, 0, 0, 0.95)',
     border: '1px solid rgba(0, 0, 0, 0.12)',
+    // 主要标签 - 使用新的紫色
+    colorPrimary: 'rgba(124, 58, 237, 0.12)',
+    textColorPrimary: '#7C3AED',
+    borderPrimary: '1px solid rgba(124, 58, 237, 0.3)',
+    // 成功标签 - 使用新的绿色
+    colorSuccess: 'rgba(81, 112, 41, 0.12)',
+    textColorSuccess: '#517029',
+    borderSuccess: '1px solid rgba(81, 112, 41, 0.3)',
+    // 信息标签 - 使用新的蓝色
+    colorInfo: 'rgba(37, 99, 235, 0.12)',
+    textColorInfo: '#2563EB',
+    borderInfo: '1px solid rgba(37, 99, 235, 0.3)',
+    // 关闭图标
     closeIconColor: 'rgba(0, 0, 0, 0.6)',
     closeIconColorHover: 'rgba(0, 0, 0, 0.9)',
     closeIconColorPressed: 'rgba(0, 0, 0, 0.7)'

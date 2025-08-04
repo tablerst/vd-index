@@ -54,14 +54,30 @@ interface Props {
 }
 
 /* ======== 连线样式参数 ======== */
-// 从CSS变量获取主题颜色
+// 从CSS变量获取主题颜色 - 动态读取以支持主题切换
 const getThemeColors = () => {
   const root = getComputedStyle(document.documentElement)
+  // 动态读取CSS变量，支持主题切换
+  const primaryColor = root.getPropertyValue('--primary').trim()
+  const secondaryColor = root.getPropertyValue('--secondary').trim()
+  const accentColor = root.getPropertyValue('--accent-blue').trim()
+
+  // 如果CSS变量可用，解析颜色；否则使用默认值
   return [
-    { r: 170, g: 131, b: 255 },  // --primary: #AA83FF
-    { r: 212, g: 222, b: 199 },  // --secondary: #D4DEC7
-    { r: 63, g: 125, b: 251 }    // --accent-blue: #3F7DFB
+    hexToRgb(primaryColor || '#AA83FF'),   // 主色
+    hexToRgb(secondaryColor || '#D4DEC7'), // 次色
+    hexToRgb(accentColor || '#3F7DFB')     // 强调色
   ]
+}
+
+// 十六进制颜色转RGB
+const hexToRgb = (hex: string) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : { r: 170, g: 131, b: 255 } // 默认紫色
 }
 
 const CONNECTION_COLORS = getThemeColors()
@@ -436,7 +452,7 @@ watch(() => deviceInfo.value.type, (newType) => {
 // 监听主题变化，更新连接线颜色
 watch(() => themeStore.currentTheme, () => {
   // 主题切换时重新获取颜色配置
-  const CONNECTION_COLORS = getThemeColors()
+  // const CONNECTION_COLORS = getThemeColors() // 颜色已在getThemeColors中动态获取
   // 重置连接系统以应用新颜色
   connectionSystem.reset()
 })
