@@ -489,7 +489,7 @@ onUnmounted(() => {
   visibility: hidden;
   transform: translateY(20px);
   transition: all var(--transition-base) var(--ease-hover);
-  z-index: var(--z-fixed);
+  z-index: 9999; /* 提高z-index确保显示在最顶层 */
   
   &--visible {
     opacity: 1;
