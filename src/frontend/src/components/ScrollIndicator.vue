@@ -14,12 +14,14 @@
         v-for="(section, index) in sections"
         :key="section.id"
         class="section-dot"
-        :class="{ 
+        :class="{
           'section-dot--active': index === currentSection,
-          'section-dot--completed': index < currentSection
+          'section-dot--completed': index < currentSection,
+          'section-dot--disabled': isMobileProgressBarDisabled
         }"
-        @click="$emit('goToSection', index)"
+        @click="!isMobileProgressBarDisabled && $emit('goToSection', index)"
         :aria-label="`跳转到第${index + 1}屏`"
+        :disabled="isMobileProgressBarDisabled"
       >
         <span class="dot-inner"></span>
         <span class="dot-label">{{ getSectionLabel(index) }}</span>
@@ -53,6 +55,7 @@ interface Props {
   progress: number
   visible?: boolean
   showHint?: boolean
+  isMobileProgressBarDisabled?: boolean
 }
 
 interface Emits {
@@ -61,7 +64,8 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
   visible: true,
-  showHint: false
+  showHint: false,
+  isMobileProgressBarDisabled: false
 })
 
 defineEmits<Emits>()
@@ -185,7 +189,32 @@ const getSectionLabel = (index: number) => {
       transform: scale(1.1);
     }
   }
-  
+
+  &--disabled {
+    pointer-events: none;
+    opacity: 0.4;
+    cursor: default;
+
+    .dot-inner {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .dot-label {
+      color: rgba(255, 255, 255, 0.3);
+      background: rgba(0, 0, 0, 0.4);
+    }
+
+    &:hover {
+      transform: none;
+
+      .dot-inner {
+        transform: none;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
+
   @include media-down(md) {
     width: 12px;
     height: 12px;

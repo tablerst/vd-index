@@ -3,6 +3,7 @@ import { gsap } from 'gsap'
 import { Observer } from 'gsap/Observer'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { ScrollToPlugin } from 'gsap/ScrollToPlugin'
+import { useDeviceDetection } from './useDeviceDetection'
 
 // 注册GSAP插件
 gsap.registerPlugin(Observer, ScrollTrigger, ScrollToPlugin)
@@ -14,12 +15,131 @@ export interface SnapScrollSection {
   height: number
 }
 
+export interface TouchGestureConfig {
+  // 距离阈值
+  minDistance: number          // 最小滑动距离
+  minQuickDistance: number     // 快速滑动最小距离
+
+  // 速度阈值
+  minVelocity: number          // 最小滑动速度 (px/ms)
+  maxVelocity: number          // 最大有效速度
+
+  // 方向检测
+  directionThreshold: number   // 方向置信度阈值 (0-1)
+
+  // 反馈配置
+  enableVibration: boolean     // 是否启用触觉反馈
+  enableVisualFeedback: boolean // 是否启用视觉反馈
+  disableProgressBar: boolean  // 是否禁用进度条交互（防止误触）
+}
+
+export interface WheelConfig {
+  minDeltaY: number           // 最小滚轮增量
+  sensitivity: number         // 滚轮灵敏度倍数
+}
+
+export interface PerformanceConfig {
+  enableGPUAcceleration: boolean
+  reducedMotion: boolean
+  targetFPS: number
+}
+
 export interface SnapScrollConfig {
+  // 通用配置
   tolerance: number
   duration: number
   ease: string
   debounceDelay: number
   footerThreshold: number
+
+  // 设备特定配置
+  touch?: TouchGestureConfig
+  wheel?: WheelConfig
+  performance?: PerformanceConfig
+}
+
+/**
+ * 获取设备特定的配置
+ */
+function getDeviceSpecificConfig(deviceType: 'mobile' | 'tablet' | 'desktop'): SnapScrollConfig {
+  const baseConfigs = {
+    mobile: {
+      tolerance: 120,
+      duration: 0.8,
+      ease: "power2.inOut",
+      debounceDelay: 200,
+      footerThreshold: 0.85,
+      touch: {
+        minDistance: 30,
+        minQuickDistance: 15,
+        minVelocity: 0.5,
+        maxVelocity: 3.0,
+        directionThreshold: 0.7,
+        enableVibration: true,
+        enableVisualFeedback: true,
+        disableProgressBar: true  // 移动端禁用进度条点击
+      },
+      performance: {
+        enableGPUAcceleration: true,
+        reducedMotion: false,
+        targetFPS: 30
+      }
+    },
+    tablet: {
+      tolerance: 120,
+      duration: 1.0,
+      ease: "power2.out",
+      debounceDelay: 250,
+      footerThreshold: 0.8,
+      touch: {
+        minDistance: 40,
+        minQuickDistance: 20,
+        minVelocity: 0.4,
+        maxVelocity: 2.5,
+        directionThreshold: 0.75,
+        enableVibration: false,
+        enableVisualFeedback: true,
+        disableProgressBar: false  // 平板端保持进度条交互
+      },
+      wheel: {
+        minDeltaY: 8,
+        sensitivity: 1.0
+      },
+      performance: {
+        enableGPUAcceleration: true,
+        reducedMotion: false,
+        targetFPS: 45
+      }
+    },
+    desktop: {
+      tolerance: 120,
+      duration: 1.2,
+      ease: "power2.out",
+      debounceDelay: 300,
+      footerThreshold: 0.8,
+      wheel: {
+        minDeltaY: 10,
+        sensitivity: 1.0
+      },
+      touch: {
+        minDistance: 50,
+        minQuickDistance: 25,
+        minVelocity: 0.3,
+        maxVelocity: 2.0,
+        directionThreshold: 0.8,
+        enableVibration: false,
+        enableVisualFeedback: false,
+        disableProgressBar: false  // 桌面端保持进度条交互
+      },
+      performance: {
+        enableGPUAcceleration: true,
+        reducedMotion: false,
+        targetFPS: 60
+      }
+    }
+  }
+
+  return baseConfigs[deviceType]
 }
 
 /**
@@ -27,16 +147,14 @@ export interface SnapScrollConfig {
  * 使用GSAP Observer实现平滑的分屏切换效果
  */
 export function useSnapScroll(sectionRefs: Array<{ value: HTMLElement | null }>, config?: Partial<SnapScrollConfig>) {
-  // 默认配置
-  const defaultConfig: SnapScrollConfig = {
-    tolerance: 120,       // 最小滚动距离（已废弃，保留兼容性）
-    duration: 1.2,        // 动画持续时间
-    ease: "power2.out",   // 缓动函数
-    debounceDelay: 300,   // 防抖延迟（增加延迟，确保动画完成后才能再次触发）
-    footerThreshold: 0.8  // footer区域阈值
-  }
+  // 集成设备检测
+  const { deviceInfo } = useDeviceDetection()
 
-  const finalConfig = { ...defaultConfig, ...config }
+  // 获取设备特定的默认配置
+  const deviceConfig = getDeviceSpecificConfig(deviceInfo.value.type)
+
+  // 合并用户配置
+  const finalConfig = { ...deviceConfig, ...config }
 
   // 响应式状态
   const currentSection = ref(0)
@@ -50,6 +168,11 @@ export function useSnapScroll(sectionRefs: Array<{ value: HTMLElement | null }>,
   // 防抖控制
   let isWheelBlocked = false
   let wheelBlockTimer: number | null = null // 滚轮阻止超时定时器
+
+  // 触摸手势防抖控制
+  let isTouchBlocked = false
+  let touchBlockTimer: number | null = null
+  let lastGestureTime = 0
 
   // 计算属性
   const totalSections = computed(() => sections.value.length)
@@ -224,9 +347,13 @@ export function useSnapScroll(sectionRefs: Array<{ value: HTMLElement | null }>,
       return
     }
 
+    // 使用设备特定的滚轮配置
+    const wheelConfig = finalConfig.wheel
+    const minDeltaY = wheelConfig?.minDeltaY || 10
+
     // 过滤极小的滚动值
-    if (Math.abs(e.deltaY) < 10) {
-      console.log('handleWheel - deltaY too small:', e.deltaY)
+    if (Math.abs(e.deltaY) < minDeltaY) {
+      console.log('handleWheel - deltaY too small:', e.deltaY, 'minDeltaY:', minDeltaY)
       return
     }
 
@@ -258,32 +385,142 @@ export function useSnapScroll(sectionRefs: Array<{ value: HTMLElement | null }>,
     }
   }
 
-    // 触摸滑动处理
+  // 触摸滑动处理 - 使用智能手势识别
+  let touchStartX = 0
   let touchStartY = 0
+  let touchStartTime = 0
 
   const handleTouchStart = (e: TouchEvent) => {
     if (!isSnapMode.value) return
+    touchStartX = e.touches[0].clientX
     touchStartY = e.touches[0].clientY
+    touchStartTime = Date.now()
+  }
+
+  /**
+   * 智能触摸手势识别算法
+   * 基于距离+速度+方向的综合判断
+   */
+  const analyzeGesture = (startX: number, startY: number, endX: number, endY: number, deltaTime: number) => {
+    const deltaX = endX - startX
+    const deltaY = startY - endY // 注意：Y轴方向，向上为正
+
+    const distanceX = Math.abs(deltaX)
+    const distanceY = Math.abs(deltaY)
+    const totalDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+
+    // 速度计算
+    const velocity = totalDistance / Math.max(deltaTime, 1) // px/ms
+    const velocityY = distanceY / Math.max(deltaTime, 1)
+
+    // 方向置信度计算
+    const directionConfidence = totalDistance > 0 ? distanceY / totalDistance : 0
+
+    // 获取触摸配置
+    const touchConfig = finalConfig.touch!
+
+    return {
+      deltaX,
+      deltaY,
+      distanceX,
+      distanceY,
+      totalDistance,
+      velocity,
+      velocityY,
+      directionConfidence,
+      isVerticalDominant: directionConfidence >= touchConfig.directionThreshold,
+      isValidDistance: distanceY > touchConfig.minDistance,
+      isValidVelocity: velocityY > touchConfig.minVelocity && distanceY > touchConfig.minQuickDistance,
+      isValidGesture: function() {
+        return this.isVerticalDominant && (this.isValidDistance || this.isValidVelocity)
+      }
+    }
   }
 
   const handleTouchEnd = (e: TouchEvent) => {
     if (!isSnapMode.value || isAnimating.value) return
-    const deltaY = touchStartY - e.changedTouches[0].clientY
-    if (Math.abs(deltaY) < 50) return // 降低触摸阈值，使触摸更敏感
 
-    console.log('Touch deltaY:', deltaY)
+    const touchEndX = e.changedTouches[0].clientX
+    const touchEndY = e.changedTouches[0].clientY
+    const touchEndTime = Date.now()
+    const deltaTime = touchEndTime - touchStartTime
 
-    if (deltaY > 0) {
+    // 防抖控制：防止过快的连续手势
+    const timeSinceLastGesture = touchEndTime - lastGestureTime
+    if (timeSinceLastGesture < finalConfig.debounceDelay) {
+      console.log('Touch gesture debounced:', { timeSinceLastGesture, debounceDelay: finalConfig.debounceDelay })
+      return
+    }
+
+    // 边界情况：触摸时间过短（可能是意外触摸）
+    if (deltaTime < 50) {
+      console.log('Touch gesture too quick:', { deltaTime })
+      return
+    }
+
+    // 边界情况：触摸时间过长（可能是长按或拖拽）
+    if (deltaTime > 1000) {
+      console.log('Touch gesture too long:', { deltaTime })
+      return
+    }
+
+    // 智能手势分析
+    const gesture = analyzeGesture(touchStartX, touchStartY, touchEndX, touchEndY, deltaTime)
+
+    // 详细的调试信息
+    console.log('Touch gesture analysis:', {
+      deltaY: gesture.deltaY,
+      distanceY: gesture.distanceY,
+      velocity: gesture.velocity,
+      velocityY: gesture.velocityY,
+      directionConfidence: gesture.directionConfidence.toFixed(2),
+      isVerticalDominant: gesture.isVerticalDominant,
+      isValidDistance: gesture.isValidDistance,
+      isValidVelocity: gesture.isValidVelocity,
+      deltaTime
+    })
+
+    // 手势有效性检查
+    if (!gesture.isValidGesture()) {
+      console.log('Touch gesture rejected:', {
+        reason: !gesture.isVerticalDominant ? 'not vertical dominant' : 'insufficient distance and velocity'
+      })
+      return
+    }
+
+    // 触觉反馈
+    const touchConfig = finalConfig.touch!
+    if (touchConfig.enableVibration && 'vibrate' in navigator) {
+      navigator.vibrate(10)
+    }
+
+    console.log('Touch gesture accepted - triggering scroll')
+
+    // 更新防抖状态
+    lastGestureTime = touchEndTime
+
+    if (gesture.deltaY > 0) {
       // 向上滑动（页面向下滚动）- 切换到下一屏
       if (currentSection.value < sections.value.length - 1) {
         scrollToSection(currentSection.value + 1)
       } else {
+        // 边界情况：已在最后一屏，提供触觉反馈
+        console.log('Already at last section')
+        if (touchConfig.enableVibration && 'vibrate' in navigator) {
+          navigator.vibrate([50, 30, 50]) // 不同的振动模式表示到达边界
+        }
         checkFooterArea()
       }
     } else {
       // 向下滑动（页面向上滚动）- 切换到上一屏
       if (currentSection.value > 0) {
         scrollToSection(currentSection.value - 1)
+      } else {
+        // 边界情况：已在第一屏，提供触觉反馈
+        console.log('Already at first section')
+        if (touchConfig.enableVibration && 'vibrate' in navigator) {
+          navigator.vibrate([50, 30, 50]) // 边界振动反馈
+        }
       }
     }
   }
@@ -352,6 +589,7 @@ export function useSnapScroll(sectionRefs: Array<{ value: HTMLElement | null }>,
   })
 
   onUnmounted(() => {
+    // 清理所有定时器
     if (debounceTimer) {
       clearTimeout(debounceTimer)
     }
@@ -360,6 +598,11 @@ export function useSnapScroll(sectionRefs: Array<{ value: HTMLElement | null }>,
       clearTimeout(wheelBlockTimer)
     }
 
+    if (touchBlockTimer) {
+      clearTimeout(touchBlockTimer)
+    }
+
+    // 移除事件监听器
     window.removeEventListener('scroll', handleScroll)
     window.removeEventListener('resize', handleResize)
     window.removeEventListener('wheel', handleWheel)
@@ -375,7 +618,7 @@ export function useSnapScroll(sectionRefs: Array<{ value: HTMLElement | null }>,
     sections,
     totalSections,
     progress,
-    
+
     // 方法
     goToSection,
     nextSection,
@@ -383,8 +626,15 @@ export function useSnapScroll(sectionRefs: Array<{ value: HTMLElement | null }>,
     enableSnapMode,
     disableSnapMode,
     updateSections,
-    
-    // 配置
-    config: finalConfig
+
+    // 配置和设备信息
+    config: finalConfig,
+    deviceInfo: deviceInfo.value,
+    deviceType: deviceInfo.value.type,
+
+    // 移动端特定配置
+    isMobileProgressBarDisabled: computed(() =>
+      deviceInfo.value.isMobile && finalConfig.touch?.disableProgressBar
+    )
   }
 }

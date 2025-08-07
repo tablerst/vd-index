@@ -31,6 +31,7 @@
       :progress="progress"
       :visible="isSnapMode && !isAnimating"
       :show-hint="currentSection === 0"
+      :is-mobile-progress-bar-disabled="isMobileProgressBarDisabled"
       @go-to-section="goToSection"
     />
 
@@ -62,15 +63,15 @@ const {
   isSnapMode,
   sections,
   progress,
-  goToSection
+  goToSection,
+  deviceType,
+  isMobileProgressBarDisabled
 } = useSnapScroll([
   heroSectionRef,
   membersSectionRef,
   calendarSectionRef
 ], {
-  duration: 1.2,
-  ease: "power2.out",
-  tolerance: 50,
+  // 只保留必要的自定义配置，让设备特定配置生效
   footerThreshold: 0.85
 })
 </script>
