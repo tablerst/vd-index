@@ -420,7 +420,7 @@ const drawConnections = () => {
 
   // 连接线绘制统计（开发模式）
   if (import.meta.env.DEV && Math.random() < 0.1) {
-    console.log(`📈 [连接线绘制] 设备: ${deviceInfo.value.type}, 总激活: ${activeConnections.length}, 实际绘制: ${drawnConnections}, 绘制率: ${((drawnConnections / Math.max(activeConnections.length, 1)) * 100).toFixed(1)}%`)
+    // console.log(`📈 [连接线绘制] 设备: ${deviceInfo.value.type}, 总激活: ${activeConnections.length}, 实际绘制: ${drawnConnections}, 绘制率: ${((drawnConnections / Math.max(activeConnections.length, 1)) * 100).toFixed(1)}%`)
   }
 
   performanceProfiler.measure('draw-connections')

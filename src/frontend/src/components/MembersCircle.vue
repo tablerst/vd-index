@@ -25,14 +25,14 @@
     <!-- Swiper 横向滑动容器 -->
     <div class="galaxy-container">
       <swiper
-        :modules="[Navigation, Mousewheel]"
+        :modules="[Navigation]"
         :slides-per-view="1"
         :space-between="0"
-        :mousewheel="{ forceToAxis: true, sensitivity: 0.5 }"
         :keyboard="{ enabled: true }"
         :speed="900"
         :effect="'slide'"
         :grab-cursor="true"
+        :allowTouchMove="true"
         @slide-change="onSlideChange"
         @swiper="onSwiperInit"
         class="galaxy-swiper"
@@ -115,7 +115,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import { Swiper, SwiperSlide } from 'swiper/vue'
-import { Navigation, Mousewheel } from 'swiper/modules'
+import { Navigation } from 'swiper/modules'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useMembersStore } from '../stores/members'

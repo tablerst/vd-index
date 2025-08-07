@@ -6,17 +6,33 @@
     <!-- 主要内容区域 -->
     <main class="main-content">
       <!-- Hero 首屏 -->
-      <HeroSection />
+      <section ref="heroSectionRef" class="snap-section">
+        <HeroSection />
+      </section>
 
       <!-- Members Circle 成员圆形展示 -->
-      <MembersCircle />
+      <section ref="membersSectionRef" class="snap-section">
+        <MembersCircle />
+      </section>
 
       <!-- 星历活动板 -->
-      <StarCalendar />
+      <section ref="calendarSectionRef" class="snap-section">
+        <StarCalendar />
+      </section>
     </main>
 
     <!-- Footer -->
     <AppFooter />
+
+    <!-- 滚动指示器 -->
+    <ScrollIndicator
+      :current-section="currentSection"
+      :sections="sections"
+      :progress="progress"
+      :visible="isSnapMode && !isAnimating"
+      :show-hint="currentSection === 0"
+      @go-to-section="goToSection"
+    />
 
     <!-- 全局背景粒子 -->
     <GlobalParticles />
@@ -24,15 +40,44 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import GlassNavigation from '@/components/GlassNavigation.vue'
 import HeroSection from '@/components/HeroSection.vue'
 import MembersCircle from '@/components/MembersCircle.vue'
 import StarCalendar from '@/components/StarCalendar.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import GlobalParticles from '@/components/GlobalParticles.vue'
+import ScrollIndicator from '@/components/ScrollIndicator.vue'
+import { useSnapScroll } from '@/composables/useSnapScroll'
+
+// Section refs
+const heroSectionRef = ref<HTMLElement | null>(null)
+const membersSectionRef = ref<HTMLElement | null>(null)
+const calendarSectionRef = ref<HTMLElement | null>(null)
+
+// 使用分屏滚动
+const {
+  currentSection,
+  isAnimating,
+  isSnapMode,
+  sections,
+  progress,
+  goToSection
+} = useSnapScroll([
+  heroSectionRef,
+  membersSectionRef,
+  calendarSectionRef
+], {
+  duration: 1.2,
+  ease: "power2.out",
+  tolerance: 50,
+  footerThreshold: 0.85
+})
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '../styles/variables.scss' as *;
+
 .home {
   min-height: 100vh;
   background: var(--base-dark);
@@ -43,5 +88,59 @@ import GlobalParticles from '@/components/GlobalParticles.vue'
 .main-content {
   position: relative;
   z-index: 1;
+}
+
+.snap-section {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+
+  // 确保每个section都有足够的高度
+  &:first-child {
+    min-height: 100vh;
+  }
+
+  &:nth-child(2) {
+    min-height: 100vh;
+  }
+
+  &:last-child {
+    min-height: 100vh;
+  }
+
+  // 移动端适配
+  @include media-down(md) {
+    min-height: 100vh;
+    min-height: 100dvh; // 动态视口高度
+  }
+
+  // 平板适配
+  @include media-between(md, lg) {
+    min-height: 100vh;
+  }
+}
+
+// 滚动行为优化 - 确保GSAP完全接管滚动控制
+html {
+  scroll-behavior: auto !important; // 强制禁用浏览器默认的平滑滚动，使用GSAP控制
+}
+
+// 防止滚动条闪烁
+body {
+  overflow-x: hidden;
+}
+
+// 性能优化
+.snap-section {
+  contain: layout style paint;
+  will-change: transform;
+}
+
+// 可访问性
+@media (prefers-reduced-motion: reduce) {
+  .snap-section {
+    will-change: auto;
+  }
 }
 </style>
