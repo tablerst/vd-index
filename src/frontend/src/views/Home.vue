@@ -24,12 +24,12 @@
     <!-- Footer -->
     <AppFooter />
 
-    <!-- 滚动指示器 -->
+    <!-- 滚动指示器 - 移动端隐藏 -->
     <ScrollIndicator
       :current-section="currentSection"
       :sections="sections"
       :progress="progress"
-      :visible="isSnapMode && !isAnimating"
+      :visible="isSnapMode && !isAnimating && !isRealMobileDevice"
       :show-hint="currentSection === 0"
       :is-mobile-progress-bar-disabled="isMobileProgressBarDisabled"
       @go-to-section="goToSection"
@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import GlassNavigation from '@/components/GlassNavigation.vue'
 import HeroSection from '@/components/HeroSection.vue'
 import MembersCircle from '@/components/MembersCircle.vue'
@@ -55,6 +55,18 @@ import { useSnapScroll } from '@/composables/useSnapScroll'
 const heroSectionRef = ref<HTMLElement | null>(null)
 const membersSectionRef = ref<HTMLElement | null>(null)
 const calendarSectionRef = ref<HTMLElement | null>(null)
+
+// 真实的移动设备检测（不受我们的强制desktop配置影响）
+const isRealMobileDevice = computed(() => {
+  // 检查屏幕宽度
+  const isMobileWidth = window.innerWidth <= 768
+  // 检查用户代理
+  const isMobileUserAgent = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  // 检查触摸设备
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+
+  return isMobileWidth || (isMobileUserAgent && isTouchDevice)
+})
 
 // 使用分屏滚动
 const {

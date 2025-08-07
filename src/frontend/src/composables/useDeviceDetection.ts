@@ -40,8 +40,11 @@ export function useDeviceDetection() {
   // 设备类型检测
   const deviceType = computed<DeviceInfo['type']>(() => {
     const width = screenWidth.value
-    if (width <= 768) return 'mobile'
-    if (width <= 1024) return 'tablet'
+    // 暂时禁用移动端和平板端的snap scroll功能
+    // 所有设备都使用desktop配置，确保PC端体验最佳
+    // 移动端将使用标准的滚动方式
+    // if (width <= 768) return 'mobile'
+    // if (width <= 1024) return 'tablet'
     return 'desktop'
   })
 
