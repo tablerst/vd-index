@@ -1,7 +1,10 @@
 <template>
   <!-- 使用 Teleport 将粒子渲染到 body，突破容器限制 -->
   <Teleport to="body">
-    <div class="global-particles" :class="{ 'particles-active': isActive }">
+    <div class="global-particles" :class="{
+      'particles-active': isActive,
+      'particles-paused': isPaused || !isVisible
+    }">
       <!-- 全局背景粒子 - 稀疏分布 -->
       <div
         v-for="i in globalParticleCount"
@@ -70,15 +73,17 @@ watch(() => themeStore.currentTheme, () => {
 
 // 响应式状态
 const isActive = ref(false)
+const isVisible = ref(true)
+const isPaused = ref(false)
 
-// 计算粒子数量
-const globalParticleCount = computed(() => Math.floor(80 * props.intensity))
-const centerParticleCount = computed(() => Math.floor(40 * props.intensity))
+// 计算粒子数量 - 大幅减少以提升性能
+const globalParticleCount = computed(() => Math.floor(30 * props.intensity))
+const centerParticleCount = computed(() => Math.floor(15 * props.intensity))
 const deepSpaceParticleCount = computed(() =>
-  props.enableDeepSpace ? Math.floor(60 * props.intensity) : 0
+  props.enableDeepSpace ? Math.floor(15 * props.intensity) : 0
 )
 const stardustParticleCount = computed(() =>
-  props.enableDeepSpace ? Math.floor(30 * props.intensity) : 0
+  props.enableDeepSpace ? Math.floor(10 * props.intensity) : 0
 )
 
 // 生成全局粒子样式
@@ -214,16 +219,44 @@ const getStardustParticleStyle = (index: number) => {
   }
 }
 
+// 性能优化：页面可见性检测
+const handleVisibilityChange = () => {
+  isVisible.value = !document.hidden
+  if (document.hidden) {
+    isPaused.value = true
+  } else {
+    // 页面重新可见时延迟恢复动画
+    setTimeout(() => {
+      isPaused.value = false
+    }, 100)
+  }
+}
+
+// 全局动画暂停控制（用于滑动时暂停）
+const handleAnimationPause = (event: CustomEvent) => {
+  isPaused.value = event.detail.pause
+}
+
 // 生命周期
 onMounted(() => {
   // 延迟激活以确保平滑过渡
   setTimeout(() => {
     isActive.value = true
   }, 500)
+
+  // 监听页面可见性变化
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+
+  // 监听全局动画暂停事件
+  window.addEventListener('particles-pause', handleAnimationPause as EventListener)
 })
 
 onUnmounted(() => {
   isActive.value = false
+
+  // 清理事件监听器
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+  window.removeEventListener('particles-pause', handleAnimationPause as EventListener)
 })
 </script>
 
@@ -242,14 +275,24 @@ onUnmounted(() => {
   &.particles-active {
     opacity: 1;
   }
+
+  &.particles-paused {
+    .global-particle,
+    .center-particle,
+    .deepspace-particle,
+    .stardust-particle {
+      animation-play-state: paused;
+    }
+  }
 }
 
 .global-particle {
   position: absolute;
   border-radius: 50%;
   background: var(--particle-color, var(--particle-primary));
-  filter: blur(0.5px);
+  box-shadow: 0 0 4px var(--particle-color, var(--particle-primary));
   will-change: transform, opacity;
+  transform: translate3d(0, 0, 0); // 强制GPU加速
   animation: globalFloat linear infinite;
 
   &::before {
@@ -261,7 +304,7 @@ onUnmounted(() => {
     height: 200%;
     background: radial-gradient(circle, currentColor 0%, transparent 70%);
     border-radius: 50%;
-    opacity: 0.2;
+    opacity: 0.15; // 减少透明度以降低渲染负载
   }
 }
 
@@ -269,9 +312,9 @@ onUnmounted(() => {
   position: absolute;
   border-radius: 50%;
   background: var(--particle-secondary);
-  box-shadow: 0 0 8px var(--particle-secondary);
-  filter: blur(0.3px);
+  box-shadow: 0 0 6px var(--particle-secondary);
   will-change: transform;
+  transform: translate3d(0, 0, 0); // 强制GPU加速
   animation: centerOrbit linear infinite;
 }
 
@@ -279,10 +322,11 @@ onUnmounted(() => {
   position: absolute;
   border-radius: 50%;
   background: var(--particle-accent);
-  filter: blur(1px);
+  box-shadow: 0 0 3px var(--particle-accent);
   will-change: transform, opacity;
+  transform: translate3d(0, 0, 0); // 强制GPU加速
   animation: deepSpaceFloat linear infinite;
-  opacity: 0.6;
+  opacity: 0.5; // 降低透明度减少渲染负载
 
   &::before {
     content: '';
@@ -293,7 +337,7 @@ onUnmounted(() => {
     height: 300%;
     background: radial-gradient(circle, currentColor 0%, transparent 60%);
     border-radius: 50%;
-    opacity: 0.3;
+    opacity: 0.2; // 降低透明度
   }
 }
 
@@ -301,10 +345,11 @@ onUnmounted(() => {
   position: absolute;
   border-radius: 50%;
   background: var(--particle-primary);
-  filter: blur(0.2px);
+  box-shadow: 0 0 2px var(--particle-primary);
   will-change: transform;
+  transform: translate3d(0, 0, 0); // 强制GPU加速
   animation: stardustFlow linear infinite;
-  opacity: 0.7;
+  opacity: 0.6; // 降低透明度
 }
 
 // 全局粒子漂浮动画

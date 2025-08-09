@@ -113,7 +113,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, computed, nextTick, inject } from 'vue'
 import { Swiper, SwiperSlide } from 'swiper/vue'
 import { Navigation } from 'swiper/modules'
 import { gsap } from 'gsap'
@@ -149,6 +149,9 @@ interface Member {
 const membersStore = useMembersStore()
 const { responsiveConfig } = useDeviceDetection()
 // const { metrics: performanceMetrics } = usePerformanceMonitor(45) // 暂时注释未使用的性能监控
+
+// 注入滚轮监听器控制函数
+const setWheelListenerDisabled = inject<(disabled: boolean) => void>('setWheelListenerDisabled')
 
 const sectionRef = ref<HTMLElement>()
 const modalContent = ref<HTMLDivElement>()
@@ -220,7 +223,7 @@ const goToNextPage = () => {
   }
 }
 
-// GSAP切屏动画
+// GSAP切屏动画 - 性能优化版本
 const animateSlideTransition = (fromIndex: number, toIndex: number) => {
   if (isTransitioning.value) return
 
@@ -248,56 +251,49 @@ const animateSlideTransition = (fromIndex: number, toIndex: number) => {
     }
   })
 
-  // 如果有前一个滑动页面，添加退出动画
+  // 简化的退出动画，只使用透明度和轻微缩放
   if (previousSlideEl) {
     const previousStars = previousSlideEl.querySelectorAll('.member-star')
 
     tl.to(previousStars, {
-      scale: 0.8,
-      opacity: 0.3,
-      rotationY: toIndex > fromIndex ? -45 : 45,
-      duration: 0.4,
+      scale: 0.9,
+      opacity: 0.2,
+      duration: 0.3,
       ease: "power2.out",
       stagger: {
-        amount: 0.2,
-        from: "random"
+        amount: 0.1,
+        from: "center"
       }
     }, 0)
   }
 
-  // 当前滑动页面的进入动画
+  // 简化的进入动画，移除3D变换以提升性能
   gsap.set(currentStars, {
-    scale: 0.6,
-    opacity: 0,
-    rotationY: toIndex > fromIndex ? 45 : -45,
-    z: -100
+    scale: 0.8,
+    opacity: 0
   })
 
   tl.to(currentStars, {
     scale: 1,
     opacity: 1,
-    rotationY: 0,
-    z: 0,
-    duration: 0.6,
-    ease: "power4.out",
+    duration: 0.4,
+    ease: "power3.out",
     stagger: {
-      amount: 0.3,
+      amount: 0.2,
       from: "center"
     }
-  }, 0.2)
+  }, 0.1)
 
-  // 添加视差效果
+  // 移除blur滤镜以提升性能，只使用简单的透明度过渡
   tl.fromTo(currentSlideEl,
     {
-      filter: "blur(5px)",
-      scale: 1.05
+      opacity: 0.8
     },
     {
-      filter: "blur(0px)",
-      scale: 1,
-      duration: 0.8,
-      ease: "power3.out"
-    }, 0.1)
+      opacity: 1,
+      duration: 0.4,
+      ease: "power2.out"
+    }, 0)
 }
 
 // 成员交互处理
@@ -305,6 +301,11 @@ const handleMemberSelect = (member: Member) => {
   performanceProfiler.mark('member-modal-open-start')
   selectedMember.value = member
   showMemberInfo.value = true
+
+  // 禁用全局滚轮监听，允许Modal内滚动
+  if (setWheelListenerDisabled) {
+    setWheelListenerDisabled(true)
+  }
 
   // 使用GSAP实现高性能打开动画
   nextTick(() => {
@@ -370,6 +371,11 @@ const closeMemberInfo = () => {
     onComplete: () => {
       showMemberInfo.value = false
       selectedMember.value = null
+
+      // 恢复全局滚轮监听
+      if (setWheelListenerDisabled) {
+        setWheelListenerDisabled(false)
+      }
     }
   })
 

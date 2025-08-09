@@ -230,59 +230,45 @@ const prefersReducedMotion = () => {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
-// 初始化呼吸动画
+// 初始化呼吸动画 - 性能优化版本
 const initBreathingAnimation = () => {
   if (!props.enableBreathing || prefersReducedMotion()) return
+
+  // 合并所有元素到单一时间线以减少计算开销
+  const allElements = [
+    ...([ring1.value, ring2.value, ring3.value].filter(Boolean)),
+    core.value,
+    breathingHalo.value
+  ].filter(Boolean)
+
+  if (allElements.length === 0) return
+
+  // 设置will-change属性和GPU加速
+  allElements.forEach(el => {
+    if (el) {
+      el.style.willChange = 'transform'
+      el.style.transform = 'translate3d(0,0,0)' // 强制GPU加速
+    }
+  })
 
   breathingTl = gsap.timeline({
     repeat: -1,
     yoyo: true,
     defaults: {
       ease: 'sine.inOut',
-      duration: 4 // 增加持续时间减少计算频率
+      duration: 5 // 增加持续时间减少计算频率
     }
   })
 
-  // 环的呼吸效果 - 使用will-change优化
-  const rings = [ring1.value, ring2.value, ring3.value].filter(Boolean)
-  if (rings.length > 0) {
-    // 设置will-change属性
-    rings.forEach(ring => {
-      if (ring) ring.style.willChange = 'transform, opacity'
-    })
-
-    breathingTl.to(rings, {
-      scale: 1.06, // 减少缩放幅度
-      opacity: 1,
-      transformOrigin: 'center',
-      force3D: true // 强制GPU加速
-    }, 0)
-  }
-
-  // 核心圆的呼吸效果
-  if (core.value) {
-    core.value.style.willChange = 'transform, opacity'
-    breathingTl.to(core.value, {
-      scale: 1.08, // 轻微缩放
-      opacity: 1,
-      transformOrigin: 'center',
-      force3D: true
-    }, 0)
-  }
-
-  // 呼吸光晕的效果 - 更明显的呼吸
-  if (breathingHalo.value) {
-    breathingHalo.value.style.willChange = 'transform, opacity'
-    breathingTl.to(breathingHalo.value, {
-      scale: 1.3, // 更大的缩放幅度
-      opacity: 0.8, // 呼吸时更明显
-      transformOrigin: 'center',
-      force3D: true
-    }, 0)
-  }
+  // 统一的呼吸效果，减少复杂度
+  breathingTl.to(allElements, {
+    scale: 1.04, // 减少缩放幅度以降低GPU负载
+    transformOrigin: 'center',
+    force3D: true
+  }, 0)
 }
 
-// 初始化脉冲动画
+// 初始化脉冲动画 - 简化版本
 const initPulseAnimation = () => {
   if (!props.enablePulse || prefersReducedMotion()) return
 
@@ -292,11 +278,18 @@ const initPulseAnimation = () => {
     return
   }
 
+  // 设置GPU加速
+  validPulseRefs.forEach(el => {
+    if (el) {
+      el.style.willChange = 'opacity'
+      el.style.transform = 'translate3d(0,0,0)'
+    }
+  })
+
   pulseTl = gsap.timeline({ repeat: -1 })
 
+  // 简化的脉冲效果，只改变透明度以减少GPU负载
   validPulseRefs.forEach((pulseEl, index) => {
-    // 设置will-change属性
-    if (pulseEl) pulseEl.style.willChange = 'transform, opacity'
 
     const delay = index * 1.5 // 增加延迟间隔减少重叠
     pulseTl

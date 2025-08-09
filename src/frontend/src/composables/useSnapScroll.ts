@@ -208,6 +208,15 @@ export function useSnapScroll(sectionRefs: Array<{ value: HTMLElement | null }>,
     }, finalConfig.debounceDelay)
   }
 
+  // 全局滚轮监听禁用状态
+  const isWheelListenerDisabled = ref(false)
+
+  // 禁用/启用全局滚轮监听
+  const setWheelListenerDisabled = (disabled: boolean) => {
+    isWheelListenerDisabled.value = disabled
+    console.log('Wheel listener disabled:', disabled)
+  }
+
   // 计算属性
   const totalSections = computed(() => sections.value.length)
   const progress = computed(() => 
@@ -253,6 +262,26 @@ export function useSnapScroll(sectionRefs: Array<{ value: HTMLElement | null }>,
     }
   }
 
+  // 暂停/恢复装饰性动画
+  const pauseDecorationAnimations = (pause: boolean) => {
+    // 发送全局事件暂停粒子动画
+    window.dispatchEvent(new CustomEvent('particles-pause', {
+      detail: { pause }
+    }))
+
+    // 暂停其他装饰性动画
+    const decorativeElements = document.querySelectorAll('.ring-svg, .member-star')
+    decorativeElements.forEach(el => {
+      if (el instanceof HTMLElement || el instanceof SVGElement) {
+        if (pause) {
+          el.style.animationPlayState = 'paused'
+        } else {
+          el.style.animationPlayState = 'running'
+        }
+      }
+    })
+  }
+
   // 滚动到指定section
   const scrollToSection = (index: number, force = false, gestureVelocity?: number) => {
     if (isAnimating.value && !force) return
@@ -264,6 +293,9 @@ export function useSnapScroll(sectionRefs: Array<{ value: HTMLElement | null }>,
     isAnimating.value = true
     currentSection.value = index
     setWheelBlocked(true) // 使用新的阻止方法
+
+    // 滑动开始时暂停装饰性动画
+    pauseDecorationAnimations(true)
 
     console.log(`Scrolling to section ${index}:`, targetSection.offsetTop)
 
@@ -306,16 +338,23 @@ export function useSnapScroll(sectionRefs: Array<{ value: HTMLElement | null }>,
       onComplete: () => {
         isAnimating.value = false
         setWheelBlocked(false) // 使用新的解除阻止方法
+
+        // 滑动完成后恢复装饰性动画
+        setTimeout(() => {
+          pauseDecorationAnimations(false)
+        }, 100)
+
         console.log(`Scroll to section ${index} completed - wheel block released`)
 
         // 刷新ScrollTrigger
         ScrollTrigger.refresh()
       },
       onInterrupt: () => {
-        // 动画被中断时也要解除阻止
+        // 动画被中断时也要解除阻止和恢复动画
         console.log(`Scroll to section ${index} interrupted - releasing wheel block`)
         isAnimating.value = false
         setWheelBlocked(false)
+        pauseDecorationAnimations(false)
       }
     })
   }
@@ -396,7 +435,13 @@ export function useSnapScroll(sectionRefs: Array<{ value: HTMLElement | null }>,
 
   // 全局wheel事件拦截 - 一次滚轮操作直接切换一屏
   const handleWheel = (e: WheelEvent) => {
-    console.log('handleWheel - isSnapMode:', isSnapMode.value, 'isAnimating:', isAnimating.value, 'isWheelBlocked:', isWheelBlocked)
+    console.log('handleWheel - isSnapMode:', isSnapMode.value, 'isAnimating:', isAnimating.value, 'isWheelBlocked:', isWheelBlocked, 'isWheelListenerDisabled:', isWheelListenerDisabled.value)
+
+    // 如果滚轮监听被禁用，完全不处理事件
+    if (isWheelListenerDisabled.value) {
+      console.log('handleWheel - wheel listener disabled, allowing default behavior')
+      return
+    }
 
     // 在snap模式下，始终阻止默认滚动行为
     if (isSnapMode.value) {
@@ -729,6 +774,7 @@ export function useSnapScroll(sectionRefs: Array<{ value: HTMLElement | null }>,
     enableSnapMode,
     disableSnapMode,
     updateSections,
+    setWheelListenerDisabled,
 
     // 配置和设备信息
     config: finalConfig,

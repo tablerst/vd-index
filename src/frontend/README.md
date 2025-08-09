@@ -1,5 +1,101 @@
 # VD群成员管理系统 - 前端技术文档
 
+## 🧭 首页（Home.vue）特性与架构总览
+
+本节为当前 Home.vue 及其相关组件/Store/服务/样式的全面功能清单与实现梳理，作为后续开发的统一基线文档。
+
+### 1) 核心功能清单（Home 视图）
+- 分屏滚动体验：useSnapScroll 统一接管滚轮，按屏滚动切换（Hero → Members → Activities），底部区域自动退出 snap 模式以允许自然滚动
+- 引导与反馈：右侧 ScrollIndicator 显示当前屏、滚动进度与分屏跳转（可见条件：isSnapMode && !isAnimating && !isRealMobileDevice；支持移动端禁用点击配置；当前设备策略统一 desktop，默认可点击）
+- 统一导航：GlassNavigation 顶部玻璃态导航，含主题切换（深/浅）与移动端抽屉菜单
+- 首屏视觉：HeroSection 包含 2D 星际门（Ring2D）与环形粒子（OffscreenCanvas+Web Worker，自动降级）
+- 成员星云：MembersCircle 使用 Swiper 横向分页，GalaxySlide 负责头像随机分布+动态连接线呼吸效果+成员详情弹窗
+- 活动时间轴：StarCalendar 加载后端活动数据与统计，卡片堆栈式浏览与键盘箭头导航
+- 全局氛围：GlobalParticles 通过 Teleport 挂载到 body，渲染全屏分层粒子（中心密度增强、深空粒子、星尘粒子）
+- 页脚信息：AppFooter 含装饰线、导航/社交/联系/版权与回到顶部按钮
+
+### 2) 组件架构与关系
+- Home.vue
+  - GlassNavigation（主题切换、移动端菜单，GSAP 细腻动效）
+  - main
+    - section#hero → HeroSection（Ring2D + 环形粒子 Worker）
+    - section#members → MembersCircle（Swiper 分页 + GalaxySlide 渲染 + 评论模块）
+    - section#activities → StarCalendar（活动/统计的 API 集成）
+  - AppFooter（回到顶部、几何装饰线）
+  - ScrollIndicator（分屏指示/跳转/进度）
+  - GlobalParticles（全局粒子层，Teleport 到 body）
+
+交互路径（典型流）：
+- 导航点击/滚轮 → useSnapScroll 滚动控制 → 切换到对应 section → 触发各 section 首次进入动画/数据加载 → ScrollIndicator 状态联动
+
+### 3) 状态管理与数据流（Pinia + 组合式）
+- 主题：stores/theme.ts
+  - currentTheme（light/dark）本地持久化（localStorage），切换时更新一组 CSS 变量（含主/辅/强调色、玻璃态、阴影、粒子色等）
+  - GlassNavigation 使用 themeStore.isDark 控制 NSwitch；GlobalParticles/HeroSection 等通过 CSS 变量与 Watch 同步主题
+- 成员：stores/members.ts
+  - loadMembers：优先调用后端 API（memberApi.getAllMembers）并适配字段（avatar_url→avatarURL 等），失败自动回退到本地 JSON
+  - 可见成员、分页、搜索与统计等均由本 Store 提供；MembersCircle 首次挂载时触发加载
+- 设备/响应式：composables/useDeviceDetection.ts
+  - 统一定义 deviceInfo 与 responsiveConfig（成员每页数量、头像尺寸、间距、动画强度）；当前策略强制 desktop 配置以优化 PC 体验
+- 分屏滚动：composables/useSnapScroll.ts
+  - 维护 currentSection/isAnimating/isSnapMode/sections/progress；统一阻拦 wheel 默认行为并用 GSAP ScrollTo 控制滚动；footer 阈值切换 snap 模式
+
+数据流典型过程：
+- MembersCircle → membersStore.loadMembers() → services/api.ts → 后端 /api/v1/members（分页聚合为全量）→ Store 映射为前端模型 → 组件渲染
+- StarCalendar → activityApi.getAllActivities() & getStats() → /api/v1/star_calendar/activities & /stats → 渲染卡片与统计信息
+
+### 4) UI/UX 与动画/交互要点
+- GSAP 动画：
+  - MembersCircle：ScrollTrigger 进入视差/交错动画；分页切换时成员星球的 3D 过渡（rotateY/blur/scale）
+  - GlassNavigation：主题切换 NSwitch 的 hover/切换/过渡动效（细腻弹性与光晕）
+  - 成员详情弹窗：打开/关闭采用时间线（遮罩淡入、内容缩放+旋转 Y）
+- Canvas/Worker：
+  - HeroSection 环形粒子优先使用 OffscreenCanvas + Worker，异常时自动降级到主线程 2D 渲染；尺寸变化/主题切换通过 postMessage 同步
+  - GalaxySlide 连接线 Canvas 按 devicePixelRatio 缩放并使用 requestAnimationFrame 逐帧：
+    - 实时读取每个头像元素的 getBoundingClientRect 计算中心与半径，线条从头像边缘到边缘（避免穿过头像）
+    - 颜色采用主题色混合并按呼吸 alpha 0→1→0 渐变；支持移动端更粗线宽与更快节奏
+- Swiper 分页：MembersCircle 使用 1 屏/页横向滑动，左右箭头手动切换，键盘支持
+- 可访问性：按钮/卡片 tabindex、aria-label、focus-visible 样式；移动端进度条交互禁用以避免误触
+
+### 5) API 集成与后端端点（与 Home 相关）
+- 成员数据：
+  - GET /api/v1/members?page={n}&page_size={m}（services/api.ts → ApiClient.getMembers → memberApi.getAllMembers 聚合）
+  - GET /api/v1/members/stats（成员统计，Store/页面可扩展使用）
+- 活动数据：
+  - GET /api/v1/star_calendar/activities（分页，activityApi.getAllActivities 聚合）
+  - GET /api/v1/star_calendar/activities/stats（活动/参与度统计）
+- 评论系统（MembersCircle 的弹窗评论组件使用）：
+  - GET /api/v1/comments/members/{memberId}/comments（列表）
+  - POST /api/v1/comments/members/{memberId}/comments（创建）
+  - PUT /api/v1/comments/{commentId}/like（点赞）/ PUT /api/v1/comments/{commentId}/dislike（点踩）
+  - DELETE /api/v1/comments/{commentId}（删除）
+  - GET /api/v1/comments/stats（统计）
+
+### 6) 关键技术实现摘要
+- 分屏滚动控制：GSAP ScrollTo + ScrollTrigger 组合；滚轮事件由 useSnapScroll 自行拦截并处理，footerThreshold 自动切换自由滚动
+- 设备响应与性能策略：useDeviceDetection 暂时统一为 desktop；GlobalParticles/连接线/粒子数量与节奏按设备/主题自适应
+- 主题系统：Pinia + CSS 变量，深/浅色完整色板与玻璃态/阴影/渐变/粒子色，一处切换全局联动
+- 连接线系统：DynamicConnectionSystem 统一管理连接生成/激活/淡入淡出，GalaxySlide 每帧同步头像中心并曲线连接
+- HiDPI 渲染：连接线 Canvas 宽高乘以 dpr，context setTransform(dpr, …) 保证物理像素清晰显示
+
+### 7) 相关文件索引（主引用链）
+- 视图：src/frontend/src/views/Home.vue
+- 组件：
+  - GlassNavigation.vue, HeroSection.vue, MembersCircle.vue, StarCalendar.vue, AppFooter.vue, GlobalParticles.vue, ScrollIndicator.vue
+  - GalaxySlide.vue（MembersCircle 子组件，连接线/布局/悬浮提示/详情弹窗）
+- Store：src/frontend/src/stores/theme.ts, src/frontend/src/stores/members.ts
+- 组合式：src/frontend/src/composables/useSnapScroll.ts, src/frontend/src/composables/useDeviceDetection.ts
+- 服务：src/frontend/src/services/api.ts（memberApi/activityApi/commentApi 等）
+- 样式：src/frontend/src/styles/variables.scss, src/frontend/src/styles/theme-utils.scss（各组件通过 @use 引入）
+
+### 8) 后续增强建议（参考）
+- useSnapScroll 对移动/平板触摸恢复与简化模式联动，结合进度条禁用策略与阈值微调
+- MembersCircle 将搜索从前端过滤升级为后端模糊查询（分页接口支持 query）
+- StarCalendar 增加详情面板与筛选（按标签/年份），并引入骨架屏/占位
+- 统一将性能指标（performanceProfiler）挂载到开发模式的面板以便调试
+- 将 GlobalParticles 与 Hero 粒子主题/强度设置暴露到设置页（/settings）以便运行时调参
+
+
 ## 📋 目录
 
 - [技术栈与架构](#技术栈与架构)
@@ -73,7 +169,7 @@
 #### 2. 成员星云展示 (MembersCircle)
 **功能特性:**
 - 水平全屏分页 (Swiper集成)
-- 力导向连接系统 (D3-force算法)
+- 动态连接系统 (DynamicConnectionSystem，自研呼吸/激活调度，非 d3-force)
 - 成员头像星球化展示
 - 实时连接线动画
 
@@ -111,7 +207,7 @@
 
 ```
 用户交互流程:
-页面加载 → 星际门呼吸动画 → 鼠标视差跟随 → 滚动到成员区域 → 
+页面加载 → 星际门呼吸动画 → 鼠标视差跟随 → 滚动到成员区域 →
 星云展示 → 左右滑动分页 → 成员连接动画 → 头像悬停效果
 ```
 
@@ -139,19 +235,23 @@ src/frontend/
 │   │   └── StarCalendar.vue  # 星历日历
 │   ├── composables/          # 组合式API
 │   │   ├── useDeviceDetection.ts # 设备检测
-│   │   ├── usePerformanceMonitor.ts # 性能监控
-│   │   ├── useForceDirectedConnections.ts # 力导向连接
-│   │   └── useThreeScene.ts  # Three.js场景管理
+│   │   ├── usePerformanceMonitor.ts # 性能监控（若存在）
+│   │   ├── useForceDirectedConnections.ts # 力导向（备用/参考，当前未在 Members 使用）
+│   │   └── useSnapScroll.ts  # 分屏滚动
 │   ├── stores/               # Pinia状态管理
 │   │   └── members.ts        # 成员数据状态
 │   ├── services/             # API服务
 │   │   └── api.ts            # 后端API客户端
 │   ├── utils/                # 工具函数
-│   │   ├── stargate3d.ts     # 3D星际门工具
-│   │   ├── gravityScatter3d.ts # 3D重力散布
-│   │   ├── ringParticlesWorker.ts # 粒子Worker
-│   │   ├── mathUtils.ts      # 数学工具
-│   │   └── performanceUtils.ts # 性能工具
+│   │   ├── dynamicConnectionSystem.ts # 动态连接线系统（当前使用）
+│   │   ├── ringParticlesWorker.ts # 环形粒子Worker
+│   │   ├── performanceOptimizer.ts # 性能优化器
+│   │   ├── performanceProfiler.ts # 性能剖析器
+│   │   ├── themeColors.ts # 主题色计算
+│   │   ├── stargate3d.ts # 3D星际门（独立，不在 Home 集成）
+│   │   ├── gravityScatter3d.ts # 3D重力散布（备用）
+│   │   ├── colorScience.ts / oklchColorSystem.ts / contrastValidator.ts
+│   │   └── token.ts # 认证 token 工具
 │   ├── styles/               # 样式文件
 │   │   ├── main.scss         # 主样式入口
 │   │   ├── variables.scss    # SCSS变量
@@ -302,18 +402,33 @@ class RingParticleSystem {
 ```vue
 <template>
   <div class="members-galaxy">
-    <Swiper
-      :modules="[Navigation, Mousewheel]"
+    <swiper
+      :modules="[Navigation]"
       :slides-per-view="1"
       :space-between="0"
-      :mousewheel="{ forceToAxis: true }"
+      :keyboard="{ enabled: true }"
+      :speed="900"
+      :effect="'slide'"
+      :grab-cursor="true"
+      :allowTouchMove="true"
       @slide-change="onSlideChange"
       @swiper="onSwiperInit"
+      class="galaxy-swiper"
     >
-      <SwiperSlide v-for="(pageMembers, index) in memberPages" :key="index">
-        <GalaxySlide :members="pageMembers" :slide-index="index" />
-      </SwiperSlide>
-    </Swiper>
+      <swiper-slide
+        v-for="(pageMembers, pageIndex) in paginatedMembers"
+        :key="pageIndex"
+        class="galaxy-slide-container"
+      >
+        <GalaxySlide
+          :members="pageMembers"
+          :index="pageIndex"
+          @member-select="handleMemberSelect"
+          @member-hover="handleMemberHover"
+          @member-leave="handleMemberLeave"
+        />
+      </swiper-slide>
+    </swiper>
   </div>
 </template>
 
@@ -587,7 +702,6 @@ App.vue (根组件)
 │   ├── Ring2D.vue (2D星际门)
 │   └── Canvas (环形粒子系统)
 ├── MembersCircle.vue (成员星云)
-│   ├── DeepSpaceBackground.vue (深空背景)
 │   ├── GalaxyInfoWidget.vue (信息控件)
 │   ├── ProgressBar.vue (进度条)
 │   ├── PaginationArrows.vue (分页箭头)

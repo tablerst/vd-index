@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, provide } from 'vue'
 import GlassNavigation from '@/components/GlassNavigation.vue'
 import HeroSection from '@/components/HeroSection.vue'
 import MembersCircle from '@/components/MembersCircle.vue'
@@ -77,7 +77,8 @@ const {
   progress,
   goToSection,
   deviceType,
-  isMobileProgressBarDisabled
+  isMobileProgressBarDisabled,
+  setWheelListenerDisabled
 } = useSnapScroll([
   heroSectionRef,
   membersSectionRef,
@@ -86,6 +87,9 @@ const {
   // 只保留必要的自定义配置，让设备特定配置生效
   footerThreshold: 0.85
 })
+
+// 提供滚轮监听器控制函数给子组件
+provide('setWheelListenerDisabled', setWheelListenerDisabled)
 </script>
 
 <style scoped lang="scss">
