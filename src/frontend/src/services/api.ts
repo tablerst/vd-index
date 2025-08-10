@@ -302,6 +302,52 @@ class ApiClient {
     })
   }
 
+  // 导入：上传JSON文件到管理员接口
+  async adminImportFile(file: File): Promise<any> {
+    const form = new FormData()
+    form.append('file', file)
+    // 注意：multipart时不要手动设置Content-Type
+    return this.request('/api/v1/admin/import-file', {
+      method: 'POST',
+      body: form
+    })
+  }
+
+  // 导入：直接提交JSON结构（mems数组）
+  async adminImportJson(mems: any[]): Promise<any> {
+    // 将 mems 转为 ImportBatchRequest 结构在后端解析
+    return this.request('/api/v1/admin/import-json', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ members: mems })
+    })
+  }
+
+  // 导入：通过QQ群参数获取后导入
+  async adminImportFromQQ(params: {
+    group_id: string
+    cookie: string
+    bkn: string
+    user_agent?: string
+    page_size?: number
+    request_delay?: number
+  }): Promise<any> {
+    return this.request('/api/v1/admin/import-from-qq', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params)
+    })
+  }
+
+  // 导入：直接调用 /api/v1/members/import（批量Upsert）
+  async membersImport(batch: { members: any[] }): Promise<any> {
+    return this.request('/api/v1/members/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(batch)
+    })
+  }
+
   // 更新成员信息
   async updateMember(id: number, data: MemberUpdateRequest): Promise<any> {
     return this.request(`/api/v1/members/${id}`, {
@@ -553,6 +599,33 @@ export const memberApi = {
   // 删除成员
   async deleteMember(id: number): Promise<any> {
     return apiClient.deleteMember(id)
+  },
+
+  // 导入：上传JSON文件
+  async importMembersFile(file: File): Promise<any> {
+    return apiClient.adminImportFile(file)
+  },
+
+  // 导入：直接传JSON（mems数组）
+  async importMembersJson(mems: any[]): Promise<any> {
+    return apiClient.adminImportJson(mems)
+  },
+
+  // 导入：通过QQ群参数获取
+  async importMembersFromQQ(params: {
+    group_id: string
+    cookie: string
+    bkn: string
+    user_agent?: string
+    page_size?: number
+    request_delay?: number
+  }): Promise<any> {
+    return apiClient.adminImportFromQQ(params)
+  },
+
+  // 导入：成员 JSON 直接 Upsert
+  async importMembersBatch(mems: any[]): Promise<any> {
+    return apiClient.membersImport({ members: mems })
   },
 
   // 获取头像URL

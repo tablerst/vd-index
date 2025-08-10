@@ -139,45 +139,113 @@
       v-model:show="showImportModal"
       preset="dialog"
       title="导入成员数据"
-      style="width: 600px;"
+      style="width: 760px;"
     >
       <div class="import-content">
-        <n-text depth="3" style="margin-bottom: 16px; display: block;">
-          支持导入JSON格式的成员数据文件。请确保文件格式正确。
-        </n-text>
+        <n-tabs type="line" animated>
+          <n-tab-pane name="json" tab="上传/粘贴 JSON">
+            <n-text depth="3" style="margin-bottom: 16px; display: block;">
+              支持两种方式：上传包含 mems 字段的 JSON 文件，或在下方粘贴 mems 数组/对象后导入。
+            </n-text>
 
-        <n-upload
-          v-model:file-list="uploadFiles"
-          :max="1"
-          accept=".json"
-          @change="handleFileChange"
-        >
-          <n-upload-dragger>
-            <div style="margin-bottom: 12px;">
-              <n-icon size="48" :depth="3">
-                <CloudUploadOutline />
-              </n-icon>
+            <n-space vertical :size="16">
+              <!-- 方式一：上传JSON文件 -->
+              <div>
+                <n-upload
+                  v-model:file-list="uploadFiles"
+                  :max="1"
+                  accept=".json"
+                  @change="handleFileChange"
+                >
+                  <n-upload-dragger>
+                    <div style="margin-bottom: 12px;">
+                      <n-icon size="48" :depth="3">
+                        <CloudUploadOutline />
+                      </n-icon>
+                    </div>
+                    <n-text style="font-size: 16px;">
+                      点击或者拖动文件到该区域来上传
+                    </n-text>
+                    <n-text depth="3" style="margin-top: 8px;">
+                      仅支持 JSON 格式文件
+                    </n-text>
+                  </n-upload-dragger>
+                </n-upload>
+                <div style="margin-top: 12px; display: flex; justify-content: flex-end; gap: 12px;">
+                  <n-button @click="showImportModal = false">取消</n-button>
+                  <n-button
+                    type="primary"
+                    :loading="loading"
+                    :disabled="uploadFiles.length === 0"
+                    @click="handleImportConfirm"
+                  >
+                    上传并导入
+                  </n-button>
+                </div>
+              </div>
+
+              <!-- 方式二：粘贴 JSON -->
+              <div>
+                <n-text depth="3" style="margin: 8px 0; display: block;">或粘贴 mems 数组，或包含 mems 字段的对象：</n-text>
+                <n-input
+                  v-model:value="pastedJson"
+                  type="textarea"
+                  :rows="6"
+                  placeholder='示例1：[ {"uin": 123, "role": 2, ...}, ... ]\n示例2：{"mems": [...], ...}'
+                />
+                <div style="margin-top: 12px; display: flex; justify-content: flex-end; gap: 12px;">
+                  <n-button
+                    type="primary"
+                    tertiary
+                    :loading="loading"
+                    :disabled="!pastedJson.trim()"
+                    @click="handleImportFromPastedJson"
+                  >
+                    粘贴并导入
+                  </n-button>
+                </div>
+              </div>
+            </n-space>
+          </n-tab-pane>
+
+          <n-tab-pane name="qq" tab="通过QQ获取">
+            <n-text depth="3" style="margin-bottom: 16px; display: block;">
+              通过填写 Cookie / BKN / 群号 等参数，从QQ群官网获取成员数据后导入。仅管理员使用。
+            </n-text>
+            <n-form :model="qqImport" label-placement="left" label-width="100px">
+              <n-form-item label="群号" path="group_id">
+                <n-input v-model:value="qqImport.group_id" placeholder="请输入群号" />
+              </n-form-item>
+              <n-form-item label="Cookie" path="cookie">
+                <n-input v-model:value="qqImport.cookie" type="textarea" :rows="3" placeholder="请粘贴有效Cookie" />
+              </n-form-item>
+              <n-form-item label="BKN" path="bkn">
+                <n-input v-model:value="qqImport.bkn" placeholder="请输入bkn" />
+              </n-form-item>
+              <n-form-item label="User-Agent" path="user_agent">
+                <n-input v-model:value="qqImport.user_agent" placeholder="可选，默认 Apifox UA" />
+              </n-form-item>
+              <n-form-item label="每页数量" path="page_size">
+                <n-input-number v-model:value="qqImport.page_size" :min="1" :max="200" placeholder="默认10，范围1-200" />
+              </n-form-item>
+              <n-form-item label="请求间隔(s)" path="request_delay">
+                <n-input-number v-model:value="qqImport.request_delay" :step="0.1" :min="0" :max="5" placeholder="默认0.5" />
+              </n-form-item>
+            </n-form>
+
+            <div style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 12px;">
+              <n-button @click="showImportModal = false">取消</n-button>
+              <n-button
+                type="primary"
+                :loading="loading"
+                :disabled="!qqImport.group_id || !qqImport.cookie || !qqImport.bkn"
+                @click="handleImportFromQQ"
+              >
+                获取并导入
+              </n-button>
             </div>
-            <n-text style="font-size: 16px;">
-              点击或者拖动文件到该区域来上传
-            </n-text>
-            <n-text depth="3" style="margin-top: 8px;">
-              仅支持 JSON 格式文件
-            </n-text>
-          </n-upload-dragger>
-        </n-upload>
-
-        <div style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 12px;">
-          <n-button @click="showImportModal = false">取消</n-button>
-          <n-button
-            type="primary"
-            :loading="loading"
-            :disabled="uploadFiles.length === 0"
-            @click="handleImportConfirm"
-          >
-            确认导入
-          </n-button>
-        </div>
+          </n-tab-pane>
+        </n-tabs>
       </div>
     </n-modal>
 
@@ -246,6 +314,9 @@ import {
   NUploadDragger,
   NText,
   NPopconfirm,
+  NTabs,
+  NTabPane,
+  NInputNumber,
   useMessage,
   type DataTableColumns,
   type UploadFileInfo
@@ -501,11 +572,7 @@ const handleImportConfirm = async () => {
 
   loading.value = true
   try {
-    // const text = await file.text()
-    // const data = JSON.parse(text)
-
-    // 这里应该调用后端API进行导入
-    // await memberApi.importMembers(data)
+    await memberApi.importMembersFile(file)
 
     message.success('成员数据导入成功')
     showImportModal.value = false
@@ -622,6 +689,78 @@ const handleDelete = async (member: Member) => {
   } catch (error) {
     console.error('Delete failed:', error)
     message.error('删除失败')
+  }
+}
+
+// QQ导入参数
+const qqImport = ref({
+  group_id: '',
+  cookie: '',
+  bkn: '',
+  user_agent: 'Apifox/1.0.0 (https://apifox.com)',
+  page_size: 10,
+  request_delay: 0.5
+})
+
+// 通过QQ获取并导入
+const handleImportFromQQ = async () => {
+  loading.value = true
+  try {
+    await memberApi.importMembersFromQQ({
+      group_id: qqImport.value.group_id,
+      cookie: qqImport.value.cookie,
+      bkn: qqImport.value.bkn,
+      user_agent: qqImport.value.user_agent,
+      page_size: Number(qqImport.value.page_size) || 10,
+      request_delay: Number(qqImport.value.request_delay) || 0.5
+    })
+    message.success('通过QQ获取并导入成功')
+    showImportModal.value = false
+    // 清理表单
+    qqImport.value = {
+      group_id: '',
+      cookie: '',
+      bkn: '',
+      user_agent: 'Apifox/1.0.0 (https://apifox.com)',
+      page_size: 10,
+      request_delay: 0.5
+    }
+    await loadMembers()
+  } catch (error: any) {
+    console.error('Import from QQ failed:', error)
+    message.error(error?.message || '通过QQ获取导入失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 粘贴 JSON 文本
+const pastedJson = ref('')
+
+// 从粘贴的 JSON 导入
+const handleImportFromPastedJson = async () => {
+  if (!pastedJson.value.trim()) {
+    message.warning('请输入要导入的 JSON')
+    return
+  }
+  loading.value = true
+  try {
+    const parsed = JSON.parse(pastedJson.value)
+    const mems = Array.isArray(parsed) ? parsed : (parsed.mems || [])
+    if (!Array.isArray(mems) || mems.length === 0) {
+      message.warning('未找到 mems 数组，请检查输入格式')
+      return
+    }
+    await memberApi.importMembersBatch(mems)
+    message.success('粘贴 JSON 导入成功')
+    pastedJson.value = ''
+    showImportModal.value = false
+    await loadMembers()
+  } catch (error: any) {
+    console.error('Paste import failed:', error)
+    message.error(error?.message || '粘贴导入失败，请检查 JSON 格式')
+  } finally {
+    loading.value = false
   }
 }
 

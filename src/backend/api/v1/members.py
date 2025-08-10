@@ -247,21 +247,38 @@ async def import_members_from_json(
     session: AsyncSession = Depends(get_session),
     _: dict = Depends(require_admin)
 ):
-    """从JSON导入成员数据"""
+    """从JSON导入成员数据（存在则更新，不存在则创建）"""
     try:
-        created_members = []
-        for member_data in batch_data.members:
-            member = await MemberService.import_member_from_json(session, member_data)
-            created_members.append(member.id)
+        result = await MemberService.upsert_members_from_json(session, batch_data.members)
+        created_cnt = len(result.get("created_ids", []))
+        updated_cnt = len(result.get("updated_ids", []))
+
+        # 批量下载头像（新建+更新）
+        try:
+            from domain.avatar_service import AvatarService
+            updated_uins = result.get("updated_uins", [])
+            created_uins = [d.get("uin") for d in result.get("created_details", []) if d.get("uin")]
+            target_uins = list({*updated_uins, *created_uins})
+            if target_uins:
+                await AvatarService.batch_fetch_and_save_avatars_webp(target_uins)
+        except Exception:
+            pass
+
+        # 退群清理
+        try:
+            latest_uins = [m.uin for m in batch_data.members]
+            departures = await MemberService.reconcile_departures(session, latest_uins)
+        except Exception:
+            departures = {"deleted": 0}
 
         return ApiResponse(
             success=True,
-            message=f"批量创建成功，共创建 {len(created_members)} 个成员",
-            data={"member_ids": created_members}
+            message=f"导入完成：创建 {created_cnt} 个，更新 {updated_cnt} 个，清理 {departures.get('deleted', 0)} 个退群成员",
+            data={**result, "departures": departures}
         )
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"批量创建成员失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"批量导入成员失败: {str(e)}")
 
 
 @router.put(

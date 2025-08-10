@@ -3,7 +3,7 @@
 """
 from datetime import datetime, timezone
 from typing import List, Optional
-from sqlalchemy import desc, func, and_
+from sqlalchemy import desc, func, and_, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -12,7 +12,7 @@ from .base import Comment, CommentCreate, CommentUpdate, CommentStats
 
 class CommentCRUD:
     """评论CRUD操作类"""
-    
+
     @staticmethod
     async def create(db: AsyncSession, comment_data: CommentCreate) -> Comment:
         """创建新评论"""
@@ -21,7 +21,15 @@ class CommentCRUD:
         await db.commit()
         await db.refresh(comment)
         return comment
-    
+
+    @staticmethod
+    async def delete_by_member_id(db: AsyncSession, member_id: int) -> int:
+        """硬删除指定成员的所有评论，返回删除条数"""
+        result = await db.execute(delete(Comment).where(Comment.member_id == member_id))
+        await db.commit()
+        # rowcount may be -1 depending on backend; normalize to int
+        return int(result.rowcount or 0)
+
     @staticmethod
     async def get_by_id(db: AsyncSession, comment_id: int) -> Optional[Comment]:
         """根据ID获取评论"""
