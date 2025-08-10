@@ -23,7 +23,7 @@
           />
         </svg>
       </div>
-      <span class="hint-text">滚动探索</span>
+      <span class="hint-text" style="color: var(--text-secondary)">滚动探索</span>
     </div>
     <div v-else class="back-to-top-wrap">      
       <button
@@ -326,7 +326,7 @@ watch(() => collapsed.value, (val) => {
   align-items: center;
   gap: var(--spacing-xs);
   margin-top: var(--spacing-md);
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary);
   animation: pulse 2s ease-in-out infinite;
 
   @include media-down(md) {
@@ -400,7 +400,7 @@ watch(() => collapsed.value, (val) => {
     padding: 0 4px;
     border-radius: 10px;
     background: var(--primary);
-    color: #000; /* 与主色对比 */
+    color: var(--text-inverse); /* 遵循主题的反色文本 */
     font-size: 10px;
     font-weight: 700;
     display: flex;

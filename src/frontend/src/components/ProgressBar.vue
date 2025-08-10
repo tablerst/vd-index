@@ -38,7 +38,7 @@ const progressPercentage = computed(() => {
 
 .progress-bar {
   position: fixed;
-  top: 20px;
+  top: calc(20px + var(--nav-height, 0px));
   right: 20px;
   z-index: 100;
   display: flex;
@@ -60,7 +60,7 @@ const progressPercentage = computed(() => {
   }
 
   @include media-down(md) {
-    top: 10px;
+    top: calc(10px + var(--nav-height, 0px));
     right: 10px;
     padding: 6px 12px;
     gap: 8px;

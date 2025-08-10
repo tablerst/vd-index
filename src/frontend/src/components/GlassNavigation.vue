@@ -1,5 +1,5 @@
 <template>
-  <nav class="glass-navigation" :class="{ 'glass-navigation--scrolled': isScrolled }">
+  <nav ref="navRef" class="glass-navigation" :class="{ 'glass-navigation--scrolled': isScrolled }">
     <div class="container">
       <div class="nav-content">
         <!-- LOGO -->
@@ -86,7 +86,7 @@
           </div>
 
           <!-- 移动端菜单按钮 -->
-          <button 
+          <button
             class="mobile-menu-btn interactive"
             @click="toggleMobileMenu"
             :aria-label="isMobileMenuOpen ? '关闭菜单' : '打开菜单'"
@@ -101,8 +101,8 @@
     </div>
 
     <!-- 移动端菜单遮罩 -->
-    <div 
-      class="mobile-overlay" 
+    <div
+      class="mobile-overlay"
       :class="{ 'mobile-overlay--active': isMobileMenuOpen }"
       @click="closeMobileMenu"
     ></div>
@@ -122,6 +122,15 @@ const currentLanguage = ref<'zh' | 'en'>('zh')
 // 组件引用
 const themeSwitcherRef = ref<HTMLElement>()
 const switchRef = ref<InstanceType<typeof NSwitch>>()
+
+
+// 导航高度测量并写入CSS变量
+const navRef = ref<HTMLElement>()
+let navResizeObserver: ResizeObserver | null = null
+const setNavHeightVar = () => {
+  const h = navRef.value?.offsetHeight || 0
+  document.documentElement.style.setProperty('--nav-height', `${h}px`)
+}
 
 // 主题store
 const themeStore = useThemeStore()
@@ -261,7 +270,7 @@ const railStyle = ({ focused, checked }: { focused: boolean; checked: boolean })
 // 切换移动端菜单
 const toggleMobileMenu = () => {
   isMobileMenuOpen.value = !isMobileMenuOpen.value
-  
+
   // 防止背景滚动
   if (isMobileMenuOpen.value) {
     document.body.style.overflow = 'hidden'
@@ -280,7 +289,7 @@ const closeMobileMenu = () => {
 const scrollToSection = (sectionId: string) => {
   const element = document.getElementById(sectionId)
   if (element) {
-    element.scrollIntoView({ 
+    element.scrollIntoView({
       behavior: 'smooth',
       block: 'start'
     })
@@ -339,6 +348,12 @@ const animateThemeTransition = (isDark: boolean) => {
 }
 
 onMounted(() => {
+  // 初始化设置一次 --nav-height
+  setNavHeightVar()
+
+  // 监听导航高度变化并更新 --nav-height
+  navResizeObserver = new ResizeObserver(() => setNavHeightVar())
+  if (navRef.value) navResizeObserver.observe(navRef.value)
   window.addEventListener('scroll', handleScroll)
 
   // 键盘导航支持
@@ -357,6 +372,12 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  // 清理 nav 高度监听
+  if (navResizeObserver) {
+    try { navResizeObserver.disconnect() } catch {}
+    navResizeObserver = null
+  }
+
   window.removeEventListener('scroll', handleScroll)
   document.body.style.overflow = ''
 
@@ -378,7 +399,7 @@ onUnmounted(() => {
   right: 0;
   z-index: var(--z-fixed);
   transition: all var(--transition-base);
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -408,7 +429,7 @@ onUnmounted(() => {
   padding: var(--spacing-md) 0;
   position: relative;
   z-index: 2;
-  
+
   @include media-down(md) {
     padding: var(--spacing-sm) 0;
   }
@@ -424,7 +445,7 @@ onUnmounted(() => {
     font-weight: var(--font-weight-bold);
     font-size: var(--font-size-lg);
     transition: all var(--transition-base);
-    
+
     &:hover {
       transform: translateY(-2px);
 
@@ -433,7 +454,7 @@ onUnmounted(() => {
       }
     }
   }
-  
+
   .logo-icon {
     display: flex;
     align-items: center;
@@ -444,7 +465,7 @@ onUnmounted(() => {
       border-radius: var(--radius-sm);
     }
   }
-  
+
   .logo-text {
     background: var(--primary-gradient);
     -webkit-background-clip: text;
@@ -478,7 +499,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: var(--spacing-xl);
-  
+
   @include media-down(md) {
     flex-direction: column;
     align-items: flex-start;
@@ -495,7 +516,7 @@ onUnmounted(() => {
     font-weight: var(--font-weight-medium);
     padding: var(--spacing-sm) 0;
     transition: all var(--transition-base);
-    
+
     &::before {
       content: '';
       position: absolute;
@@ -506,7 +527,7 @@ onUnmounted(() => {
       background: var(--primary-gradient);
       transition: width var(--transition-base) var(--ease-hover);
     }
-    
+
     &:hover {
       color: var(--text-primary);
 
@@ -551,17 +572,17 @@ onUnmounted(() => {
     font-weight: var(--font-weight-medium);
     font-size: var(--font-size-sm);
     transition: all var(--transition-base) var(--ease-hover);
-    
+
     &:hover {
       @include magnetic-hover(4px);
       box-shadow: var(--shadow-green-glow);
-      
+
       .language-indicator {
         transform: scale(1.2);
         opacity: 1;
       }
     }
-    
+
     .language-indicator {
       position: absolute;
       top: -2px;
@@ -630,12 +651,12 @@ onUnmounted(() => {
   @include media-down(md) {
     display: flex;
   }
-  
+
   &:hover {
     @include magnetic-hover(4px);
     box-shadow: var(--shadow-glow);
   }
-  
+
   .hamburger-line {
     width: 20px;
     height: 2px;
@@ -643,19 +664,19 @@ onUnmounted(() => {
     margin: 2px 0;
     transition: all var(--transition-base) var(--ease-hover);
     transform-origin: center;
-    
+
     &:nth-child(1) {
       &.hamburger-line--active {
         transform: rotate(45deg) translate(5px, 5px);
       }
     }
-    
+
     &:nth-child(2) {
       &.hamburger-line--active {
         opacity: 0;
       }
     }
-    
+
     &:nth-child(3) {
       &.hamburger-line--active {
         transform: rotate(-45deg) translate(7px, -6px);
@@ -675,12 +696,12 @@ onUnmounted(() => {
   visibility: hidden;
   transition: all var(--transition-base);
   z-index: 1;
-  
+
   &--active {
     opacity: 1;
     visibility: visible;
   }
-  
+
   @include media-up(md) {
     display: none;
   }

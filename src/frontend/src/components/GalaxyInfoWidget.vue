@@ -426,12 +426,12 @@ onUnmounted(() => {
 
 .galaxy-info-widget {
   position: absolute;
-  top: var(--spacing-lg);
+  top: calc(var(--spacing-lg) + var(--nav-height, 0px));
   left: var(--spacing-lg);
   z-index: var(--z-popover);
 
   @include media-down(md) {
-    top: var(--spacing-md);
+    top: calc(var(--spacing-md) + var(--nav-height, 0px));
     left: var(--spacing-md);
   }
 }
