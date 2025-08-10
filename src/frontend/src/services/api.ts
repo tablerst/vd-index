@@ -302,28 +302,28 @@ class ApiClient {
     })
   }
 
-  // 导入：上传JSON文件到管理员接口
+  // 导入：上传JSON文件（members模块）
   async adminImportFile(file: File): Promise<any> {
     const form = new FormData()
     form.append('file', file)
     // 注意：multipart时不要手动设置Content-Type
-    return this.request('/api/v1/admin/import-file', {
+    return this.request('/api/v1/members/import-file', {
       method: 'POST',
       body: form
     })
   }
 
-  // 导入：直接提交JSON结构（mems数组）
+  // 导入：直接提交JSON结构（members模块）
   async adminImportJson(mems: any[]): Promise<any> {
     // 将 mems 转为 ImportBatchRequest 结构在后端解析
-    return this.request('/api/v1/admin/import-json', {
+    return this.request('/api/v1/members/import', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ members: mems })
     })
   }
 
-  // 导入：通过QQ群参数获取后导入
+  // 导入：通过QQ群参数获取后导入（members模块）
   async adminImportFromQQ(params: {
     group_id: string
     cookie: string
@@ -332,7 +332,7 @@ class ApiClient {
     page_size?: number
     request_delay?: number
   }): Promise<any> {
-    return this.request('/api/v1/admin/import-from-qq', {
+    return this.request('/api/v1/members/import-from-qq', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params)

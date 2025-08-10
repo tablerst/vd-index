@@ -122,10 +122,17 @@ src/backend/
 │   └── schema.py             # 服务注册
 ├── domain/                    # 业务领域服务层
 │   ├── __init__.py
-│   ├── member_service.py      # 成员业务逻辑
-│   └── avatar_service.py      # 头像业务逻辑
+│   └── member_service.py      # 成员业务逻辑
+├── utils/                     # 工具方法层（与数据库无关的通用工具）
+│   ├── __init__.py
+│   ├── avatar.py              # 头像工具（下载/转换/删除）
+│   └── qq_group/              # QQ群工具
+│       └── fetcher.py         # QQ群成员抓取
 ├── schema/                    # API数据模型
-│   └── member_schemas.py      # 成员相关Schema
+│   ├── member.py              # 成员模型
+│   ├── activity.py            # 活动模型
+│   ├── comment.py             # 评论模型
+│   └── config.py              # 配置模型
 ├── scripts/                   # 运维脚本
 │   ├── import_group_json.py   # 数据导入脚本
 │   ├── verify_import.py       # 导入验证脚本
@@ -163,7 +170,9 @@ src/backend/
 - **core/config.py**: 统一配置管理，支持环境变量和文件配置
 - **core/crypto.py**: 加密解密核心实现，AES-256-GCM算法
 - **services/database/service.py**: 异步数据库服务，支持连接池和事务管理
-- **services/member_service.py**: 成员业务逻辑，数据转换和业务规则
+- **domain/member_service.py**: 成员业务逻辑，数据转换和业务规则
+- **utils/avatar.py**: 头像相关工具方法
+- **utils/qq_group/fetcher.py**: QQ群成员抓取工具
 - **api/**: RESTful API路由定义，请求验证和响应处理
 
 ## 🔧 核心功能实现
@@ -514,10 +523,12 @@ HEAD /api/avatar/{member_id}
 
 ### 管理员接口
 
-#### 批量导入成员数据
+注：导入成员操作全部位于 members 模块：JSON 批量导入 `POST /api/v1/members/import`，文件上传导入 `POST /api/v1/members/import-file`，从QQ群抓取导入 `POST /api/v1/members/import-from-qq`；管理员模块仅保留工具端点（解密、数据库统计）。
+
+#### 批量导入成员数据（JSON）
 
 ```http
-POST /api/admin/import-json
+POST /api/v1/members/import
 Content-Type: application/json
 
 {
@@ -730,7 +741,7 @@ logrotate /etc/logrotate.d/vd-backend
 
 如有问题，请查看：
 1. [调试指南](scripts/DEBUG_GUIDE.md)
-2. [测试文档](test/README.md)
+2. [测试文档]（已临时移除测试目录以便重构，待后续按模块重建）
 3. [脚本说明](scripts/README.md)
 
 或联系开发团队获取技术支持。

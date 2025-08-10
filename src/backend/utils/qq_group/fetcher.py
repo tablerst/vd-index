@@ -1,8 +1,6 @@
 """
-QQ group members fetcher service (async)
-- Consolidates legacy utils/get_members.py and member_config.py
-- Removes file I/O; returns structured data
-- 参数通过函数传入，便于API层调用
+QQ group members fetcher (async)
+中文注释：从 services/qq_group/fetcher.py 迁移至 utils.qq_group.fetcher。
 """
 from __future__ import annotations
 
@@ -36,7 +34,6 @@ async def fetch_members(
     - 不在服务端持久化文件，直接返回结果
     """
 
-    # Sanitize Cookie header: remove any leading/trailing whitespace/newlines
     cookie_sanitized = re.sub(r"\s+", " ", cookie or "").strip()
     user_agent_sanitized = (user_agent or "Apifox/1.0.0 (https://apifox.com)").strip()
 
@@ -103,8 +100,8 @@ async def fetch_members(
 
             start = end + 1
             if request_delay > 0:
-                # simple cooperative delay
-                await _sleep_async(request_delay)
+                import asyncio
+                await asyncio.sleep(request_delay)
 
         result = {
             "ec": 0,
@@ -122,10 +119,4 @@ async def fetch_members(
             "extmode": 0,
         }
         return result
-
-async def _sleep_async(seconds: float) -> None:
-    """Non-blocking sleep helper."""
-    # httpx doesn't provide sleep; use asyncio
-    import asyncio
-    await asyncio.sleep(seconds)
 

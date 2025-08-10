@@ -4,9 +4,7 @@
 """
 
 from .member_service import MemberService
-from .avatar_service import AvatarService
 
 __all__ = [
     "MemberService",
-    "AvatarService"
 ]

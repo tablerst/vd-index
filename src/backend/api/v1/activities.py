@@ -11,7 +11,7 @@ from services.deps import get_session
 from services.auth.utils import require_admin
 from services.database.models.activity import ActivityCRUD, ActivityCreate, ActivityUpdate
 from services.database.models.member import MemberCRUD
-from schema.activity_schemas import (
+from schema.activity import (
     ActivityResponse, ActivityListResponse, ActivityStatsResponse,
     ActivityCreateRequest, ActivityUpdateRequest, ApiResponse, ParticipantInfo
 )

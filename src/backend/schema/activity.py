@@ -1,5 +1,6 @@
 """
-活动相关的API数据模型
+活动相关API数据模型
+中文注释：原 activity_schemas.py 重命名为 activity.py，去除冗余后缀。
 """
 from datetime import datetime, timezone
 from typing import List, Optional
@@ -16,7 +17,6 @@ class ParticipantInfo(BaseModel):
 class ActivityResponse(BaseModel):
     """活动响应模型"""
     model_config = ConfigDict(
-        # 确保datetime字段序列化为ISO格式并包含时区信息
         json_encoders={
             datetime: lambda v: (
                 v.replace(tzinfo=timezone.utc).isoformat()
@@ -73,6 +73,7 @@ class ActivityUpdateRequest(BaseModel):
 
 class ApiResponse(BaseModel):
     """通用API响应模型"""
-    success: bool = Field(description="操作是否成功")
-    message: str = Field(description="响应消息")
-    data: Optional[dict] = Field(None, description="响应数据")
+    success: bool
+    message: str
+    data: Optional[dict] = None
+

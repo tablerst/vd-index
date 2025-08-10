@@ -9,10 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from services.deps import get_session
 from services.auth.utils import require_admin
 from services.database.models import CommentCRUD, CommentCreate, MemberCRUD
-from schema.comment_schemas import (
-    CommentResponse, 
-    CommentCreateRequest, 
-    CommentListResponse, 
+from schema.comment import (
+    CommentResponse,
+    CommentCreateRequest,
+    CommentListResponse,
     CommentActionResponse,
     CommentStatsResponse,
     CommentModerationResponse,

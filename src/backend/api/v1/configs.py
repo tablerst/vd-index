@@ -10,10 +10,10 @@ from services.deps import get_session
 from services.auth.utils import require_admin
 from services.database.models.config.base import Config, ConfigCreate, ConfigUpdate
 from services.database.models.config.crud import ConfigCRUD
-from schema.config_schemas import (
-    ConfigResponse, 
-    ConfigListResponse, 
-    ConfigCreateRequest, 
+from schema.config import (
+    ConfigResponse,
+    ConfigListResponse,
+    ConfigCreateRequest,
     ConfigUpdateRequest,
     ApiResponse
 )

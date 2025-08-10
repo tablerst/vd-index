@@ -7,7 +7,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from services.deps import get_session
 from services.auth.utils import require_admin
-from schema.member_schemas import (
+from schema.member import (
     MemberListResponse,
     MemberDetailResponse,
     CreateMemberRequest,
@@ -37,14 +37,14 @@ async def get_members(
     # 验证分页参数
     if page < 1:
         raise HTTPException(status_code=400, detail="页码必须大于0")
-    
+
     if page_size < 1 or page_size > 100:
         raise HTTPException(status_code=400, detail="每页大小必须在1-100之间")
-    
+
     try:
         # 构建基础URL
         base_url = f"{request.url.scheme}://{request.url.netloc}"
-        
+
         # 获取成员列表
         members, total = await MemberService.get_members_paginated(
             session=session,
@@ -52,10 +52,10 @@ async def get_members(
             page_size=page_size,
             base_url=base_url
         )
-        
+
         # 计算总页数
         total_pages = math.ceil(total / page_size)
-        
+
         return MemberListResponse(
             members=members,
             total=total,
@@ -63,7 +63,7 @@ async def get_members(
             page_size=page_size,
             total_pages=total_pages
         )
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取成员列表失败: {str(e)}")
 
@@ -255,7 +255,7 @@ async def import_members_from_json(
 
         # 批量下载头像（新建+更新）
         try:
-            from domain.avatar_service import AvatarService
+            from utils.avatar import AvatarService
             updated_uins = result.get("updated_uins", [])
             created_uins = [d.get("uin") for d in result.get("created_details", []) if d.get("uin")]
             target_uins = list({*updated_uins, *created_uins})
@@ -348,3 +348,157 @@ async def delete_member(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"删除成员失败: {str(e)}")
+
+
+# ---------------- 迁移自 admin：成员导入相关接口（保留管理员鉴权） ---------------- #
+from typing import Optional, List
+from pydantic import BaseModel, Field
+from fastapi import UploadFile, File
+from utils.avatar import AvatarService
+from utils.qq_group.fetcher import fetch_members, QQGroupFetcherError
+
+
+class QQImportParams(BaseModel):
+    """通过QQ群官网获取成员的参数"""
+    group_id: str = Field(..., description="群号")
+    cookie: str = Field(..., description="Cookie")
+    bkn: str = Field(..., description="bkn 参数")
+    user_agent: Optional[str] = Field(default="Apifox/1.0.0 (https://apifox.com)")
+    page_size: Optional[int] = Field(default=10, ge=1, le=200)
+    request_delay: Optional[float] = Field(default=0.5, ge=0, le=5)
+
+
+@router.post(
+    "/members/import-file",
+    response_model=ApiResponse,
+    summary="上传JSON文件导入",
+    description="上传QQ群成员JSON文件进行批量导入（存在则更新，不存在则创建）"
+)
+async def import_members_from_file(
+    file: UploadFile = File(...),
+    session: AsyncSession = Depends(get_session),
+    _: dict = Depends(require_admin)
+):
+    """从上传的JSON文件导入成员（迁移自 admin）"""
+    if not file.filename.endswith('.json'):
+        raise HTTPException(status_code=400, detail="只支持JSON文件")
+
+    try:
+        content = await file.read()
+        data = json.loads(content.decode('utf-8'))
+
+        if 'mems' not in data:
+            raise HTTPException(status_code=400, detail="JSON文件格式错误，缺少mems字段")
+
+        members_data: List[ImportMemberRequest] = []
+        for mem in data['mems']:
+            members_data.append(ImportMemberRequest(
+                uin=mem['uin'],
+                role=mem['role'],
+                join_time=mem['join_time'],
+                last_speak_time=mem.get('last_speak_time'),
+                card=mem['card'],
+                nick=mem['nick'],
+                lv=mem.get('lv', {}),
+                qage=mem.get('qage', 0),
+            ))
+
+        # 复用已有导入逻辑
+        result = await MemberService.upsert_members_from_json(session, members_data)
+        created_cnt = len(result.get("created_ids", []))
+        updated_cnt = len(result.get("updated_ids", []))
+
+        # 下载头像
+        try:
+            updated_uins = result.get("updated_uins", [])
+            created_uins = [d.get("uin") for d in result.get("created_details", []) if d.get("uin")]
+            target_uins = list({*updated_uins, *created_uins})
+            if target_uins:
+                await AvatarService.batch_fetch_and_save_avatars_webp(target_uins)
+        except Exception:
+            pass
+
+        # 退群清理
+        try:
+            latest_uins = [m.uin for m in members_data]
+            departures = await MemberService.reconcile_departures(session, latest_uins)
+        except Exception:
+            departures = {"deleted": 0}
+
+        return ApiResponse(
+            success=True,
+            message=f"导入完成：创建 {created_cnt} 个，更新 {updated_cnt} 个，清理 {departures.get('deleted', 0)} 个退群成员",
+            data={**result, "departures": departures}
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"文件导入失败: {str(e)}")
+
+
+@router.post(
+    "/members/import-from-qq",
+    response_model=ApiResponse,
+    summary="通过QQ群官网获取并导入成员",
+    description="通过 Cookie 等参数从 qun.qq.com 获取成员数据后执行批量导入（存在则更新，不存在则创建）"
+)
+async def import_members_from_qq(
+    params: QQImportParams,
+    session: AsyncSession = Depends(get_session),
+    _: dict = Depends(require_admin)
+):
+    """通过QQ群抓取后导入（迁移自 admin）"""
+    try:
+        raw = await fetch_members(
+            group_id=params.group_id,
+            cookie=params.cookie,
+            bkn=params.bkn,
+            user_agent=params.user_agent or "Apifox/1.0.0 (https://apifox.com)",
+            page_size=params.page_size or 10,
+            request_delay=params.request_delay or 0.5,
+        )
+        mems = raw.get("mems", [])
+        members_data: List[ImportMemberRequest] = []
+        for mem in mems:
+            members_data.append(ImportMemberRequest(
+                uin=mem['uin'],
+                role=mem['role'],
+                join_time=mem['join_time'],
+                last_speak_time=mem.get('last_speak_time'),
+                card=mem['card'],
+                nick=mem['nick'],
+                lv=mem.get('lv', {}),
+                qage=mem.get('qage', 0),
+            ))
+
+        result = await MemberService.upsert_members_from_json(session, members_data)
+        created_ids = result.get("created_ids", [])
+        updated_ids = result.get("updated_ids", [])
+
+        # 下载头像
+        try:
+            updated_uins = result.get("updated_uins", [])
+            created_details = result.get("created_details", [])
+            created_uins = [d.get("uin") for d in created_details if d.get("uin")]
+            target_uins = list({*updated_uins, *created_uins})
+            if target_uins:
+                await AvatarService.batch_fetch_and_save_avatars_webp(target_uins)
+        except Exception:
+            pass
+
+        # 清理退群
+        try:
+            latest_uins = [m.uin for m in members_data]
+            departures = await MemberService.reconcile_departures(session, latest_uins)
+        except Exception:
+            departures = {"deleted": 0}
+
+        return ApiResponse(
+            success=True,
+            message=f"导入完成：创建 {len(created_ids)} 个，更新 {len(updated_ids)} 个，清理 {departures.get('deleted', 0)} 个退群成员",
+            data={**result, "departures": departures, "source": "qq", "group_id": params.group_id, "fetched_count": len(members_data)}
+        )
+    except QQGroupFetcherError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"从QQ群获取或导入失败: {str(e)}")

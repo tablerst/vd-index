@@ -1,5 +1,6 @@
 """
-评论API响应模式定义
+评论相关API数据模型
+中文注释：原 comment_schemas.py 重命名为 comment.py，去除冗余后缀。
 """
 from datetime import datetime, timezone
 from typing import Optional, List
@@ -9,7 +10,6 @@ from pydantic import BaseModel, Field, ConfigDict
 class CommentResponse(BaseModel):
     """评论信息响应模型"""
     model_config = ConfigDict(
-        # 确保datetime字段序列化为ISO格式并包含时区信息
         json_encoders={
             datetime: lambda v: (
                 v.replace(tzinfo=timezone.utc).isoformat().replace('+00:00', 'Z')
@@ -72,3 +72,4 @@ class ErrorResponse(BaseModel):
     error: str = Field(description="错误类型")
     message: str = Field(description="错误消息")
     detail: Optional[str] = Field(default=None, description="详细错误信息")
+

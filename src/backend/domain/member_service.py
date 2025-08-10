@@ -10,9 +10,9 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from services.database.models.member import Member, MemberCreate, MemberCRUD, MemberUpdate
 from services.database.models import ActivityCRUD
 from services.database.models.comment.crud import CommentCRUD
-from schema.member_schemas import MemberResponse, MemberDetailResponse, ImportMemberRequest
+from schema.member import MemberResponse, MemberDetailResponse, ImportMemberRequest
 from services.deps import get_crypto_service
-from domain.avatar_service import AvatarService
+from utils.avatar import AvatarService
 
 
 class MemberService:

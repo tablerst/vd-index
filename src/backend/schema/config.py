@@ -1,5 +1,6 @@
 """
-配置管理相关的数据模式
+配置相关API数据模型
+中文注释：原 config_schemas.py 重命名为 config.py，去除冗余后缀。
 """
 from datetime import datetime
 from typing import List, Optional
@@ -76,3 +77,4 @@ class ApiResponse(BaseModel):
     success: bool
     message: str
     data: Optional[dict] = None
+

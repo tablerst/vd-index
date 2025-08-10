@@ -1,5 +1,6 @@
 """
-API响应模式定义
+成员相关API数据模型
+中文注释：原 member_schemas.py 重命名为 member.py，去除冗余后缀。
 """
 from datetime import datetime
 from typing import Optional, List
@@ -72,3 +73,4 @@ class ErrorResponse(BaseModel):
     error: str = Field(description="错误类型")
     message: str = Field(description="错误消息")
     detail: Optional[str] = Field(default=None, description="错误详情")
+
