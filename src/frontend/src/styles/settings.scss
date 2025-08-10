@@ -3,7 +3,8 @@
 
 .settings-layout {
   min-height: 100vh;
-  background: #0E1016;
+  background: var(--base-dark);
+  color: var(--text-primary);
   display: flex;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
@@ -16,9 +17,9 @@
     right: 0;
     bottom: 0;
     background:
-      radial-gradient(circle at 20% 80%, rgba(170, 131, 255, 0.05) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(212, 222, 199, 0.05) 0%, transparent 50%),
-      radial-gradient(circle at 40% 40%, rgba(63, 125, 251, 0.03) 0%, transparent 50%);
+      radial-gradient(circle at 20% 80%, var(--primary-lighter) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, var(--secondary-lighter) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, var(--accent-blue-light) 0%, transparent 50%);
     z-index: 0;
     pointer-events: none;
   }
@@ -26,8 +27,8 @@
 
 .sidebar {
   width: 280px;
-  background: rgba(255, 255, 255, 0.08);
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--glass-bg);
+  border-right: 1px solid var(--glass-border);
   display: flex;
   flex-direction: column;
   position: relative;
@@ -37,19 +38,25 @@
 }
 
 .sidebar-header {
-  padding: 32px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 16px 16px 16px 24px;
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 
   h2 {
-    margin: 0 0 16px 0;
+    margin: 0;
     font-size: 20px;
     font-weight: 600;
-    color: #FFFFFF;
-    background: linear-gradient(135deg, #B99AFD 0%, #AA83FF 33%, #8F6BFF 66%);
+    color: var(--text-primary);
+    background: var(--primary-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  .header-right { display: flex; align-items: center; gap: 12px; }
 }
 
 .user-info {
@@ -61,19 +68,19 @@
   transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 
   &:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--surface-hover);
   }
 
   .username {
     font-size: 16px;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--text-secondary);
     font-weight: 500;
   }
 }
 
 .sidebar-footer {
   padding: 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 1px solid var(--glass-border);
   margin-top: auto;
 }
 
@@ -82,15 +89,20 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--surface-1);
   position: relative;
   z-index: 1;
 }
 
 .content-header {
   padding: 24px 32px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--border-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  background: var(--surface-1);
 }
 
 .content-body {
@@ -113,30 +125,30 @@
       transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
       position: relative;
       overflow: hidden;
-      color: #FFFFFF !important;
+      color: var(--text-primary) !important;
 
       &:hover {
-        background: rgba(255, 255, 255, 0.05) !important;
+        background: var(--surface-hover) !important;
       }
 
       &.n-menu-item--selected {
-        background: linear-gradient(135deg, rgba(170, 131, 255, 0.3) 0%, rgba(170, 131, 255, 0.1) 100%) !important;
-        color: #FFFFFF !important;
+        background: var(--primary-light) !important;
+        color: var(--text-primary) !important;
         font-weight: 500;
-        box-shadow: 0 0 20px rgba(170, 131, 255, 0.2);
+        box-shadow: var(--shadow-glow);
 
         .n-menu-item-content-header {
-          color: #FFFFFF !important;
+          color: var(--text-primary) !important;
         }
       }
 
       .n-menu-item-content {
         font-size: 16px;
-        color: #FFFFFF !important;
+        color: var(--text-primary) !important;
       }
 
       .n-menu-item-content-header {
-        color: #FFFFFF !important;
+        color: var(--text-primary) !important;
       }
     }
   }
@@ -144,17 +156,15 @@
   // 面包屑样式
   :deep(.n-breadcrumb) {
     .n-breadcrumb-item {
-      .n-breadcrumb-item__link {
-        color: rgba(255, 255, 255, 0.7) !important;
-        
-        &:hover {
-          color: #FFFFFF !important;
-        }
-      }
+      color: var(--text-secondary) !important;
 
-      .n-breadcrumb-item__separator {
-        color: rgba(255, 255, 255, 0.5) !important;
+      &:hover {
+        color: var(--text-primary) !important;
       }
+    }
+
+    .n-breadcrumb-item__separator {
+      color: var(--text-tertiary) !important;
     }
   }
 
@@ -165,27 +175,25 @@
     transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 
     &.n-button--primary-type {
-      background: linear-gradient(135deg, #B99AFD 0%, #AA83FF 33%, #8F6BFF 66%) !important;
+      background: var(--primary-gradient) !important;
       border: none !important;
-      color: #FFFFFF !important;
-      box-shadow: 0 0 20px rgba(170, 131, 255, 0.3);
+      color: var(--text-inverse) !important;
+      box-shadow: var(--shadow-glow);
 
       &:hover {
-        box-shadow: 
-          0 0 20px rgba(170, 131, 255, 0.3),
-          0 4px 20px rgba(170, 131, 255, 0.4);
+        box-shadow: var(--shadow-glow-strong);
         transform: translateY(-1px);
       }
     }
 
     &.n-button--secondary-type {
-      background: rgba(255, 255, 255, 0.08) !important;
-      border: 1px solid rgba(255, 255, 255, 0.15) !important;
-      color: #FFFFFF !important;
+      background: var(--surface-1) !important;
+      border: 1px solid var(--border-primary) !important;
+      color: var(--text-primary) !important;
 
       &:hover {
-        background: rgba(255, 255, 255, 0.12) !important;
-        border-color: #AA83FF !important;
+        background: var(--surface-hover) !important;
+        border-color: var(--border-focus) !important;
       }
     }
   }
@@ -193,111 +201,111 @@
   // 输入框样式
   :deep(.n-input) {
     .n-input-wrapper {
-      background-color: rgba(255, 255, 255, 0.08) !important;
-      border: 1px solid rgba(255, 255, 255, 0.15) !important;
+      background-color: var(--surface-1) !important;
+      border: 1px solid var(--border-primary) !important;
     }
 
     .n-input__input-el {
-      color: #FFFFFF !important;
+      color: var(--text-primary) !important;
       background: transparent !important;
     }
 
     .n-input__placeholder {
-      color: rgba(255, 255, 255, 0.6) !important;
+      color: var(--text-tertiary) !important;
     }
 
     &:hover .n-input-wrapper {
-      border-color: #AA83FF !important;
+      border-color: var(--border-focus) !important;
     }
 
     &:focus-within .n-input-wrapper {
-      border-color: #AA83FF !important;
-      box-shadow: 0 0 0 2px rgba(170, 131, 255, 0.3) !important;
+      border-color: var(--border-focus) !important;
+      box-shadow: 0 0 0 2px var(--primary-light) !important;
     }
   }
 
   // 选择器样式
   :deep(.n-select) {
     .n-base-selection {
-      background-color: rgba(255, 255, 255, 0.08) !important;
-      border: 1px solid rgba(255, 255, 255, 0.15) !important;
+      background-color: var(--surface-1) !important;
+      border: 1px solid var(--border-primary) !important;
 
       .n-base-selection-label {
-        color: #FFFFFF !important;
+        color: var(--text-primary) !important;
       }
 
       .n-base-selection-placeholder {
-        color: rgba(255, 255, 255, 0.6) !important;
+        color: var(--text-tertiary) !important;
       }
     }
 
     &:hover .n-base-selection {
-      border-color: #AA83FF !important;
+      border-color: var(--border-focus) !important;
     }
 
     &.n-select--focused .n-base-selection {
-      border-color: #AA83FF !important;
-      box-shadow: 0 0 0 2px rgba(170, 131, 255, 0.3) !important;
+      border-color: var(--border-focus) !important;
+      box-shadow: 0 0 0 2px var(--primary-light) !important;
     }
   }
 
   // 表格样式
   :deep(.n-data-table) {
-    background: rgba(255, 255, 255, 0.05) !important;
+    background: var(--surface-1) !important;
     border-radius: 12px;
 
     .n-data-table-th {
-      background: rgba(255, 255, 255, 0.08) !important;
-      color: #FFFFFF !important;
+      background: var(--surface-2) !important;
+      color: var(--text-primary) !important;
       font-weight: 600;
     }
 
     .n-data-table-td {
-      color: rgba(255, 255, 255, 0.9) !important;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+      color: var(--text-primary) !important;
+      border-bottom: 1px solid var(--border-secondary) !important;
     }
 
     .n-data-table-tr:hover .n-data-table-td {
-      background: rgba(255, 255, 255, 0.05) !important;
+      background: var(--surface-hover) !important;
     }
   }
 
   // 分页样式
   :deep(.n-pagination) {
     .n-pagination-item {
-      color: rgba(255, 255, 255, 0.7) !important;
-      background: rgba(255, 255, 255, 0.05) !important;
-      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      color: var(--text-secondary) !important;
+      background: var(--surface-1) !important;
+      border: 1px solid var(--border-primary) !important;
 
       &:hover {
-        background: rgba(255, 255, 255, 0.1) !important;
-        color: #FFFFFF !important;
+        background: var(--surface-hover) !important;
+        color: var(--text-primary) !important;
       }
 
       &.n-pagination-item--active {
-        background: #AA83FF !important;
-        color: #FFFFFF !important;
-        border-color: #AA83FF !important;
+        background: var(--primary) !important;
+        color: var(--text-inverse) !important;
+        border-color: var(--border-focus) !important;
       }
     }
 
     .n-pagination-quick-jumper {
-      color: rgba(255, 255, 255, 0.7) !important;
+      color: var(--text-secondary) !important;
     }
 
     .n-pagination-size-picker {
-      color: rgba(255, 255, 255, 0.7) !important;
+      color: var(--text-secondary) !important;
     }
   }
 
   // 卡片样式
   :deep(.n-card) {
-    background: rgba(255, 255, 255, 0.08) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    color: #FFFFFF !important;
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    color: var(--text-primary) !important;
 
     .n-card-header {
-      color: #FFFFFF !important;
+      color: var(--text-primary) !important;
       font-weight: 600;
     }
   }
@@ -307,7 +315,7 @@
 .settings-layout {
   // 数据表格样式覆盖
   :deep(.n-data-table) {
-    background-color: rgba(14, 16, 22, 0.8) !important;
+    background-color: var(--surface-1) !important;
 
     .n-data-table-wrapper {
       background-color: transparent !important;
@@ -318,12 +326,12 @@
     }
 
     .n-data-table-thead {
-      background-color: rgba(255, 255, 255, 0.05) !important;
+      background-color: var(--surface-2) !important;
 
       .n-data-table-th {
         background-color: transparent !important;
-        color: #FFFFFF !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: var(--text-primary) !important;
+        border-bottom: 1px solid var(--border-secondary) !important;
       }
     }
 
@@ -332,13 +340,13 @@
         background-color: transparent !important;
 
         &:hover {
-          background-color: rgba(170, 131, 255, 0.1) !important;
+          background-color: var(--surface-hover) !important;
         }
 
         .n-data-table-td {
           background-color: transparent !important;
-          color: #FFFFFF !important;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+          color: var(--text-primary) !important;
+          border-bottom: 1px solid var(--border-secondary) !important;
         }
       }
     }
@@ -346,16 +354,16 @@
 
   // 卡片组件样式覆盖
   :deep(.n-card) {
-    background-color: rgba(14, 16, 22, 0.8) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background-color: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
 
     .n-card-header {
-      color: #FFFFFF !important;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+      color: var(--text-primary) !important;
+      border-bottom: 1px solid var(--border-secondary) !important;
     }
 
     .n-card__content {
-      color: #FFFFFF !important;
+      color: var(--text-primary) !important;
     }
   }
 
@@ -369,8 +377,8 @@
   :deep(.stat-card),
   :deep(.management-card),
   :deep(.toolbar) {
-    background-color: rgba(14, 16, 22, 0.8) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background-color: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
   }
 
   // 修复表格容器背景
@@ -386,8 +394,8 @@
   :deep(.activity-management .management-card),
   :deep(.member-management .management-card),
   :deep(.config-management .management-card) {
-    background-color: rgba(14, 16, 22, 0.8) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background-color: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
 
     .n-card__content {
       background-color: transparent !important;
@@ -399,35 +407,57 @@
   :deep([style*="background-color: white"]),
   :deep([style*="background: rgb(255, 255, 255)"]),
   :deep([style*="background: white"]) {
-    background-color: rgba(14, 16, 22, 0.8) !important;
-    background: rgba(14, 16, 22, 0.8) !important;
+    background-color: var(--surface-1) !important;
+    background: var(--surface-1) !important;
   }
 
   // 分页组件样式覆盖
   :deep(.n-pagination) {
     .n-pagination-item {
-      background-color: rgba(255, 255, 255, 0.05) !important;
-      color: #FFFFFF !important;
-      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      background-color: var(--surface-1) !important;
+      color: var(--text-primary) !important;
+      border: 1px solid var(--border-primary) !important;
 
       &:hover {
-        background-color: rgba(170, 131, 255, 0.2) !important;
-        border-color: #AA83FF !important;
+        background-color: var(--surface-hover) !important;
+        border-color: var(--border-focus) !important;
       }
 
       &.n-pagination-item--active {
-        background-color: #AA83FF !important;
-        border-color: #AA83FF !important;
-        color: #FFFFFF !important;
+        background-color: var(--primary) !important;
+        border-color: var(--border-focus) !important;
+        color: var(--text-inverse) !important;
       }
     }
 
     .n-pagination-prefix,
     .n-pagination-suffix {
-      color: rgba(255, 255, 255, 0.7) !important;
+      color: var(--text-secondary) !important;
     }
   }
 }
+
+  // Modal 对话框全局可读性修复（统一非透明背景与文字颜色）
+  :deep(.n-modal) {
+    .n-dialog {
+      background-color: var(--surface-1) !important;
+      border: 1px solid var(--border-primary) !important;
+      color: var(--text-primary) !important;
+    }
+    .n-dialog__title { color: var(--text-primary) !important; }
+    .n-dialog__content { color: var(--text-secondary) !important; }
+
+    // 表单元素与标签
+    .n-form-item-label, .n-form-item-label__text { color: var(--text-secondary) !important; }
+    .n-form-item-feedback, .n-form-item-feedback__line { color: var(--text-secondary) !important; }
+
+    // 输入与选择在弹窗中的可读性
+    .n-input .n-input__input-el { color: var(--text-primary) !important; }
+    .n-input .n-input__placeholder, .n-input__input-el::placeholder { color: var(--text-tertiary) !important; }
+    .n-base-selection-label { color: var(--text-primary) !important; }
+    .n-base-selection-placeholder { color: var(--text-tertiary) !important; }
+  }
+
 
 // 响应式设计
 @media (max-width: 768px) {
@@ -450,14 +480,14 @@
   // 页面标题和文字颜色修复
   .page-header {
     h1 {
-      color: #FFFFFF !important;
+      color: var(--text-primary) !important;
       font-size: 32px;
       font-weight: 600;
       margin-bottom: 8px;
     }
 
     p {
-      color: rgba(255, 255, 255, 0.8) !important;
+      color: var(--text-secondary) !important;
       font-size: 16px;
       line-height: 1.5;
     }
@@ -465,49 +495,49 @@
 
   // 强制覆盖所有标题颜色
   h1, h2, h3, h4, h5, h6 {
-    color: #FFFFFF !important;
+    color: var(--text-primary) !important;
   }
 
   // 强制覆盖所有段落文字颜色
   p {
-    color: rgba(255, 255, 255, 0.8) !important;
+    color: var(--text-secondary) !important;
   }
 }
 
 // 全局输入框和选择框修复 - 不限制在 settings-layout 内
 :deep(.n-input) {
   .n-input-wrapper {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    background-color: var(--surface-1) !important;
+    border: 1px solid var(--border-primary) !important;
   }
 
   .n-input__input-el {
-    color: #FFFFFF !important;
+    color: var(--text-primary) !important;
     background-color: transparent !important;
 
     &::placeholder {
-      color: rgba(255, 255, 255, 0.5) !important;
+      color: var(--text-tertiary) !important;
     }
   }
 
   .n-input__prefix,
   .n-input__suffix {
-    color: rgba(255, 255, 255, 0.6) !important;
+    color: var(--text-secondary) !important;
   }
 }
 
 // 全局选择框修复
 :deep(.n-select) {
   .n-base-selection {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    background-color: var(--surface-1) !important;
+    border: 1px solid var(--border-primary) !important;
 
     .n-base-selection-label {
-      color: #FFFFFF !important;
+      color: var(--text-primary) !important;
     }
 
     .n-base-selection-placeholder {
-      color: rgba(255, 255, 255, 0.5) !important;
+      color: var(--text-tertiary) !important;
     }
   }
 }
@@ -515,31 +545,31 @@
 // 全局标题和文字颜色修复 - 覆盖所有设置页面
 .main-content {
   h1, h2, h3, h4, h5, h6 {
-    color: #FFFFFF !important;
+    color: var(--text-primary) !important;
   }
 
   p {
-    color: rgba(255, 255, 255, 0.8) !important;
+    color: var(--text-secondary) !important;
   }
 
   .page-header {
     h1 {
-      color: #FFFFFF !important;
+      color: var(--text-primary) !important;
     }
 
     p {
-      color: rgba(255, 255, 255, 0.8) !important;
+      color: var(--text-secondary) !important;
     }
   }
 
   // 覆盖仪表板标题
   .dashboard-header {
     h1 {
-      color: #FFFFFF !important;
+      color: var(--text-primary) !important;
     }
 
     p {
-      color: rgba(255, 255, 255, 0.8) !important;
+      color: var(--text-secondary) !important;
     }
   }
 }
@@ -550,21 +580,21 @@
 .activity-management,
 .config-management {
   h1, h2, h3, h4, h5, h6 {
-    color: #FFFFFF !important;
+    color: var(--text-primary) !important;
   }
 
   p {
-    color: rgba(255, 255, 255, 0.8) !important;
+    color: var(--text-secondary) !important;
   }
 
   .page-header,
   .dashboard-header {
     h1 {
-      color: #FFFFFF !important;
+      color: var(--text-primary) !important;
     }
 
     p {
-      color: rgba(255, 255, 255, 0.8) !important;
+      color: var(--text-secondary) !important;
     }
   }
 }
@@ -572,37 +602,54 @@
 // 全局输入框修复 - 最高优先级，覆盖所有组件
 .n-input {
   .n-input-wrapper {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    background-color: var(--surface-1) !important;
+    border: 1px solid var(--border-primary) !important;
   }
 
   .n-input__input-el {
-    color: #FFFFFF !important;
+    color: var(--text-primary) !important;
     background-color: transparent !important;
 
     &::placeholder {
-      color: rgba(255, 255, 255, 0.5) !important;
+      color: var(--text-tertiary) !important;
     }
   }
 
   .n-input__prefix,
   .n-input__suffix {
-    color: rgba(255, 255, 255, 0.6) !important;
+    color: var(--text-secondary) !important;
   }
 }
 
 // 全局选择框修复 - 最高优先级
 .n-select {
   .n-base-selection {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    background-color: var(--surface-1) !important;
+    border: 1px solid var(--border-primary) !important;
 
     .n-base-selection-label {
-      color: #FFFFFF !important;
+      color: var(--text-primary) !important;
     }
 
+/* 主题开关样式（侧边栏顶部） */
+.theme-switcher {
+  display: flex;
+  align-items: center;
+
+  :deep(.n-switch) {
+    --n-rail-height: 22px;
+    --n-rail-width: 44px;
+    --n-button-width: 18px;
+    --n-button-height: 18px;
+
+    .n-switch__rail { border: none; transition: none; border-radius: 11px; }
+    .n-switch__button { background: var(--glass-bg); border: none; transition: none; border-radius: 9px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  }
+}
+
+
     .n-base-selection-placeholder {
-      color: rgba(255, 255, 255, 0.5) !important;
+      color: var(--text-tertiary) !important;
     }
   }
 }

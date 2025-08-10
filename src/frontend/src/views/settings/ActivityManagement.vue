@@ -618,12 +618,12 @@ onMounted(async () => {
       margin: 0 0 8px 0;
       font-size: 28px;
       font-weight: 600;
-      color: #FFFFFF;
+      color: var(--text-primary);
     }
 
     p {
       margin: 0;
-      color: rgba(255, 255, 255, 0.7);
+      color: var(--text-secondary);
       font-size: 16px;
     }
   }
@@ -652,7 +652,7 @@ onMounted(async () => {
     margin: 0;
     font-size: 24px;
     font-weight: 600;
-    color: #FFFFFF; // 修复深色主题下的文字颜色
+    color: var(--text-primary);
     font-family: $fluent-font-family;
   }
 }
@@ -684,7 +684,7 @@ onMounted(async () => {
 
   .n-data-table-th {
     background: $fluent-fill-subtle;
-    color: $fluent-text-primary;
+    color: var(--text-primary);
     font-weight: 600;
     border-bottom: 1px solid $fluent-stroke-surface;
   }
@@ -762,15 +762,15 @@ onMounted(async () => {
     @include fluent-depth-shadow(32);
 
     // 确保文字可读性
-    color: rgba(255, 255, 255, 0.95) !important;
+    color: var(--text-primary) !important;
 
     .n-dialog__title {
-      color: rgba(255, 255, 255, 0.95) !important;
+      color: var(--text-primary) !important;
       font-weight: 600;
     }
 
     .n-dialog__content {
-      color: rgba(255, 255, 255, 0.9) !important;
+      color: var(--text-secondary) !important;
     }
   }
 
@@ -786,27 +786,27 @@ onMounted(async () => {
 
   // 确保所有标签都使用深色主题
   &:not(.tag-more) {
-    background: rgba(255, 255, 255, 0.1) !important;
-    color: rgba(255, 255, 255, 0.9) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    background: var(--surface-2) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-secondary) !important;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.15) !important;
-      color: rgba(255, 255, 255, 0.95) !important;
-      border-color: rgba(255, 255, 255, 0.3) !important;
+      background: var(--surface-hover) !important;
+      color: var(--text-primary) !important;
+      border-color: var(--border-focus) !important;
     }
   }
 
   // 省略标签样式优化
   &.tag-more {
-    background: rgba(255, 255, 255, 0.1) !important;
-    color: rgba(255, 255, 255, 0.8) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    background: var(--surface-2) !important;
+    color: var(--text-secondary) !important;
+    border: 1px solid var(--border-secondary) !important;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.15) !important;
-      color: rgba(255, 255, 255, 0.9) !important;
-      border-color: rgba(255, 255, 255, 0.3) !important;
+      background: var(--surface-hover) !important;
+      color: var(--text-primary) !important;
+      border-color: var(--border-focus) !important;
     }
   }
 
@@ -839,13 +839,13 @@ onMounted(async () => {
 :deep(.n-transfer) {
   .n-transfer-list {
     border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid var(--border-primary) !important;
+    background: var(--surface-1) !important;
 
     .n-transfer-list-header {
-      background: rgba(255, 255, 255, 0.12) !important;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
-      color: rgba(255, 255, 255, 0.9) !important;
+      background: var(--surface-2) !important;
+      border-bottom: 1px solid var(--border-primary) !important;
+      color: var(--text-primary) !important;
     }
 
     .n-transfer-list-body {
@@ -853,28 +853,28 @@ onMounted(async () => {
     }
 
     .n-transfer-list-item {
-      color: rgba(255, 255, 255, 0.8) !important;
+      color: var(--text-secondary) !important;
 
       &:hover {
-        background: rgba(255, 255, 255, 0.08) !important;
+        background: var(--surface-hover) !important;
       }
 
       &.n-transfer-list-item--pending {
-        background: rgba(170, 131, 255, 0.1) !important;
-        color: rgba(255, 255, 255, 0.9) !important;
+        background: var(--primary-light) !important;
+        color: var(--text-primary) !important;
       }
     }
   }
 
   .n-transfer-list-gap {
     .n-button {
-      background: rgba(255, 255, 255, 0.08) !important;
-      border: 1px solid rgba(255, 255, 255, 0.15) !important;
-      color: rgba(255, 255, 255, 0.7) !important;
+      background: var(--surface-1) !important;
+      border: 1px solid var(--border-primary) !important;
+      color: var(--text-secondary) !important;
 
       &:hover {
-        background: rgba(255, 255, 255, 0.12) !important;
-        color: rgba(255, 255, 255, 0.9) !important;
+        background: var(--surface-hover) !important;
+        color: var(--text-primary) !important;
       }
     }
   }

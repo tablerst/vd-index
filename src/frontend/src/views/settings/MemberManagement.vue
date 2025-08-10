@@ -782,12 +782,12 @@ onMounted(() => {
       margin: 0 0 8px 0;
       font-size: 28px;
       font-weight: 600;
-      color: #FFFFFF;
+      color: var(--text-primary);
     }
 
     p {
       margin: 0;
-      color: rgba(255, 255, 255, 0.7);
+      color: var(--text-secondary);
       font-size: 16px;
     }
   }
@@ -816,7 +816,7 @@ onMounted(() => {
     margin: 0;
     font-size: 24px;
     font-weight: 600;
-    color: #FFFFFF; // 修复深色主题下的文字颜色
+    color: var(--text-primary);
     font-family: $fluent-font-family;
   }
 }
@@ -852,7 +852,7 @@ onMounted(() => {
 
   .n-data-table-th {
     background: $fluent-fill-subtle;
-    color: #FFFFFF; // 修复表头文字颜色
+    color: var(--text-primary);
     font-weight: 600;
     border-bottom: 1px solid $fluent-stroke-surface;
   }
@@ -935,15 +935,15 @@ onMounted(() => {
     @include fluent-depth-shadow(32);
 
     // 确保文字可读性
-    color: rgba(255, 255, 255, 0.95) !important;
+    color: var(--text-primary) !important;
 
     .n-dialog__title {
-      color: rgba(255, 255, 255, 0.95) !important;
+      color: var(--text-primary) !important;
       font-weight: 600;
     }
 
     .n-dialog__content {
-      color: rgba(255, 255, 255, 0.9) !important;
+      color: var(--text-secondary) !important;
     }
   }
 

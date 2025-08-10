@@ -4,6 +4,7 @@
     :theme-overrides="currentThemeOverrides"
     :locale="zhCN"
     :date-locale="dateZhCN"
+    preflight-style-disabled
   >
     <n-global-style />
     <n-message-provider>
@@ -91,13 +92,19 @@ const darkThemeOverrides: GlobalThemeOverrides = {
     // 模态框样式优化 - 提高可读性
     borderRadius: '12px',
     color: 'rgba(14, 16, 22, 0.85)', // 深色背景，降低透明度
-    // 模态框遮罩层
-    maskColor: 'rgba(0, 0, 0, 0.6)', // 增强遮罩层不透明度
-    // 文本颜色确保可读性
+    maskColor: 'rgba(0, 0, 0, 0.6)',
     textColor: 'rgba(255, 255, 255, 0.95)',
     titleTextColor: 'rgba(255, 255, 255, 0.95)',
-    // 边框和阴影
     borderColor: 'rgba(255, 255, 255, 0.15)',
+    boxShadow: '0 12px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(170, 131, 255, 0.1)'
+  },
+  Dialog: {
+    // 注意：preset="dialog" 的 n-modal 底层使用的是 Dialog 的 token
+    borderRadius: '12px',
+    color: 'rgba(14, 16, 22, 0.9)',
+    textColor: 'rgba(255, 255, 255, 0.95)',
+    titleTextColor: 'rgba(255, 255, 255, 0.95)',
+    border: '1px solid rgba(255, 255, 255, 0.15)',
     boxShadow: '0 12px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(170, 131, 255, 0.1)'
   },
 
@@ -298,6 +305,14 @@ const lightThemeOverrides: GlobalThemeOverrides = {
     textColor: '#000000',
     titleTextColor: '#000000',
     borderColor: 'rgba(0, 0, 0, 0.15)',
+    boxShadow: '0 12px 32px rgba(0, 0, 0, 0.15), 0 0 20px rgba(170, 131, 255, 0.05)'
+  },
+  Dialog: {
+    borderRadius: '12px',
+    color: 'rgba(255, 255, 255, 0.98)',
+    textColor: '#000000',
+    titleTextColor: '#000000',
+    border: '1px solid rgba(0, 0, 0, 0.15)',
     boxShadow: '0 12px 32px rgba(0, 0, 0, 0.15), 0 0 20px rgba(170, 131, 255, 0.05)'
   },
 

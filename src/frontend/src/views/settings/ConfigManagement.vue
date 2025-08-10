@@ -318,10 +318,10 @@ const typeOptions = [
 
 // 类型标签映射 - 深色主题适配
 const typeTagMap = {
-  string: { type: 'default', text: '字符串', color: 'rgba(255, 255, 255, 0.7)' },
-  number: { type: 'info', text: '数字', color: '#3F7DFB' },
-  boolean: { type: 'success', text: '布尔值', color: '#D4DEC7' },
-  json: { type: 'warning', text: 'JSON', color: '#FFB020' }
+  string: { type: 'default', text: '字符串', color: 'var(--text-secondary)' },
+  number: { type: 'info', text: '数字', color: 'var(--accent-blue)' },
+  boolean: { type: 'success', text: '布尔值', color: 'var(--accent-green)' },
+  json: { type: 'warning', text: 'JSON', color: 'var(--accent-yellow)' }
 }
 
 // 表格列定义
@@ -624,12 +624,12 @@ onMounted(() => {
     margin: 0 0 8px 0;
     font-size: 28px;
     font-weight: 600;
-    color: #FFFFFF;
+    color: var(--text-primary);
   }
 
   p {
     margin: 0;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--text-secondary);
     font-size: 16px;
   }
 }
@@ -657,7 +657,7 @@ onMounted(() => {
     margin: 0;
     font-size: 24px;
     font-weight: 600;
-    color: #FFFFFF; // 修复深色主题下的文字颜色
+    color: var(--text-primary); // 修复深色主题下的文字颜色
     font-family: $fluent-font-family;
   }
 }

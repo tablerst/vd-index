@@ -336,12 +336,12 @@ onMounted(() => {
       margin: 0 0 8px 0;
       font-size: 28px;
       font-weight: 600;
-      color: #FFFFFF;
+      color: var(--text-primary);
     }
 
     p {
       margin: 0;
-      color: rgba(255, 255, 255, 0.7);
+      color: var(--text-secondary);
       font-size: 16px;
     }
   }
@@ -373,12 +373,12 @@ onMounted(() => {
         margin: 0 0 4px 0;
         font-size: 24px;
         font-weight: 600;
-        color: #FFFFFF;
+        color: var(--text-primary);
       }
 
       p {
         margin: 0;
-        color: rgba(255, 255, 255, 0.7);
+        color: var(--text-secondary);
         font-size: 14px;
       }
     }
@@ -398,18 +398,18 @@ onMounted(() => {
       margin: 0 0 4px 0;
       font-size: 16px;
       font-weight: 500;
-      color: #FFFFFF;
+      color: var(--text-primary);
     }
 
     p {
       margin: 0;
-      color: rgba(255, 255, 255, 0.7);
+      color: var(--text-secondary);
       font-size: 14px;
     }
   }
   
   .activity-date {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-tertiary);
     font-size: 12px;
     white-space: nowrap;
     margin-left: 16px;
@@ -422,7 +422,7 @@ onMounted(() => {
     justify-content: space-between;
     align-items: center;
     padding: 12px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border-secondary);
 
     &:last-child {
       border-bottom: none;
@@ -430,7 +430,7 @@ onMounted(() => {
 
     .status-label {
       font-weight: 500;
-      color: rgba(255, 255, 255, 0.8);
+      color: var(--text-secondary);
     }
   }
 }
@@ -443,12 +443,12 @@ onMounted(() => {
     padding: 8px 0;
 
     .metric-label {
-      color: rgba(255, 255, 255, 0.8);
+      color: var(--text-secondary);
       font-size: 14px;
     }
 
     .metric-value {
-      color: #FFFFFF;
+      color: var(--text-primary);
       font-size: 14px;
       font-weight: 500;
     }
@@ -457,7 +457,7 @@ onMounted(() => {
   .cache-actions {
     margin-top: 16px;
     padding-top: 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--border-secondary);
 
     .n-button {
       width: 100%;
