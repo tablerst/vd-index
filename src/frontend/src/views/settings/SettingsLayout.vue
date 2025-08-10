@@ -93,13 +93,15 @@ import {
 } from '@vicons/ionicons5'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
+import { storeToRefs } from 'pinia'
 import { RevealEffect } from '@/utils/fluentEffects'
 import { gsap } from 'gsap'
 
 
 // 主题切换
 const themeStore = useThemeStore()
-const isDarkTheme = themeStore.isDark
+// 使用 storeToRefs 保持响应式（避免被解构为普通 boolean）
+const { isDark: isDarkTheme } = storeToRefs(themeStore)
 const switchValue = computed({
   get: () => isDarkTheme.value,
   set: (val: boolean) => { animateThemeSwitch(); themeStore.setTheme(val ? 'dark' : 'light') }

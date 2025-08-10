@@ -76,7 +76,6 @@ const {
   sections,
   progress,
   goToSection,
-  deviceType,
   isMobileProgressBarDisabled,
   setWheelListenerDisabled
 } = useSnapScroll([

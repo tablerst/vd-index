@@ -173,33 +173,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
-
-const showBackToTop = ref(false)
+import { computed } from 'vue'
 
 // 当前年份
 const currentYear = computed(() => new Date().getFullYear())
-
-// 滚动到顶部
-const scrollToTop = () => {
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  })
-}
-
-// 监听滚动事件
-const handleScroll = () => {
-  showBackToTop.value = window.scrollY > 500
-}
-
-onMounted(() => {
-  window.addEventListener('scroll', handleScroll)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll)
-})
 </script>
 
 <style scoped lang="scss">

@@ -65,11 +65,6 @@ const props = withDefaults(defineProps<Props>(), {
 
 defineEmits<Emits>()
 
-// 获取section标签
-const getSectionLabel = (index: number) => {
-  const labels = ['首页', '成员', '活动']
-  return labels[index] || `第${index + 1}屏`
-}
 import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
 import { gsap } from 'gsap'
 
@@ -78,7 +73,6 @@ const collapsed = ref(false)
 let collapseTimer: number | null = null
 const rootRef = ref<HTMLElement | null>(null)
 const comboRef = ref<HTMLElement | null>(null)
-const maskRef = ref<HTMLElement | null>(null)
 const fillRef = ref<HTMLElement | null>(null)
 
 // 展示用进度：基于当前分屏与总分屏（0 顶部 → 1 底部），避免 props.progress 与视觉方向不一致
