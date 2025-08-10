@@ -8,13 +8,8 @@
 
         <!-- 2D 星环容器 -->
         <div class="ring-container" ref="ringContainer">
-          <Ring2D
-            ref="ring2d"
-            :size="ringSize"
-            :enable-parallax="!isMobile"
-            :enable-breathing="true"
-            :enable-pulse="true"
-          />
+          <Ring2D ref="ring2d" :size="ringSize" :enable-parallax="!isMobile" :enable-breathing="true"
+            :enable-pulse="true" />
         </div>
 
         <!-- 文本内容 -->
@@ -30,23 +25,15 @@
 
           <!-- CTA 按钮 -->
           <div class="hero-actions">
-            <button
-              class="cta-button interactive"
-              @click="scrollToMembers"
-              aria-label="探索成员星云"
-            >
+            <button class="cta-button interactive" @click="scrollToMembers" aria-label="探索成员星云">
               <span class="cta-text">探索成员星云</span>
               <div class="cta-ripple"></div>
               <svg class="cta-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M10 3L10 17M3 10L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M10 3L10 17M3 10L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
               </svg>
             </button>
 
-            <button
-              class="secondary-button interactive"
-              @click="scrollToAbout"
-              aria-label="了解更多关于VRC Division"
-            >
+            <button class="secondary-button interactive" @click="scrollToAbout" aria-label="了解更多关于VRC Division">
               <span>了解更多</span>
             </button>
           </div>
@@ -54,17 +41,6 @@
       </div>
     </div>
 
-
-
-
-
-    <!-- 滚动指示器 -->
-    <div class="scroll-indicator">
-      <div class="scroll-mouse">
-        <div class="scroll-wheel"></div>
-      </div>
-      <span class="scroll-text">向下滚动探索</span>
-    </div>
   </section>
 </template>
 
@@ -162,7 +138,7 @@ const initRingParticles = (): (() => void) => {
   const canvas = ringParticlesCanvas.value
   if (!canvas) {
     console.warn('Ring particles canvas not found')
-    return () => {}
+    return () => { }
   }
 
   // 检测浏览器兼容性
@@ -213,62 +189,62 @@ const initRingParticles = (): (() => void) => {
     // 检测性能设置
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-  // 初始化并同步尺寸
-  const resizeCanvas = () => {
+    // 初始化并同步尺寸
+    const resizeCanvas = () => {
+      const rect = (canvas.parentElement as HTMLElement).getBoundingClientRect()
+      offscreen.width = rect.width
+      offscreen.height = rect.height
+      // 只有在 worker 已初始化后才发送 resize 消息
+      if (particleWorker) {
+        particleWorker.postMessage({ type: 'resize', width: rect.width, height: rect.height })
+      }
+
+      // 尺寸变化时同步粒子中心
+      setTimeout(syncParticleCenter, 50)
+    }
+
+    // 获取初始尺寸
     const rect = (canvas.parentElement as HTMLElement).getBoundingClientRect()
     offscreen.width = rect.width
     offscreen.height = rect.height
-    // 只有在 worker 已初始化后才发送 resize 消息
-    if (particleWorker) {
-      particleWorker.postMessage({ type: 'resize', width: rect.width, height: rect.height })
+
+    // 发送初始化消息
+    particleWorker.postMessage(
+      { type: 'init', canvas: offscreen, width: offscreen.width, height: offscreen.height },
+      [offscreen]
+    )
+
+    // 发送性能设置
+    particleWorker.postMessage({
+      type: 'setPerformance',
+      options: {
+        reducedMotion: prefersReducedMotion,
+        isMobile: isMobile.value,
+        performanceLevel: performanceOptimizer.getCurrentLevel(),
+        adaptiveQuality: true
+      }
+    })
+
+    // 窗口尺寸变化
+    window.addEventListener('resize', resizeCanvas)
+
+    // 页面可见性切换
+    const handleVisibility = () => {
+      particleWorker!.postMessage({ type: document.hidden ? 'pause' : 'resume' })
     }
+    document.addEventListener('visibilitychange', handleVisibility)
 
-    // 尺寸变化时同步粒子中心
-    setTimeout(syncParticleCenter, 50)
-  }
-
-  // 获取初始尺寸
-  const rect = (canvas.parentElement as HTMLElement).getBoundingClientRect()
-  offscreen.width = rect.width
-  offscreen.height = rect.height
-
-  // 发送初始化消息
-  particleWorker.postMessage(
-    { type: 'init', canvas: offscreen, width: offscreen.width, height: offscreen.height },
-    [offscreen]
-  )
-
-  // 发送性能设置
-  particleWorker.postMessage({
-    type: 'setPerformance',
-    options: {
-      reducedMotion: prefersReducedMotion,
-      isMobile: isMobile.value,
-      performanceLevel: performanceOptimizer.getCurrentLevel(),
-      adaptiveQuality: true
+    // 监听动画偏好变化
+    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const handleMotionChange = () => {
+      if (particleWorker) {
+        particleWorker.postMessage({
+          type: 'setPerformance',
+          options: { reducedMotion: motionQuery.matches }
+        })
+      }
     }
-  })
-
-  // 窗口尺寸变化
-  window.addEventListener('resize', resizeCanvas)
-
-  // 页面可见性切换
-  const handleVisibility = () => {
-    particleWorker!.postMessage({ type: document.hidden ? 'pause' : 'resume' })
-  }
-  document.addEventListener('visibilitychange', handleVisibility)
-
-  // 监听动画偏好变化
-  const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-  const handleMotionChange = () => {
-    if (particleWorker) {
-      particleWorker.postMessage({
-        type: 'setPerformance',
-        options: { reducedMotion: motionQuery.matches }
-      })
-    }
-  }
-  motionQuery.addEventListener('change', handleMotionChange)
+    motionQuery.addEventListener('change', handleMotionChange)
 
     // 返回清理函数
     return () => {
@@ -290,14 +266,14 @@ const initRingParticles = (): (() => void) => {
 // 降级方案：使用传统 Canvas 渲染
 const initRingParticlesFallback = (): (() => void) => {
   const canvas = ringParticlesCanvas.value
-  if (!canvas) return () => {}
+  if (!canvas) return () => { }
 
   console.log('Using fallback canvas rendering for ring particles')
 
   const ctx = canvas.getContext('2d')
   if (!ctx) {
     console.error('Failed to get 2D context for fallback canvas')
-    return () => {}
+    return () => { }
   }
 
   // 简化的粒子系统（不使用 Worker）
@@ -452,7 +428,8 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 1; /* 在文本内容之下，但在背景之上 */
+  z-index: 1;
+  /* 在文本内容之下，但在背景之上 */
 }
 
 .ring-container {
@@ -479,29 +456,30 @@ onUnmounted(() => {
 
 .hero-text {
   position: relative;
-  z-index: 3; /* 确保文本在粒子之上 */
-  
+  z-index: 3;
+  /* 确保文本在粒子之上 */
+
   .hero-title {
     font-size: var(--font-size-5xl);
     font-weight: var(--font-weight-bold);
     line-height: var(--line-height-tight);
     margin-bottom: var(--spacing-lg);
-    
+
     @include media-down(md) {
       font-size: var(--font-size-4xl);
     }
-    
+
     .title-line {
       display: block;
       opacity: 0;
       transform: translateY(30px);
       animation: titleSlideIn 0.8s ease-out forwards;
-      
+
       &--1 {
         color: var(--text-secondary);
         animation-delay: 0.2s;
       }
-      
+
       &--2 {
         background: var(--primary-gradient);
         -webkit-background-clip: text;
@@ -511,7 +489,7 @@ onUnmounted(() => {
       }
     }
   }
-  
+
   .hero-subtitle {
     font-size: var(--font-size-xl);
     color: var(--text-secondary);
@@ -519,7 +497,7 @@ onUnmounted(() => {
     opacity: 0;
     transform: translateY(20px);
     animation: titleSlideIn 0.8s ease-out 0.6s forwards;
-    
+
     @include media-down(md) {
       font-size: var(--font-size-lg);
     }
@@ -532,7 +510,7 @@ onUnmounted(() => {
   opacity: 0;
   transform: translateY(20px);
   animation: titleSlideIn 0.8s ease-out 0.8s forwards;
-  
+
   @include media-down(sm) {
     flex-direction: column;
     align-items: center;
@@ -564,19 +542,19 @@ onUnmounted(() => {
       transform: rotate(45deg);
     }
   }
-  
+
   &:active {
     transform: translateY(-2px);
-    
+
     .cta-ripple {
       animation: rippleEffect 1s ease-out;
     }
   }
-  
+
   .cta-icon {
     transition: transform var(--transition-base);
   }
-  
+
   .cta-ripple {
     position: absolute;
     top: 50%;
@@ -607,61 +585,31 @@ onUnmounted(() => {
   }
 }
 
-
-
-
-
-.scroll-indicator {
-  position: absolute;
-  bottom: var(--spacing-2xl);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-sm);
-  color: var(--text-muted);
-  animation: scrollBounce 2s ease-in-out infinite;
-  
-  .scroll-mouse {
-    width: 24px;
-    height: 40px;
-    border: 2px solid var(--text-muted);
-    border-radius: 12px;
-    position: relative;
-    
-    .scroll-wheel {
-      width: 4px;
-      height: 8px;
-      background: var(--text-muted);
-      border-radius: 2px;
-      position: absolute;
-      top: 6px;
-      left: 50%;
-      transform: translateX(-50%);
-      animation: scrollWheel 2s ease-in-out infinite;
-    }
-  }
-  
-  .scroll-text {
-    font-size: var(--font-size-xs);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-}
-
 // 动画定义
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes portalRotate {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes portalPulse {
-  0%, 100% { opacity: 0.8; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.1); }
+
+  0%,
+  100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
 }
 
 @keyframes titleSlideIn {
@@ -683,16 +631,5 @@ onUnmounted(() => {
 
 
 
-@keyframes scrollBounce {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50% { transform: translateX(-50%) translateY(-10px); }
-}
-
-@keyframes scrollWheel {
-  0% { top: 6px; opacity: 1; }
-  50% { top: 16px; opacity: 0.5; }
-  100% { top: 6px; opacity: 1; }
-}
-
-
+/* 移除与滚动指示器相关的动画定义 */
 </style>

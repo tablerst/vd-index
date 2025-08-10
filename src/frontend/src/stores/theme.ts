@@ -42,6 +42,14 @@ export const useThemeStore = defineStore('theme', () => {
     const root = document.documentElement
     const colors = getThemeColors(theme === 'dark')
 
+    // 标记当前主题，提供 CSS 钩子
+    root.setAttribute('data-theme', theme)
+    try {
+      document.body.classList.remove('theme-dark', 'theme-light')
+      document.body.classList.add(theme === 'dark' ? 'theme-dark' : 'theme-light')
+    } catch {}
+
+
     // 核心主题色彩
     root.style.setProperty('--primary', colors.primary)
     root.style.setProperty('--primary-hover', colors.primaryHover)

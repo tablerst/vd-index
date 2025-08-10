@@ -40,12 +40,10 @@ export function useDeviceDetection() {
   // 设备类型检测
   const deviceType = computed<DeviceInfo['type']>(() => {
     const width = screenWidth.value
-    // 暂时禁用移动端和平板端的snap scroll功能
-    // 所有设备都使用desktop配置，确保PC端体验最佳
-    // 移动端将使用标准的滚动方式
-    // if (width <= 768) return 'mobile'
-    // if (width <= 1024) return 'tablet'
-    return 'desktop'
+  // 基于屏幕宽度的设备类型判定
+  if (width <= 768) return 'mobile'
+  if (width <= 1024) return 'tablet'
+  return 'desktop'
   })
 
   // 设备信息
@@ -69,7 +67,8 @@ export function useDeviceDetection() {
     switch (type) {
       case 'mobile':
         return {
-          membersPerPage: 12, // 移动端显示更少成员
+          // 移动端成员数量为桌面的 12
+          membersPerPage: 12,
           avatarSize: {
             min: 45, // 更大的头像便于触摸
             max: 65

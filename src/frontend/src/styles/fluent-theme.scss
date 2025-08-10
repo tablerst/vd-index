@@ -388,135 +388,135 @@ body {
   outline-offset: 2px;
 }
 
-// 修复 NaiveUI 输入框文字颜色问题
+// 修复 NaiveUI 输入/选择文本颜色问题（使用主题变量，深浅色自适应）
 .n-input .n-input__input-el {
-  color: #FFFFFF !important; // 改为白色确保在深色背景下可见
+  color: var(--text-primary) !important; // 使用主题主要文本色
   background-color: transparent !important;
 }
 
 .n-input input {
-  color: #FFFFFF !important; // 改为白色确保在深色背景下可见
+  color: var(--text-primary) !important; // 使用主题主要文本色
   background-color: transparent !important;
 }
 
 .n-input input::placeholder {
-  color: rgba(255, 255, 255, 0.6) !important; // 改为半透明白色
+  color: var(--text-tertiary) !important; // 使用主题占位文本色
 }
 
 .n-input .n-input__placeholder {
-  color: rgba(255, 255, 255, 0.6) !important; // 改为半透明白色
+  color: var(--text-tertiary) !important; // 使用主题占位文本色
 }
 
-// 确保输入框有合适的背景色和边框
+// 确保输入框有合适的背景色和边框（主题变量）
 .n-input .n-input-wrapper {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  background-color: var(--surface-1) !important;
+  border: 1px solid var(--border-primary) !important;
 }
 
 .n-input:hover .n-input-wrapper {
-  border-color: rgba(255, 255, 255, 0.4) !important;
+  border-color: var(--border-focus) !important;
 }
 
 .n-input:focus-within .n-input-wrapper {
-  border-color: #AA83FF !important;
-  box-shadow: 0 0 0 2px rgba(170, 131, 255, 0.3) !important;
+  border-color: var(--border-focus) !important;
+  box-shadow: 0 0 0 2px var(--primary-light) !important;
 }
 
-// 修复文本域的文字颜色
+// 修复文本域的文字颜色（主题变量）
 .n-input .n-input__textarea-el {
-  color: #FFFFFF !important;
+  color: var(--text-primary) !important;
   background-color: transparent !important;
 }
 
-// 修复选择器的文字颜色
+// 修复选择器的文字颜色（主题变量）
 .n-select .n-base-selection .n-base-selection-label {
-  color: #FFFFFF !important;
+  color: var(--text-primary) !important;
 }
 
 .n-select .n-base-selection .n-base-selection-placeholder {
-  color: rgba(255, 255, 255, 0.6) !important;
+  color: var(--text-tertiary) !important;
 }
 
-// 专门针对settings页面的输入框样式修复 - 最高优先级
+// 专门针对settings页面的输入框样式修复 - 使用主题变量，避免浅色主题白底白字
 .settings-layout,
 .main-content,
 .activity-management,
 .member-management,
 .config-management,
 .dashboard {
-  // 强制覆盖所有输入框样式
+  // 强制覆盖所有输入框样式（主题变量）
   .n-input,
   :deep(.n-input) {
     .n-input-wrapper {
-      background-color: rgba(255, 255, 255, 0.1) !important;
-      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      background-color: var(--surface-1) !important;
+      border: 1px solid var(--border-primary) !important;
     }
 
     .n-input__input-el,
     input {
-      color: #FFFFFF !important;
+      color: var(--text-primary) !important;
       background-color: transparent !important;
-      caret-color: #FFFFFF !important;
+      caret-color: var(--text-primary) !important;
 
       &::placeholder {
-        color: rgba(255, 255, 255, 0.6) !important;
+        color: var(--text-tertiary) !important;
       }
     }
 
     .n-input__placeholder {
-      color: rgba(255, 255, 255, 0.6) !important;
+      color: var(--text-tertiary) !important;
     }
 
     .n-input__prefix,
     .n-input__suffix {
-      color: rgba(255, 255, 255, 0.6) !important;
+      color: var(--text-secondary) !important;
     }
 
     &:hover .n-input-wrapper {
-      border-color: rgba(255, 255, 255, 0.4) !important;
+      border-color: var(--border-focus) !important;
     }
 
     &:focus-within .n-input-wrapper {
-      border-color: #AA83FF !important;
-      box-shadow: 0 0 0 2px rgba(170, 131, 255, 0.3) !important;
+      border-color: var(--border-focus) !important;
+      box-shadow: 0 0 0 2px var(--primary-light) !important;
     }
   }
 
-  // 强制覆盖文本域样式
+  // 强制覆盖文本域样式（主题变量）
   .n-input .n-input__textarea-el,
   :deep(.n-input .n-input__textarea-el) {
-    color: #FFFFFF !important;
+    color: var(--text-primary) !important;
     background-color: transparent !important;
-    caret-color: #FFFFFF !important;
+    caret-color: var(--text-primary) !important;
 
     &::placeholder {
-      color: rgba(255, 255, 255, 0.6) !important;
+      color: var(--text-tertiary) !important;
     }
   }
 
-  // 强制覆盖选择器样式
+  // 强制覆盖选择器样式（主题变量）
   .n-select,
   :deep(.n-select) {
     .n-base-selection {
-      background-color: rgba(255, 255, 255, 0.1) !important;
-      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      background-color: var(--surface-1) !important;
+      border: 1px solid var(--border-primary) !important;
 
       .n-base-selection-label {
-        color: #FFFFFF !important;
+        color: var(--text-primary) !important;
       }
 
       .n-base-selection-placeholder {
-        color: rgba(255, 255, 255, 0.6) !important;
+        color: var(--text-tertiary) !important;
       }
     }
 
     &:hover .n-base-selection {
-      border-color: rgba(255, 255, 255, 0.4) !important;
+      border-color: var(--border-focus) !important;
     }
 
     &.n-select--focused .n-base-selection {
-      border-color: #AA83FF !important;
-      box-shadow: 0 0 0 2px rgba(170, 131, 255, 0.3) !important;
+      border-color: var(--border-focus) !important;
+      box-shadow: 0 0 0 2px var(--primary-light) !important;
     }
   }
 }

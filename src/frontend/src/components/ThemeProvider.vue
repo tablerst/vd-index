@@ -76,6 +76,19 @@ const darkThemeOverrides: GlobalThemeOverrides = {
     fontWeightStrong: '600'
   },
 
+  Pagination: {
+    // 分页（深色）
+    itemTextColor: 'rgba(255, 255, 255, 0.82)',
+    itemTextColorHover: 'rgba(255, 255, 255, 0.95)',
+    itemTextColorActive: '#FFFFFF',
+    itemColor: 'rgba(14, 16, 22, 0.85)',
+    itemColorHover: 'rgba(14, 16, 22, 1)',
+    itemColorActive: '#AA83FF',
+    itemBorder: '1px solid rgba(255, 255, 255, 0.15)',
+    itemBorderHover: '1px solid rgba(255, 255, 255, 0.25)',
+    itemBorderActive: '1px solid #AA83FF'
+  },
+
   Card: {
     // 玻璃态卡片效果
     borderRadius: '12px',
@@ -83,9 +96,16 @@ const darkThemeOverrides: GlobalThemeOverrides = {
   },
 
   DataTable: {
-    // 表格样式优化
+    // 表格样式优化（深色）
     borderRadius: '12px',
-    thFontWeight: '600'
+    thFontWeight: '600',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    thColor: 'rgba(255, 255, 255, 0.08)',
+    tdColor: 'rgba(255, 255, 255, 0.05)',
+    tdColorHover: 'rgba(255, 255, 255, 0.08)',
+    tdColorStriped: 'rgba(255, 255, 255, 0.03)',
+    thTextColor: 'rgba(255, 255, 255, 0.95)',
+    tdTextColor: 'rgba(255, 255, 255, 0.95)'
   },
 
   Modal: {
@@ -183,8 +203,25 @@ const darkThemeOverrides: GlobalThemeOverrides = {
 
 
   Menu: {
-    // 菜单样式
-    borderRadius: '8px'
+    // 菜单（深色）
+    borderRadius: '8px',
+    itemTextColor: 'rgba(255, 255, 255, 0.95)',
+    itemTextColorHover: 'rgba(255, 255, 255, 0.95)',
+    itemTextColorActive: 'rgba(255, 255, 255, 0.95)',
+    itemTextColorChildActive: 'rgba(255, 255, 255, 0.95)',
+    itemColorHover: 'rgba(255, 255, 255, 0.05)',
+    itemColorActive: 'rgba(170, 131, 255, 0.2)',
+    itemColorActiveHover: 'rgba(170, 131, 255, 0.3)',
+    groupTextColor: 'rgba(255, 255, 255, 0.7)',
+    dividerColor: 'rgba(255, 255, 255, 0.12)'
+  },
+
+  Breadcrumb: {
+    // 面包屑（深色）
+    itemTextColor: 'rgba(255, 255, 255, 0.7)',
+    itemTextColorHover: 'rgba(255, 255, 255, 0.95)',
+    itemTextColorPressed: '#AA83FF',
+    separatorColor: 'rgba(255, 255, 255, 0.5)'
   },
 
   Tag: {
@@ -278,6 +315,19 @@ const lightThemeOverrides: GlobalThemeOverrides = {
     fontWeightStrong: '600'
   },
 
+  Pagination: {
+    // 分页（浅色）
+    itemTextColor: 'rgba(31, 41, 55, 0.85)',
+    itemTextColorHover: 'rgba(0, 0, 0, 0.95)',
+    itemTextColorActive: '#FFFFFF',
+    itemColor: 'rgba(255, 255, 255, 0.95)',
+    itemColorHover: 'rgba(248, 250, 252, 1)',
+    itemColorActive: '#7C3AED',
+    itemBorder: '1px solid rgba(0, 0, 0, 0.12)',
+    itemBorderHover: '1px solid rgba(0, 0, 0, 0.2)',
+    itemBorderActive: '1px solid #7C3AED'
+  },
+
   Card: {
     borderRadius: '12px',
     paddingMedium: '20px 24px',
@@ -289,6 +339,7 @@ const lightThemeOverrides: GlobalThemeOverrides = {
   },
 
   DataTable: {
+    // 表格样式优化（浅色）
     borderRadius: '12px',
     thFontWeight: '600',
     borderColor: 'rgba(0, 0, 0, 0.08)',
@@ -307,6 +358,45 @@ const lightThemeOverrides: GlobalThemeOverrides = {
     borderColor: 'rgba(0, 0, 0, 0.15)',
     boxShadow: '0 12px 32px rgba(0, 0, 0, 0.15), 0 0 20px rgba(170, 131, 255, 0.05)'
   },
+
+  // 输入框（浅色）
+  Input: {
+    borderRadius: '8px',
+    textColor: '#000000',
+    textColorDisabled: 'rgba(0, 0, 0, 0.3)',
+    placeholderColor: 'rgba(0, 0, 0, 0.45)',
+    placeholderColorDisabled: 'rgba(0, 0, 0, 0.3)',
+    color: 'rgba(255, 255, 255, 0.98)',
+    colorDisabled: 'rgba(255, 255, 255, 0.92)',
+    colorFocus: '#FFFFFF',
+    border: '1px solid rgba(0, 0, 0, 0.12)',
+    borderHover: '1px solid #7C3AED',
+    borderDisabled: '1px solid rgba(0, 0, 0, 0.08)',
+    borderFocus: '1px solid #7C3AED',
+    boxShadowFocus: '0 0 0 2px rgba(124, 58, 237, 0.25)',
+    caretColor: '#7C3AED'
+  },
+
+  // 选择器（浅色）
+  Select: {
+    borderRadius: '8px',
+    color: 'rgba(255, 255, 255, 0.98)',
+    colorActive: '#FFFFFF',
+    border: '1px solid rgba(0, 0, 0, 0.12)',
+    borderHover: '1px solid #7C3AED',
+    borderActive: '1px solid #7C3AED',
+    borderFocus: '1px solid #7C3AED',
+    boxShadowFocus: '0 0 0 2px rgba(124, 58, 237, 0.25)',
+    textColor: '#000000',
+    placeholderColor: 'rgba(0, 0, 0, 0.45)',
+    peers: {
+      InternalSelection: {
+        textColor: '#000000',
+        placeholderColor: 'rgba(0, 0, 0, 0.45)'
+      }
+    },
+  },
+
   Dialog: {
     borderRadius: '12px',
     color: 'rgba(255, 255, 255, 0.98)',
@@ -351,6 +441,12 @@ const lightThemeOverrides: GlobalThemeOverrides = {
     itemColorPending: 'rgba(170, 131, 255, 0.1)',
     itemColorPendingHover: 'rgba(170, 131, 255, 0.15)',
     extraTextColor: 'rgba(0, 0, 0, 0.7)'
+  },
+  Breadcrumb: {
+    itemTextColor: 'rgba(0, 0, 0, 0.6)',
+    itemTextColorHover: 'rgba(0, 0, 0, 0.95)',
+    itemTextColorPressed: '#7C3AED',
+    separatorColor: 'rgba(0, 0, 0, 0.45)'
   }
 }
 
