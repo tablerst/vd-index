@@ -2,6 +2,7 @@
 成员业务逻辑服务
 """
 import secrets
+import logging
 from datetime import datetime
 from typing import List, Optional, Tuple, Dict, Any
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -251,22 +252,28 @@ class MemberService:
         """对比数据库与最新成员UIN列表，清理已退群成员。
         返回统计信息：{"deleted": n, "details": [...]}。
         """
+        logger = logging.getLogger(__name__)
         crypto = get_crypto_service()
         # 加载所有成员并映射 uin->Member
         existing_members = await MemberCRUD.get_all(session)
+        logger.info(f"[RECONCILE] existing members: {len(existing_members)}; latest_uins input size: {len(latest_uins)}")
         uin_to_member: Dict[int, Member] = {}
         for m in existing_members:
             try:
                 u = crypto.decrypt_uin(m.uin_encrypted, m.salt)
                 uin_to_member[u] = m
-            except Exception:
+            except Exception as e:
+                logger.warning(f"[RECONCILE] failed to decrypt member id={m.id}: {e}")
                 continue
-        latest_set = set(int(x) for x in latest_uins if x)
+        latest_set = set(int(x) for x in latest_uins if x is not None)
+        logger.info(f"[RECONCILE] mapped existing UINs: {len(uin_to_member)}; latest_set size: {len(latest_set)}")
         departed = [ (u, m) for u, m in uin_to_member.items() if u not in latest_set ]
+        logger.info(f"[RECONCILE] departed candidates: {len(departed)}")
         details = []
         for u, m in departed:
             info = await MemberService._cleanup_member_departure(session, m, u)
             details.append(info)
+        logger.info(f"[RECONCILE] deleted count: {len(details)}")
         return {"deleted": len(details), "details": details}
 
 
@@ -275,19 +282,25 @@ class MemberService:
         """清理退群成员的相关数据并删除成员记录。
         步骤：删除评论 -> 从所有活动的参与者中移除 -> 删除头像文件 -> 删除成员。
         """
+        logger = logging.getLogger(__name__)
         removed = {
             "member_id": member.id,
             "uin": uin,
             "comments_deleted": 0,
             "activities_updated": 0,
             "avatar_deleted": False,
+            "member_deleted": False,
+            "errors": []
         }
         # 删除评论
         try:
             from services.database.models.comment.crud import CommentCRUD
-            removed["comments_deleted"] = await CommentCRUD.delete_by_member_id(session, member.id)
-        except Exception:
-            pass
+            deleted_cnt = await CommentCRUD.delete_by_member_id(session, member.id)
+            removed["comments_deleted"] = deleted_cnt
+            logger.info(f"[RECONCILE] member {member.id} comments deleted: {deleted_cnt}")
+        except Exception as e:
+            logger.warning(f"[RECONCILE] delete comments failed for member {member.id}: {e}")
+            removed["errors"].append(f"comments:{e}")
         # 从活动中移除
         try:
             activities = await ActivityCRUD.get_by_participant(session, member.id)
@@ -297,14 +310,30 @@ class MemberService:
                 if updated:
                     count += 1
             removed["activities_updated"] = count
-        except Exception:
-            pass
+            logger.info(f"[RECONCILE] member {member.id} removed from activities: {count}")
+        except Exception as e:
+            logger.warning(f"[RECONCILE] remove from activities failed for member {member.id}: {e}")
+            removed["errors"].append(f"activities:{e}")
         # 删除头像文件
         try:
             removed["avatar_deleted"] = AvatarService.delete_avatar_file_by_uin(uin)
-        except Exception:
-            pass
+            logger.info(f"[RECONCILE] member {member.id} avatar_deleted={removed['avatar_deleted']}")
+        except Exception as e:
+            logger.warning(f"[RECONCILE] delete avatar failed for member {member.id}: {e}")
+            removed["errors"].append(f"avatar:{e}")
         # 最后删除成员
-        await MemberCRUD.delete(session, member.id)
+        try:
+            ok = await MemberCRUD.delete(session, member.id)
+            removed["member_deleted"] = bool(ok)
+            # 二次核验：再查一次
+            try:
+                from services.database.models.member.base import Member as MemberModel
+                check = await session.get(MemberModel, member.id)
+                logger.info(f"[RECONCILE] member {member.id} deleted={ok}, verify_exists={check is not None}")
+            except Exception as e2:
+                logger.warning(f"[RECONCILE] verify after delete failed for member {member.id}: {e2}")
+        except Exception as e:
+            logger.error(f"[RECONCILE] delete member failed for member {member.id}: {e}")
+            removed["errors"].append(f"member:{e}")
         return removed
 
