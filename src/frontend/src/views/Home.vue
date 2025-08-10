@@ -29,7 +29,7 @@
       :current-section="currentSection"
       :sections="sections"
       :progress="progress"
-      :visible="isSnapMode && !isAnimating && !isRealMobileDevice"
+      :visible="!isAnimating && !isRealMobileDevice"
       :show-hint="currentSection === 0"
       :is-mobile-progress-bar-disabled="isMobileProgressBarDisabled"
       @go-to-section="goToSection"
@@ -72,7 +72,7 @@ const isRealMobileDevice = computed(() => {
 const {
   currentSection,
   isAnimating,
-  isSnapMode,
+
   sections,
   progress,
   goToSection,

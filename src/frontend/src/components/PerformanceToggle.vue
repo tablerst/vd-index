@@ -1,7 +1,7 @@
 <template>
   <div class="performance-toggle" v-if="showToggle">
-    <button 
-      @click="togglePanel" 
+    <button
+      @click="togglePanel"
       class="toggle-button"
       :class="{ 'toggle-button--active': isPanelVisible }"
       title="切换性能监控面板 (Ctrl+Shift+P)"
@@ -65,7 +65,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .performance-toggle {
   position: fixed;
-  bottom: 20px;
+  top: 16px;
   right: 20px;
   z-index: 9999;
 }
@@ -122,4 +122,13 @@ onMounted(() => {
     display: none;
   }
 }
+
+/* 避免与顶部导航重叠，微调位置 */
+@media (min-width: 769px) {
+  .performance-toggle {
+    top: 18px;
+    right: 18px;
+  }
+}
+
 </style>

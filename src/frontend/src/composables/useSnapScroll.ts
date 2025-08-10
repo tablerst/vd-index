@@ -1,4 +1,4 @@
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { gsap } from 'gsap'
 import { Observer } from 'gsap/Observer'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -219,9 +219,11 @@ export function useSnapScroll(sectionRefs: Array<{ value: HTMLElement | null }>,
 
   // 计算属性
   const totalSections = computed(() => sections.value.length)
-  const progress = computed(() => 
-    totalSections.value > 0 ? (currentSection.value + 1) / totalSections.value : 0
-  )
+  // 进度改为响应式数值，允许在动画中 tween
+  const progress = ref(0)
+  watch([currentSection, totalSections], () => {
+    progress.value = totalSections.value > 0 ? (currentSection.value + 1) / totalSections.value : 0
+  }, { immediate: true })
 
   // 更新sections信息
   const updateSections = async () => {
@@ -327,6 +329,12 @@ export function useSnapScroll(sectionRefs: Array<{ value: HTMLElement | null }>,
       console.log(`Dynamic adjustment: velocity=${gestureVelocity.toFixed(2)}, distance=${scrollDistance.toFixed(0)}px, duration=${dynamicDuration.toFixed(2)}, ease=${dynamicEase}`)
     }
 
+    // 动态 tween 进度条：从起始进度到目标进度
+    const startSection = currentSection.value
+    const startProgress = totalSections.value > 0 ? (startSection + 1) / totalSections.value : 0
+    const endProgress = totalSections.value > 0 ? (index + 1) / totalSections.value : 0
+    gsap.to(progress, { duration: dynamicDuration * 0.9, value: endProgress, ease: dynamicEase })
+
     // 执行滚动动画
     gsap.to(window, {
       duration: dynamicDuration,
@@ -338,6 +346,9 @@ export function useSnapScroll(sectionRefs: Array<{ value: HTMLElement | null }>,
       onComplete: () => {
         isAnimating.value = false
         setWheelBlocked(false) // 使用新的解除阻止方法
+
+        // 完成时锁定进度到目标值
+        progress.value = endProgress
 
         // 滑动完成后恢复装饰性动画
         setTimeout(() => {

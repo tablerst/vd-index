@@ -168,17 +168,7 @@
       </div>
     </div>
 
-    <!-- 回到顶部按钮 -->
-    <button 
-      class="back-to-top interactive"
-      @click="scrollToTop"
-      :class="{ 'back-to-top--visible': showBackToTop }"
-      aria-label="回到顶部"
-    >
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <path d="M10 15L10 5M5 10L10 5L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </button>
+    <!-- 原回到顶部按钮已由 ScrollIndicator 集成版替代，移除以避免重复入口 -->
   </footer>
 </template>
 
