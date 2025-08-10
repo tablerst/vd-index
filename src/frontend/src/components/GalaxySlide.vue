@@ -15,18 +15,22 @@
           <img :src="member.avatarURL" :alt="member.name" loading="lazy">
           <div class="avatar-glow"></div>
         </div>
-        <div class="member-tooltip" v-if="hoveredMember?.id === member.id" :style="{
-          left: `${tooltipPosition.x}px`,
-          top: `${tooltipPosition.y}px`
-        }">
-          <div class="tooltip-content">
-            <h4 class="member-name">{{ member.name }}</h4>
-            <p class="member-bio" v-if="member.bio">{{ member.bio }}</p>
-            <div class="member-meta" v-if="member.joinDate">
-              <span class="join-date">加入于 {{ formatDate(member.joinDate) }}</span>
-            </div>
-          </div>
+      </div>
+    </div>
+
+    <!-- 全局悬浮信息框（放在 slide 根节点，避免受头像 transform 影响） -->
+    <div
+      v-if="hoveredMember"
+      class="member-tooltip"
+      :style="{ left: `${tooltipPosition.x}px`, top: `${tooltipPosition.y}px` }"
+    >
+      <div class="tooltip-content">
+        <h4 class="member-name">{{ hoveredMember.name }}</h4>
+        <!-- 规则：优先显示加入日期；只有在没有加入日期时才显示 bio，避免信息重复 -->
+        <div class="member-meta" v-if="hoveredMember.joinDate">
+          <span class="join-date">加入于 {{ formatDate(hoveredMember.joinDate) }}</span>
         </div>
+        <p class="member-bio" v-else-if="hoveredMember.bio">{{ hoveredMember.bio }}</p>
       </div>
     </div>
   </div>
@@ -202,14 +206,17 @@ const handleMemberLeave = () => {
 }
 
 const updateTooltipPosition = (event: MouseEvent) => {
+  // 当光标悬停在头像上时，使用头像元素的真实视口位置进行定位，避免父级 transform 影响
   if (!hoveredMember.value) return
 
-  const rect = slideRef.value?.getBoundingClientRect()
-  if (!rect) return
+  const el = event.currentTarget as HTMLElement | null
+  if (!el) return
 
+  const rect = el.getBoundingClientRect()
+  // 固定定位：left/top 基于视口，因此直接使用 rect 值
   tooltipPosition.value = {
-    x: event.clientX - rect.left + 15,
-    y: event.clientY - rect.top - 10
+    x: rect.left + rect.width / 2, // 水平居中
+    y: rect.top // 顶部边缘，配合 CSS 的 translate(-50%, -100% - 8px) 向上偏移
   }
 }
 
@@ -599,10 +606,10 @@ onUnmounted(() => {
 }
 
 .member-tooltip {
-  position: fixed;
+  position: fixed; // 固定在视口，避免跟随父级 transform
   z-index: 1000;
   pointer-events: none;
-  transform: translateY(-100%);
+  transform: translate(-50%, calc(-100% - 8px)); // 居中并在头像正上方偏移 8px
 }
 
 .tooltip-content {
@@ -612,7 +619,7 @@ onUnmounted(() => {
   border-radius: 8px;
   padding: 12px;
   box-shadow: var(--shadow-glass);
-  max-width: 200px;
+  max-width: 220px;
 }
 
 .member-name {
