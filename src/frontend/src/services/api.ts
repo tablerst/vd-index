@@ -368,6 +368,14 @@ class ApiClient {
 
 
 
+
+  // 批量刷新所有成员头像
+  async refreshAllAvatars(): Promise<{ success: boolean; message: string; data?: any }> {
+    return this.request('/api/v1/members/refresh-avatars', {
+      method: 'POST'
+    })
+  }
+
   // 获取成员统计信息
   async getMemberStats(): Promise<MemberStats> {
     return this.request<MemberStats>('/api/v1/members/stats')
@@ -554,20 +562,20 @@ export const memberApi = {
   async getAllMembers(): Promise<Member[]> {
     const firstPage = await apiClient.getMembers(1, 50)
     const allMembers = [...firstPage.members]
-    
+
     // 如果有多页，继续获取
     if (firstPage.total_pages > 1) {
       const promises = []
       for (let page = 2; page <= firstPage.total_pages; page++) {
         promises.push(apiClient.getMembers(page, 50))
       }
-      
+
       const additionalPages = await Promise.all(promises)
       additionalPages.forEach(pageData => {
         allMembers.push(...pageData.members)
       })
     }
-    
+
     return allMembers
   },
 
@@ -632,6 +640,12 @@ export const memberApi = {
   getAvatarUrl(memberId: number): string {
     return apiClient.getAvatarUrl(memberId)
   },
+
+  // 刷新所有成员头像
+  async refreshAllAvatars(): Promise<any> {
+    return apiClient.refreshAllAvatars()
+  },
+
 
   // 从avatar_url中提取成员ID
   extractMemberId(avatarUrl: string): number {
@@ -937,16 +951,16 @@ export async function withRetry<T>(
       return await fn()
     } catch (error) {
       lastError = error as Error
-      
+
       if (i === maxRetries) {
         break
       }
-      
+
       // 等待后重试
       await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)))
     }
   }
-  
+
   throw lastError!
 }
 
@@ -964,16 +978,16 @@ class ApiCache {
 
   get<T>(key: string): T | null {
     const item = this.cache.get(key)
-    
+
     if (!item) {
       return null
     }
-    
+
     if (Date.now() - item.timestamp > item.ttl) {
       this.cache.delete(key)
       return null
     }
-    
+
     return item.data as T
   }
 
@@ -995,10 +1009,10 @@ export async function cachedApiCall<T>(
   if (cached) {
     return cached
   }
-  
+
   // 调用API并缓存结果
   const result = await apiCall()
   apiCache.set(key, result, ttl)
-  
+
   return result
 }

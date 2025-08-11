@@ -7,11 +7,12 @@ from __future__ import annotations
 from io import BytesIO
 from pathlib import Path
 from typing import Optional, List, Dict
+import os
 
 import httpx
 from PIL import Image
 
-from services.deps import get_config_service, get_crypto_service
+from services.deps import get_config_service
 
 
 class AvatarService:
@@ -54,12 +55,29 @@ class AvatarService:
                 if "image" not in content_type:
                     return False
                 data = resp.content
-            # Convert to WebP using Pillow
+            # Convert to WebP using Pillow（使用临时文件并原子替换，确保覆盖并更新修改时间）
             with Image.open(BytesIO(data)) as img:
                 if img.mode in ("P", "RGBA", "LA"):
                     img = img.convert("RGB")
                 out_path = avatar_dir / f"{uin}.webp"
-                img.save(out_path, format="WEBP", quality=80, method=6)
+                tmp_path = avatar_dir / f"{uin}.webp.tmp"
+                try:
+                    # 先写入临时文件
+                    img.save(tmp_path, format="WEBP", quality=80, method=6)
+                    # 原子替换为目标文件，保证覆盖
+                    os.replace(tmp_path, out_path)
+                    # 触碰修改时间，避免某些平台显示未更新
+                    try:
+                        os.utime(out_path, None)
+                    except Exception:
+                        pass
+                finally:
+                    # 清理可能残留的临时文件
+                    try:
+                        if tmp_path.exists():
+                            tmp_path.unlink(missing_ok=True)
+                    except Exception:
+                        pass
             return True
         except Exception:
             return False

@@ -281,6 +281,54 @@ async def import_members_from_json(
         raise HTTPException(status_code=500, detail=f"批量导入成员失败: {str(e)}")
 
 
+@router.post(
+    "/members/refresh-avatars",
+    response_model=ApiResponse,
+    summary="批量刷新所有成员头像",
+    description="管理员操作：解密所有成员UIN并批量下载QQ头像为WebP"
+)
+async def refresh_all_member_avatars(
+    session: AsyncSession = Depends(get_session),
+    _: dict = Depends(require_admin)
+):
+    """批量刷新头像：
+    - 加载所有成员
+    - 解密UIN
+    - AvatarService 批量下载保存
+    - 返回统计结果
+    """
+    try:
+        from services.database.models.member import MemberCRUD
+        from services.deps import get_crypto_service
+        from utils.avatar import AvatarService
+
+        # 加载全部成员
+        members = await MemberCRUD.get_all(session)
+
+        # 解密出全部UIN
+        crypto = get_crypto_service()
+        uins = []
+        for m in members:
+            try:
+                u = crypto.decrypt_uin(m.uin_encrypted, m.salt)
+                if u:
+                    uins.append(int(u))
+            except Exception:
+                # 解密失败跳过该成员
+                continue
+
+        # 批量下载
+        stats = await AvatarService.batch_fetch_and_save_avatars_webp(uins)
+
+        return ApiResponse(
+            success=True,
+            message=f"头像刷新完成：成功 {stats.get('success', 0)}，失败 {stats.get('failed', 0)}，共 {stats.get('total', 0)}",
+            data=stats
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"批量刷新头像失败: {str(e)}")
+
+
 @router.put(
     "/members/{member_id}",
     response_model=ApiResponse,

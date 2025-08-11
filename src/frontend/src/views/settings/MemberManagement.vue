@@ -4,7 +4,7 @@
       <h1>成员管理</h1>
       <p>管理群成员信息、权限和状态</p>
     </div>
-    
+
     <div class="management-card">
       <div class="card-header">
         <h3>成员列表</h3>
@@ -40,9 +40,23 @@
             </template>
             刷新
           </n-button>
+          <n-popconfirm
+            v-if="canImport"
+            @positive-click="handleRefreshAllAvatars"
+          >
+            <template #trigger>
+              <n-button type="warning">
+                <template #icon>
+                  <n-icon :component="RefreshOutline" />
+                </template>
+                刷新所有头像
+              </n-button>
+            </template>
+            确定要批量刷新所有成员头像吗？该操作可能耗时较长。
+          </n-popconfirm>
         </div>
       </div>
-      
+
       <div class="filters">
         <n-space>
           <n-input
@@ -55,7 +69,7 @@
               <n-icon :component="SearchOutline" />
             </template>
           </n-input>
-          
+
           <n-select
             v-model:value="roleFilter"
             placeholder="筛选角色"
@@ -63,7 +77,7 @@
             style="width: 120px;"
             :options="roleOptions"
           />
-          
+
           <n-select
             v-model:value="statusFilter"
             placeholder="筛选状态"
@@ -73,7 +87,7 @@
           />
         </n-space>
       </div>
-      
+
       <n-data-table
         :columns="columns"
         :data="members"
@@ -678,6 +692,33 @@ const handleEditConfirm = async () => {
     loading.value = false
   }
 }
+
+// 批量刷新所有成员头像
+const handleRefreshAllAvatars = async () => {
+  try {
+    loading.value = true
+    const res = await memberApi.refreshAllAvatars()
+    const stats = res?.data || {}
+    const msg = `头像刷新完成：成功 ${stats.success ?? 0}，失败 ${stats.failed ?? 0}，共 ${stats.total ?? 0}`
+    message.success(msg)
+
+    // 刷新当前列表
+    await loadMembers()
+
+    // 简单的 cache-busting：为当前页成员的 avatar_url 附加时间戳参数
+    const ts = Date.now()
+    members.value = members.value.map(m => ({
+      ...m,
+      avatar_url: m.avatar_url ? `${m.avatar_url}?t=${ts}` : m.avatar_url
+    }))
+  } catch (e) {
+    console.error('刷新头像失败:', e)
+    message.error('刷新头像失败，请稍后重试')
+  } finally {
+    loading.value = false
+  }
+}
+
 
 // 处理删除
 const handleDelete = async (member: Member) => {
