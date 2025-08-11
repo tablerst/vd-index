@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
 // 中文注释：/daily 列表页，分页+Masonry布局，兼容Mock模式
-import { ref, computed, onMounted, watch, nextTick, onUnmounted } from 'vue'
+import { ref, onMounted, watch, nextTick, onUnmounted } from 'vue'
 import DailyCard from '@/components/daily/DailyCard.vue'
 import { dailyApi, type DailyPostItem } from '@/services/daily'
 import { NPagination } from 'naive-ui'
@@ -44,7 +44,6 @@ const posts = ref<DailyPostItem[]>([])
 const page = ref(1)
 const pageSize = ref(20)
 const total = ref(0)
-const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
 const loading = ref(false)
 const error = ref('')
 
