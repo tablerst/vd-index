@@ -969,6 +969,7 @@ class ApiCache {
   private cache = new Map<string, { data: any; timestamp: number; ttl: number }>()
 
   set(key: string, data: any, ttl: number = 5 * 60 * 1000): void {
+
     this.cache.set(key, {
       data,
       timestamp: Date.now(),

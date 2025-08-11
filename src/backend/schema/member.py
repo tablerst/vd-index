@@ -74,3 +74,20 @@ class ErrorResponse(BaseModel):
     message: str = Field(description="错误消息")
     detail: Optional[str] = Field(default=None, description="错误详情")
 
+
+# 绑定相关（可绑定成员列表）
+class BindableMemberItem(BaseModel):
+    """可绑定成员的精简项"""
+    id: int
+    display_name: str
+    avatar_url: str
+
+
+class BindableMembersResponse(BaseModel):
+    """可绑定成员列表响应"""
+    members: List[BindableMemberItem]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+

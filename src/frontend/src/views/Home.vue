@@ -10,6 +10,11 @@
         <HeroSection />
       </section>
 
+      <!-- Daily Wall 子屏幕：位于 Hero 与 Members 之间 -->
+      <section class="snap-section">
+        <DailyWall />
+      </section>
+
       <!-- Members Circle 成员圆形展示 -->
       <section ref="membersSectionRef" class="snap-section">
         <MembersCircle />
@@ -44,6 +49,7 @@
 import { ref, computed, provide } from 'vue'
 import GlassNavigation from '@/components/GlassNavigation.vue'
 import HeroSection from '@/components/HeroSection.vue'
+import DailyWall from '@/components/daily/DailyWall.vue'
 import MembersCircle from '@/components/MembersCircle.vue'
 import StarCalendar from '@/components/StarCalendar.vue'
 import AppFooter from '@/components/AppFooter.vue'

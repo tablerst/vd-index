@@ -9,6 +9,7 @@ import { setupRouterGuards } from './guards'
 const Home = () => import('@/views/Home.vue')
 const BadgePreview = () => import('@/views/BadgePreview.vue')
 const Login = () => import('@/views/Login.vue')
+const DailyList = () => import('@/views/DailyList.vue')
 const SettingsLayout = () => import('@/views/settings/SettingsLayout.vue')
 const MemberManagement = () => import('@/views/settings/MemberManagement.vue')
 const ActivityManagement = () => import('@/views/settings/ActivityManagement.vue')
@@ -30,6 +31,14 @@ const routes = [
     component: BadgePreview,
     meta: {
       title: '3D徽章打印预览'
+    }
+  },
+  {
+    path: '/daily',
+    name: 'DailyList',
+    component: DailyList,
+    meta: {
+      title: '群员日常'
     }
   },
   {

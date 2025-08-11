@@ -1,0 +1,119 @@
+<template>
+  <div class="daily-card" ref="cardRef" @mouseenter="hover = true" @mouseleave="hover = false">
+    <!-- 主图区域 -->
+    <div class="cover">
+      <img v-if="firstImage" :src="firstImage" alt="cover" loading="lazy" decoding="async" />
+    </div>
+
+    <!-- 信息条：头像+昵称+时间 -->
+    <div class="meta">
+      <img v-if="post.author_avatar_url" class="avatar" :src="post.author_avatar_url" alt="avatar" loading="lazy" decoding="async" />
+      <div class="author">
+        <div class="name">{{ post.author_display_name || '未知作者' }}</div>
+        <div class="time">{{ formatTime(post.created_at) }}</div>
+      </div>
+    </div>
+
+    <!-- 正文摘要 -->
+    <div v-if="post.content" class="content" :title="post.content">{{ post.content }}</div>
+
+    <!-- 底部条：标签与统计 -->
+    <div class="footer">
+      <div class="tags">
+        <span v-for="(t, i) in post.tags.slice(0, 3)" :key="i" class="tag">#{{ t }}</span>
+      </div>
+      <div class="stats">
+        <span class="stat">❤ {{ post.likes_count }}</span>
+        <span class="stat">💬 {{ post.comments_count }}</span>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+// 中文注释：展示单条 DailyPost 卡片，暗色主题变量适配
+import { computed, ref, onMounted, onUnmounted } from 'vue'
+import type { DailyPostItem } from '@/services/daily'
+import { gsap } from 'gsap'
+
+const props = defineProps<{ post: DailyPostItem }>()
+const hover = ref(false)
+const firstImage = computed(() => props.post.images?.[0] || '')
+const cardRef = ref<HTMLElement | null>(null)
+let idleTween: gsap.core.Tween | null = null
+
+function prefersReducedMotion(): boolean {
+  try {
+    return typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  } catch { return false }
+}
+
+onMounted(() => {
+  if (prefersReducedMotion()) return
+  const el = cardRef.value
+  if (!el) return
+  // Idle呼吸：轻微scale与alpha循环
+  idleTween = gsap.to(el, {
+    duration: 2.4,
+    ease: 'sine.inOut',
+    repeat: -1,
+    yoyo: true,
+    scale: 1.005,
+    opacity: 0.98
+  })
+})
+
+onUnmounted(() => {
+  if (idleTween) {
+    try { idleTween.kill() } catch {}
+    idleTween = null
+  }
+})
+
+function formatTime(iso: string) {
+  const d = new Date(iso)
+  const now = new Date()
+  const diff = (now.getTime() - d.getTime()) / 1000
+  if (diff < 60) return '刚刚'
+  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`
+  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`
+  return d.toLocaleDateString('zh-CN', { year: 'numeric', month: 'short', day: 'numeric' })
+}
+</script>
+
+<style scoped>
+/* 中文注释：颜色使用主题变量，卡片有轻微内阴影，暗色适配 */
+.daily-card {
+  background: var(--bg-card, rgba(20, 20, 20, 0.8));
+  color: var(--text-primary, #fff);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25) inset;
+  display: flex;
+  flex-direction: column;
+  transition: transform .25s ease, box-shadow .25s ease, opacity .25s ease;
+}
+.daily-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+.daily-card:focus-within {
+  transform: scale(1.015);
+}
+.cover { position: relative; width: 100%; overflow: hidden; }
+.cover img { width: 100%; display: block; object-fit: cover; }
+
+.meta { display: flex; align-items: center; gap: 12px; padding: 12px; }
+.avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+.author { display: flex; flex-direction: column; }
+.name { font-weight: 600; color: var(--text-primary, #fff); }
+.time { font-size: 12px; color: var(--text-secondary, #bbb); }
+
+.content { padding: 0 12px 12px; color: var(--text-primary, #fff); line-height: 1.5; max-height: 3.0em; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+.footer { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-top: 1px solid rgba(255,255,255,0.06); }
+.tags { display: flex; gap: 8px; flex-wrap: nowrap; overflow: hidden; }
+.tag { background: rgba(255,255,255,0.06); color: var(--text-secondary, #bbb); padding: 2px 8px; border-radius: 10px; font-size: 12px; white-space: nowrap; }
+.stats { display: flex; gap: 12px; color: var(--text-secondary, #bbb); font-size: 12px; }
+</style>
+

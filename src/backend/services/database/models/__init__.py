@@ -8,6 +8,9 @@ from .activity.base import Activity, ActivityCreate, ActivityRead, ActivityUpdat
 from .activity.crud import ActivityCRUD
 from .comment.base import Comment, CommentCreate, CommentRead, CommentUpdate, CommentStats
 from .comment.crud import CommentCRUD
+from .daily_post.base import DailyPost, DailyPostCreate, DailyPostRead, DailyPostUpdate
+from .daily_post.crud import DailyPostCRUD
+
 
 __all__ = [
     # 模型类
@@ -16,10 +19,12 @@ __all__ = [
     "Config", "ConfigCreate", "ConfigRead", "ConfigUpdate",
     "Activity", "ActivityCreate", "ActivityRead", "ActivityUpdate",
     "Comment", "CommentCreate", "CommentRead", "CommentUpdate", "CommentStats",
+    "DailyPost", "DailyPostCreate", "DailyPostRead", "DailyPostUpdate",
     # CRUD操作类
     "MemberCRUD",
     "UserCRUD",
     "ConfigCRUD",
     "ActivityCRUD",
-    "CommentCRUD"
+    "CommentCRUD",
+    "DailyPostCRUD",
 ]

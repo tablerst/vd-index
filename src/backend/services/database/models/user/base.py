@@ -26,11 +26,14 @@ class User(SQLModel, table=True):
     
     # 用户角色
     role: str = Field(default="admin", max_length=20)  # admin, editor, viewer
-    
+
+    # 绑定的成员ID（唯一，一对一绑定）
+    member_id: Optional[int] = Field(default=None, foreign_key="members.id", unique=True, index=True)
+
     # 时间戳
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    
+
     # 最后登录时间
     last_login: Optional[datetime] = None
 
