@@ -8,10 +8,10 @@
     <!-- 横向无缝循环滚动轨道（双轨道：上-右→左，下-左→右） -->
     <div class="loop-container" ref="loopContainer" @mouseenter="pauseLoop()" @mouseleave="resumeLoop()">
       <div class="loop-track loop-track--top" ref="trackTop">
-        <DailyCard v-for="(p,i) in marqueePosts" :key="'top-'+p.id+'-'+i" :post="p" class="loop-item" />
+        <DailyCard v-for="(p, i) in marqueePosts" :key="'top-' + p.id + '-' + i" :post="p" class="loop-item" />
       </div>
       <div class="loop-track loop-track--bottom" ref="trackBottom">
-        <DailyCard v-for="(p,i) in marqueePosts" :key="'bottom-'+p.id+'-'+i" :post="p" class="loop-item" />
+        <DailyCard v-for="(p, i) in marqueePosts" :key="'bottom-' + p.id + '-' + i" :post="p" class="loop-item" />
       </div>
     </div>
 
@@ -28,10 +28,9 @@
     <svg class="visually-hidden" width="0" height="0" aria-hidden="true" focusable="false">
       <defs>
         <filter id="gooey-soft">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
-          <feColorMatrix in="blur" mode="matrix"
-            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo"/>
-          <feBlend in="SourceGraphic" in2="goo"/>
+          <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
+          <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo" />
+          <feBlend in="SourceGraphic" in2="goo" />
         </filter>
       </defs>
     </svg>
@@ -49,7 +48,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 gsap.registerPlugin(ScrollTrigger)
 
 // 全局平滑设置：大抖动时限制修正，避免卡顿传播
-try { gsap.ticker.lagSmoothing(1000, 16) } catch {}
+try { gsap.ticker.lagSmoothing(1000, 16) } catch { }
 
 const posts = ref<DailyPostItem[]>([])
 const loopContainer = ref<HTMLElement | null>(null)
@@ -230,7 +229,7 @@ function setupButtonAnimations() {
     gsap.to(btn, { duration: 0.2, scale: 1.02, boxShadow: '0 0 12px var(--primary-light)', ease: 'power2.out' })
   })
   btn.addEventListener('mouseleave', () => {
-    gsap.to(btn, { duration: 0.2, scale: 1.0, boxShadow: '0 0 0 rgba(0,0,0,0)', ease: 'power2.out' })
+    gsap.to(btn, { duration: 0.2, scale: 1.0, boxShadow: 'none', ease: 'power2.out' })
   })
   btn.addEventListener('mousedown', () => {
     gsap.to(btn, { duration: 0.12, scale: 0.98, y: 1, ease: 'power2.out' })
@@ -298,31 +297,90 @@ onUnmounted(() => {
   contain: content;
 }
 
-.title-bar { position: sticky; top: 48px; display: flex; justify-content: center; z-index: 2; pointer-events: none; }
-.title.section-title { font-size: var(--font-size-2xl, 22px); font-weight: 800; letter-spacing: 0.6px; }
+.title-bar {
+  position: sticky;
+  top: 48px;
+  display: flex;
+  justify-content: center;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.title.section-title {
+  font-size: var(--font-size-2xl, 22px);
+  font-weight: 800;
+  letter-spacing: 0.6px;
+}
+
 .title-accent {
-  background: var(--mixed-gradient); /* 参考 starCalendar 的 title-accent 实现 */
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-  text-shadow: 0 0 8px rgba(170, 131, 255, 0.15);
+  background: var(--mixed-gradient);
+  /* 参考 starCalendar 的 title-accent 实现 */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: var(--shadow-glow);
 }
 
-.loop-container { position: relative; overflow: hidden; width: 100%; padding: 24px 8px; display: grid; row-gap: 16px; will-change: transform; }
-.loop-track { display: flex; gap: 16px; will-change: transform; padding: 0 8px; backface-visibility: hidden; }
-.loop-item { flex: 0 0 auto; width: min(300px, 26vw); margin-block: 8px; }
+.loop-container {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  padding: 24px 8px;
+  display: grid;
+  row-gap: 16px;
+  will-change: transform;
+}
 
-.more-bar { position: sticky; bottom: 12px; display: flex; justify-content: center; margin-top: 8px; z-index: 2; }
-.gooey-container { position: relative; filter: url(#gooey-soft); isolation: isolate; }
+.loop-track {
+  display: flex;
+  gap: 16px;
+  will-change: transform;
+  padding: 0 8px;
+  backface-visibility: hidden;
+}
+
+.loop-item {
+  flex: 0 0 auto;
+  width: min(300px, 26vw);
+  margin-block: 8px;
+}
+
+.more-bar {
+  position: sticky;
+  bottom: 12px;
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+  z-index: 2;
+}
+
+.gooey-container {
+  position: relative;
+  filter: url(#gooey-soft);
+  isolation: isolate;
+}
+
 .more-btn {
-  appearance: none; background: var(--glass-bg); color: var(--text-secondary); border: var(--border-glass);
-  border-radius: 12px; padding: 10px 16px; cursor: pointer; transition: background .2s ease, color .2s ease, box-shadow .2s ease, border-color .2s ease, transform .1s ease;
+  appearance: none;
+  background: var(--glass-bg);
+  color: var(--text-secondary);
+  border: var(--border-glass);
+  border-radius: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease, box-shadow .2s ease, border-color .2s ease, transform .1s ease;
 }
-.more-btn:hover { color: var(--text-primary); border-color: var(--primary); box-shadow: 0 0 12px rgba(170,131,255,0.15); }
+
+.more-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-glow); }
 .more-btn:active { transform: translateY(1px) scale(0.98); }
 
 /* Gooey blobs：柔和引导球体 */
 .blob { position: absolute; inset: 0; margin: auto; width: 40px; height: 40px; border-radius: 50%; pointer-events: none; mix-blend-mode: screen; opacity: 0.5; will-change: transform; }
-.blob-1 { background: radial-gradient(circle at 30% 30%, rgba(170,131,255,0.7), rgba(170,131,255,0.0)); filter: blur(2px); }
-.blob-2 { background: radial-gradient(circle at 70% 70%, rgba(63,125,251,0.7), rgba(63,125,251,0.0)); filter: blur(2px); }
+.blob-1 { background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--primary) 70%, transparent), transparent); filter: blur(2px); }
+.blob-2 { background: radial-gradient(circle at 70% 70%, color-mix(in srgb, var(--accent-blue) 70%, transparent), transparent); filter: blur(2px); }
 
 @media (max-width: 640px) { .loop-item { width: 78vw; } }
 :deep(.daily-card) .cover { aspect-ratio: 4 / 3; }
