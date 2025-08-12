@@ -1,5 +1,5 @@
 <template>
-  <div class="daily-card" ref="cardRef" @mouseenter="hover = true" @mouseleave="hover = false">
+  <div class="daily-card">
     <!-- 主图区域 -->
     <div class="cover">
       <img v-if="firstImage" :src="firstImage" alt="cover" loading="lazy" decoding="async" />
@@ -31,44 +31,12 @@
 </template>
 
 <script setup lang="ts">
-// 中文注释：展示单条 DailyPost 卡片，暗色主题变量适配
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+// 中文注释：展示单条 DailyPost 卡片，暗色主题变量适配；移除持续动画与 hover 状态，降低并行动画负载
+import { computed } from 'vue'
 import type { DailyPostItem } from '@/services/daily'
-import { gsap } from 'gsap'
 
 const props = defineProps<{ post: DailyPostItem }>()
-const hover = ref(false)
 const firstImage = computed(() => props.post.images?.[0] || '')
-const cardRef = ref<HTMLElement | null>(null)
-let idleTween: gsap.core.Tween | null = null
-
-function prefersReducedMotion(): boolean {
-  try {
-    return typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  } catch { return false }
-}
-
-onMounted(() => {
-  if (prefersReducedMotion()) return
-  const el = cardRef.value
-  if (!el) return
-  // Idle呼吸：轻微scale与alpha循环
-  idleTween = gsap.to(el, {
-    duration: 2.4,
-    ease: 'sine.inOut',
-    repeat: -1,
-    yoyo: true,
-    scale: 1.005,
-    opacity: 0.98
-  })
-})
-
-onUnmounted(() => {
-  if (idleTween) {
-    try { idleTween.kill() } catch {}
-    idleTween = null
-  }
-})
 
 function formatTime(iso: string) {
   const d = new Date(iso)
@@ -84,19 +52,18 @@ function formatTime(iso: string) {
 <style scoped>
 /* 中文注释：颜色使用主题变量，卡片有轻微内阴影，暗色适配 */
 .daily-card {
-  /* 中文注释：卡片采用主题变量，避免硬编码 */
-  background: var(--glass-bg-strong);
-  color: var(--text-primary);
+  background: var(--bg-card, rgba(20, 20, 20, 0.8));
+  color: var(--text-primary, #fff);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: inset 0 2px 12px rgba(0,0,0,0.25);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25) inset;
   display: flex;
   flex-direction: column;
   transition: transform .25s ease, box-shadow .25s ease, opacity .25s ease;
 }
 .daily-card:hover {
   transform: scale(1.02);
-  box-shadow: var(--shadow-medium);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
 }
 .daily-card:focus-within {
   transform: scale(1.015);
@@ -107,14 +74,14 @@ function formatTime(iso: string) {
 .meta { display: flex; align-items: center; gap: 12px; padding: 12px; }
 .avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
 .author { display: flex; flex-direction: column; }
-.name { font-weight: 600; color: var(--text-primary); }
-.time { font-size: 12px; color: var(--text-secondary); }
+.name { font-weight: 600; color: var(--text-primary, #fff); }
+.time { font-size: 12px; color: var(--text-secondary, #bbb); }
 
-.content { padding: 0 12px 12px; color: var(--text-primary); line-height: 1.5; max-height: 3.0em; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.content { padding: 0 12px 12px; color: var(--text-primary, #fff); line-height: 1.5; max-height: 3.0em; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 
-.footer { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-top: 1px solid var(--border-secondary); }
+.footer { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-top: 1px solid rgba(255,255,255,0.06); }
 .tags { display: flex; gap: 8px; flex-wrap: nowrap; overflow: hidden; }
-.tag { background: var(--surface-2); color: var(--text-secondary); padding: 2px 8px; border-radius: 10px; font-size: 12px; white-space: nowrap; }
-.stats { display: flex; gap: 12px; color: var(--text-secondary); font-size: 12px; }
+.tag { background: rgba(255,255,255,0.06); color: var(--text-secondary, #bbb); padding: 2px 8px; border-radius: 10px; font-size: 12px; white-space: nowrap; }
+.stats { display: flex; gap: 12px; color: var(--text-secondary, #bbb); font-size: 12px; }
 </style>
 
