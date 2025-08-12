@@ -11,7 +11,7 @@
       </section>
 
       <!-- Daily Wall 子屏幕：位于 Hero 与 Members 之间 -->
-      <section class="snap-section">
+      <section ref="dailyWallSectionRef" class="snap-section">
         <DailyWall />
       </section>
 
@@ -59,8 +59,10 @@ import { useSnapScroll } from '@/composables/useSnapScroll'
 
 // Section refs
 const heroSectionRef = ref<HTMLElement | null>(null)
+const dailyWallSectionRef = ref<HTMLElement | null>(null)
 const membersSectionRef = ref<HTMLElement | null>(null)
 const calendarSectionRef = ref<HTMLElement | null>(null)
+
 
 // 真实的移动设备检测（不受我们的强制desktop配置影响）
 const isRealMobileDevice = computed(() => {
@@ -86,6 +88,7 @@ const {
   setWheelListenerDisabled
 } = useSnapScroll([
   heroSectionRef,
+  dailyWallSectionRef,
   membersSectionRef,
   calendarSectionRef
 ], {

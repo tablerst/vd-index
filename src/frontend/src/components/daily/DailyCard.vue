@@ -84,18 +84,19 @@ function formatTime(iso: string) {
 <style scoped>
 /* 中文注释：颜色使用主题变量，卡片有轻微内阴影，暗色适配 */
 .daily-card {
-  background: var(--bg-card, rgba(20, 20, 20, 0.8));
-  color: var(--text-primary, #fff);
+  /* 中文注释：卡片采用主题变量，避免硬编码 */
+  background: var(--glass-bg-strong);
+  color: var(--text-primary);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.25) inset;
+  box-shadow: inset 0 2px 12px rgba(0,0,0,0.25);
   display: flex;
   flex-direction: column;
   transition: transform .25s ease, box-shadow .25s ease, opacity .25s ease;
 }
 .daily-card:hover {
   transform: scale(1.02);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  box-shadow: var(--shadow-medium);
 }
 .daily-card:focus-within {
   transform: scale(1.015);
@@ -106,14 +107,14 @@ function formatTime(iso: string) {
 .meta { display: flex; align-items: center; gap: 12px; padding: 12px; }
 .avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
 .author { display: flex; flex-direction: column; }
-.name { font-weight: 600; color: var(--text-primary, #fff); }
-.time { font-size: 12px; color: var(--text-secondary, #bbb); }
+.name { font-weight: 600; color: var(--text-primary); }
+.time { font-size: 12px; color: var(--text-secondary); }
 
-.content { padding: 0 12px 12px; color: var(--text-primary, #fff); line-height: 1.5; max-height: 3.0em; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.content { padding: 0 12px 12px; color: var(--text-primary); line-height: 1.5; max-height: 3.0em; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 
-.footer { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-top: 1px solid rgba(255,255,255,0.06); }
+.footer { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-top: 1px solid var(--border-secondary); }
 .tags { display: flex; gap: 8px; flex-wrap: nowrap; overflow: hidden; }
-.tag { background: rgba(255,255,255,0.06); color: var(--text-secondary, #bbb); padding: 2px 8px; border-radius: 10px; font-size: 12px; white-space: nowrap; }
-.stats { display: flex; gap: 12px; color: var(--text-secondary, #bbb); font-size: 12px; }
+.tag { background: var(--surface-2); color: var(--text-secondary); padding: 2px 8px; border-radius: 10px; font-size: 12px; white-space: nowrap; }
+.stats { display: flex; gap: 12px; color: var(--text-secondary); font-size: 12px; }
 </style>
 

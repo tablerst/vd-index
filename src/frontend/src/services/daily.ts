@@ -35,7 +35,7 @@ const USE_MOCK = (import.meta as any).env?.VITE_DAILY_USE_MOCK === 'true' && !im
 
 // 生成多样化Mock图片URL（使用占位图服务，或留空以测试纯文本）
 function mockImage(w: number, h: number): string {
-  return `https://picsum.photos/seed/${w}x${h}/${w}/${h}`
+  return `https://picsum.photos/seed/picsum/${w}/${h}`
 }
 
 function randomPick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)] }
@@ -50,7 +50,7 @@ function buildMockPosts(count: number = 16): DailyPostItem[] {
   for (let i = 0; i < count; i++) {
     const hasImage = Math.random() > 0.3
     const imgCount = hasImage ? randomInt(1, 3) : 0
-    const images = Array.from({ length: imgCount }).map(() => mockImage(randomInt(360, 640), randomInt(220, 480)))
+    const images = Array.from({ length: imgCount }).map(() => mockImage(300, 200))
     const contentTypes = [
       '今天练了两个小时，进步了一点点～',
       '夏日小集——手工饰品上新喔~',
