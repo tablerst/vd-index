@@ -6,10 +6,10 @@
       <div class="user-area">
         <!-- 已登录：头像+下拉 -->
         <n-dropdown v-if="isAuthenticated" trigger="click" :options="userMenuOptions" @select="handleUserMenu">
-          <n-avatar round :size="36" :src="userAvatar" :fallback-src="fallbackAvatar" />
+          <n-avatar round :size="avatarSize" :src="userAvatar" :fallback-src="fallbackAvatar" />
         </n-dropdown>
         <!-- 未登录：圆形灰底头像占位，点击打开登录模态 -->
-        <n-avatar v-else round :size="36" class="user-avatar avatar-placeholder"
+        <n-avatar v-else round :size="avatarSize" class="user-avatar avatar-placeholder"
           @click="showLoginModal = true">未登录</n-avatar>
       </div>
     </header>
@@ -97,6 +97,29 @@ const tag = ref<string | null>(null)
 const dateRange = ref<[number, number] | null>(null) // 时间戳(ms)数组
 
 // Masonry 容器引用
+
+// 中文注释：日期快捷选项（NaiveUI DatePicker Range Shortcuts）
+const dateShortcuts: Record<string, [number, number] | (() => [number, number])> = {
+  '最近7天': () => {
+    const MS_DAY = 24 * 60 * 60 * 1000
+    const end = Date.now()
+    const start = end - 6 * MS_DAY
+    return [start, end]
+  },
+  '最近30天': () => {
+    const MS_DAY = 24 * 60 * 60 * 1000
+    const end = Date.now()
+    const start = end - 29 * MS_DAY
+    return [start, end]
+  },
+  '本月': () => {
+    const now = new Date()
+    const start = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
+    const end = Date.now()
+    return [start, end]
+  }
+}
+
 const masonryRef = ref<HTMLElement | null>(null)
 let cleanupFns: Array<() => void> = []
 
