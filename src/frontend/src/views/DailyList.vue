@@ -32,11 +32,13 @@
 
     <!-- 3) 正文内容区域（可滚动，保持瀑布流） -->
     <main class="content-area">
-      <div class="masonry" ref="masonryRef">
-        <DailyCard v-for="p in displayedPosts" :key="p.id" :post="p" class="masonry-item" />
-        <div v-if="loading" class="loading">加载中...</div>
-        <div v-if="error" class="error">{{ error }}</div>
-      </div>
+      <n-spin :show="loading" size="large" class="masonry-spin">
+        <template #description>正在加载</template>
+        <div class="masonry" ref="masonryRef">
+          <DailyCard v-for="p in displayedPosts" :key="p.id" :post="p" class="masonry-item" />
+        </div>
+      </n-spin>
+      <div v-if="error" class="error">{{ error }}</div>
     </main>
 
     <!-- 4) 分页组件（底部可见） -->
@@ -79,7 +81,7 @@ import DailyCard from '@/components/daily/DailyCard.vue'
 import { dailyApi, type DailyPostItem } from '@/services/daily'
 import { useAuthStore } from '@/stores/auth'
 
-import { NPagination, NDropdown, NAvatar, NButton, NDatePicker, NSelect, NSpace, NModal, NForm, NFormItem, NInput, useMessage } from 'naive-ui'
+import { NPagination, NDropdown, NAvatar, NButton, NDatePicker, NSelect, NSpace, NModal, NForm, NFormItem, NInput, NSpin, useMessage } from 'naive-ui'
 import type { FormInst, FormRules } from 'naive-ui'
 import { gsap } from 'gsap'
 
@@ -323,6 +325,13 @@ onUnmounted(() => { cleanupFns.forEach(fn => { try { fn() } catch { } }); cleanu
 
 .masonry {
   column-gap: 16px;
+  min-height: 200px; /* 中文注释：当使用 NSpin 包裹时，给容器一个最小高度，便于加载器在中间居中 */
+}
+
+/* 中文注释：确保 NSpin 作为块级元素占满可用宽度，内部加载器可居中 */
+.masonry-spin {
+  display: block;
+  width: 100%;
 }
 
 @media (max-width: 640px) {
@@ -379,11 +388,6 @@ onUnmounted(() => { cleanupFns.forEach(fn => { try { fn() } catch { } }); cleanu
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.loading {
-  color: var(--text-secondary, #bbb);
-  text-align: center;
-  padding: 16px;
-}
 
 
 /* 中文注释：统一日期选择器外观，沿用项目玻璃态/圆角/文本色体系 */
