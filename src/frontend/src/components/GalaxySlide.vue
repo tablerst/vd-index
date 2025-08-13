@@ -18,21 +18,25 @@
       </div>
     </div>
 
-    <!-- 全局悬浮信息框（放在 slide 根节点，避免受头像 transform 影响） -->
-    <div
-      v-if="hoveredMember"
-      class="member-tooltip"
-      :style="{ left: `${tooltipPosition.x}px`, top: `${tooltipPosition.y}px` }"
-    >
-      <div class="tooltip-content">
-        <h4 class="member-name">{{ hoveredMember.name }}</h4>
-        <!-- 规则：优先显示加入日期；只有在没有加入日期时才显示 bio，避免信息重复 -->
-        <div class="member-meta" v-if="hoveredMember.joinDate">
-          <span class="join-date">加入于 {{ formatDate(hoveredMember.joinDate) }}</span>
+    <!-- 全局悬浮信息框 Teleport 到 body，彻底规避祖先 transform 对 fixed 定位的影响 -->
+    <teleport to="body">
+      <div
+        v-if="hoveredMember"
+        ref="tooltipRef"
+        class="member-tooltip"
+        :data-placement="tooltipPlacement"
+        :style="{ left: `${tooltipPosition.x}px`, top: `${tooltipPosition.y}px`, '--x-shift': `${xShift}px`, '--tooltip-gap': `${tooltipGap}px` }"
+      >
+        <div class="tooltip-content">
+          <h4 class="member-name">{{ hoveredMember.name }}</h4>
+          <!-- 规则：优先显示加入日期；只有在没有加入日期时才显示 bio，避免信息重复 -->
+          <div class="member-meta" v-if="hoveredMember.joinDate">
+            <span class="join-date">加入于 {{ formatDate(hoveredMember.joinDate) }}</span>
+          </div>
+          <p class="member-bio" v-else-if="hoveredMember.bio">{{ hoveredMember.bio }}</p>
         </div>
-        <p class="member-bio" v-else-if="hoveredMember.bio">{{ hoveredMember.bio }}</p>
       </div>
-    </div>
+    </teleport>
   </div>
 </template>
 
@@ -101,6 +105,10 @@ const connectionsCanvas = ref<HTMLCanvasElement>()
 const selectedMember = ref<Member | null>(null)
 const hoveredMember = ref<Member | null>(null)
 const tooltipPosition = ref({ x: 0, y: 0 })
+const tooltipRef = ref<HTMLDivElement>()
+const tooltipPlacement = ref<'top' | 'bottom'>('top')
+const xShift = ref(0)
+const tooltipGap = 12
 
 // Canvas尺寸 - 改为使用slide容器尺寸
 const canvasSize = ref({ width: 0, height: 0 })
@@ -214,11 +222,34 @@ const updateTooltipPosition = (event: MouseEvent) => {
   if (!el) return
 
   const rect = el.getBoundingClientRect()
-  // 固定定位：left/top 基于视口，因此直接使用 rect 值
-  tooltipPosition.value = {
-    x: rect.left + rect.width / 2, // 水平居中
-    y: rect.top // 顶部边缘，配合 CSS 的 translate(-50%, -100% - 8px) 向上偏移
+  const ttEl = tooltipRef.value
+  const ttW = ttEl?.offsetWidth ?? 220
+  const ttH = ttEl?.offsetHeight ?? 60
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+  const margin = 8
+
+  // 计算水平位置与溢出修正
+  const centerX = rect.left + rect.width / 2
+  const half = ttW / 2
+  let dx = 0
+  if (centerX - half < margin) {
+    dx = (margin + half) - centerX
+  } else if (centerX + half > vw - margin) {
+    dx = (vw - margin - half) - centerX
   }
+
+  // 计算垂直放置：优先顶部，若顶部空间不足则放到底部
+  const spaceAbove = rect.top
+  const spaceBelow = vh - rect.bottom
+  const needBelow = (spaceAbove < ttH + tooltipGap) && (spaceBelow >= spaceAbove)
+  tooltipPlacement.value = needBelow ? 'bottom' : 'top'
+
+  tooltipPosition.value = {
+    x: centerX,
+    y: needBelow ? rect.bottom : rect.top
+  }
+  xShift.value = dx
 }
 
 const closeMemberInfo = () => {
@@ -652,7 +683,14 @@ onUnmounted(() => {
   position: fixed; // 固定在视口，避免跟随父级 transform
   z-index: 1000;
   pointer-events: none;
-  transform: translate(-50%, calc(-100% - 8px)); // 居中并在头像正上方偏移 8px
+  --tooltip-gap: 12px;
+  --x-shift: 0px;
+  transform: translate(calc(-50% + var(--x-shift)), calc(-100% - var(--tooltip-gap))); // 居中并在头像正上方偏移
+  will-change: transform, left, top;
+}
+
+.member-tooltip[data-placement="bottom"] {
+  transform: translate(calc(-50% + var(--x-shift)), var(--tooltip-gap));
 }
 
 .tooltip-content {

@@ -1,9 +1,7 @@
 <template>
   <section class="daily-wall" ref="sectionRef">
     <!-- 顶部居中标题：应用 title-accent 渐变文本样式 -->
-    <div class="title-bar" ref="titleBarRef">
-      <h3 class="title section-title"><span class="title-accent" ref="titleTextRef">群员日常</span></h3>
-    </div>
+
 
     <!-- 横向无缝循环滚动轨道（双轨道：上-右→左，下-左→右） -->
     <div class="loop-container" ref="loopContainer" @mouseenter="pauseLoop()" @mouseleave="resumeLoop()">
@@ -18,9 +16,12 @@
     <!-- 底部居中“点击更多”按钮 + Gooey 融球引导效果 -->
     <div class="more-bar" ref="moreBarRef">
       <div class="gooey-container" ref="gooeyRef">
-        <button class="more-btn" @click="$router.push('/daily')">点击更多</button>
-        <span class="blob blob-1"></span>
-        <span class="blob blob-2"></span>
+        <div class="blob-wrap" aria-hidden="true">
+          <span class="blob blob-base"></span>
+          <span class="blob blob-follow"></span>
+          <span class="blob blob-pulse"></span>
+        </div>
+        <button class="gooey-label" @click="$router.push('/daily')">更多</button>
       </div>
     </div>
 
@@ -218,41 +219,133 @@ function setupTitleAnimation() {
 
 // 按钮 Gooey 融球引导与 hover 柔光（reduced-motion 下只保留轻微淡入）
 function setupButtonAnimations() {
+  // 中文注释：构建液态圆形融球按钮的交互逻辑（52px 主圆 + 鼠标追踪 + 悬停融合 + 离开复位）
   const wrap = gooeyRef.value
   if (!wrap) return
-  const btn = wrap.querySelector('.more-btn') as HTMLElement | null
-  const blobs = wrap.querySelectorAll('.blob') as NodeListOf<HTMLElement>
-  if (!btn) return
+  const base = wrap.querySelector('.blob-base') as HTMLElement | null
+  const follow = wrap.querySelector('.blob-follow') as HTMLElement | null
+  const pulse = wrap.querySelector('.blob-pulse') as HTMLElement | null
+  const label = wrap.querySelector('.gooey-label') as HTMLElement | null
+  if (!base || !follow || !label) return
 
-  // hover 柔光（无强烈外发光）
-  btn.addEventListener('mouseenter', () => {
-    gsap.to(btn, { duration: 0.2, scale: 1.02, boxShadow: '0 0 12px var(--primary-light)', ease: 'power2.out' })
+  // 初始化 transform 原点与初始缩放
+  gsap.set([base, follow, pulse], { transformOrigin: '50% 50% 0.1px' })
+  gsap.set(follow, { scale: 0.9 })
+
+  // 轻微的 label 交互反馈（不改变布局）
+  label.addEventListener('mouseenter', () => {
+    gsap.to(label, { duration: 0.2, scale: 1.02, ease: 'power2.out' })
   })
-  btn.addEventListener('mouseleave', () => {
-    gsap.to(btn, { duration: 0.2, scale: 1.0, boxShadow: 'none', ease: 'power2.out' })
+  label.addEventListener('mouseleave', () => {
+    gsap.to(label, { duration: 0.2, scale: 1.0, ease: 'power2.out' })
   })
-  btn.addEventListener('mousedown', () => {
-    gsap.to(btn, { duration: 0.12, scale: 0.98, y: 1, ease: 'power2.out' })
+  label.addEventListener('mousedown', () => {
+    gsap.to(label, { duration: 0.12, scale: 0.97, y: 1, ease: 'power2.out' })
   })
-  btn.addEventListener('mouseup', () => {
-    gsap.to(btn, { duration: 0.18, scale: 1.02, y: 0, ease: 'power2.out' })
+  label.addEventListener('mouseup', () => {
+    gsap.to(label, { duration: 0.18, scale: 1.02, y: 0, ease: 'power2.out' })
   })
+  // 同步代理 mousemove 到 wrap 以提升在子元素上的响应
+  label.addEventListener('mousemove', (e) => onMove(e as MouseEvent))
 
   if (prefersReducedMotion()) return
 
-  // Gooey 融球与方向引导：两个小球跟随鼠标方向轻微偏移（transform-only）
+  // 基础呼吸动画：主圆轻微呼吸，pulse 轻微往返移动
+  const breath = gsap.timeline({ repeat: -1, yoyo: true })
+  breath.to(base, { scale: 1.02, duration: 1.6, ease: 'sine.inOut' })
+        .to(base, { scale: 0.98, duration: 1.6, ease: 'sine.inOut' }, 0)
+  if (pulse) {
+    gsap.to(pulse, { x: 7, y: -7, duration: 2.0, ease: 'sine.inOut', repeat: -1, yoyo: true })
+  }
+
+  // 添加细微的随机波动（小波浪扰动）
+  const noise = () => (Math.random() * 2 - 1) // [-1,1]
+  const jitter = () => {
+    gsap.to(base, {
+      x: noise() * 1.2,
+      y: noise() * 1.2,
+      duration: 0.8 + Math.random() * 0.6,
+      ease: 'sine.inOut',
+      onComplete: jitter
+    })
+  }
+  jitter()
+
+  // 鼠标追踪 & 悬停融合
+  const R = 24 // 60px 主圆对应更大的跟随半径
+  const threshold = 0.18 // 悬停融合阈值（相对容器的归一化距离）
+
   const onMove = (e: MouseEvent) => {
     const rect = wrap.getBoundingClientRect()
     const cx = rect.left + rect.width / 2
     const cy = rect.top + rect.height / 2
-    const dx = (e.clientX - cx) / rect.width
-    const dy = (e.clientY - cy) / rect.height
-    gsap.to(blobs[0], { x: dx * 18, y: dy * 18, duration: 0.3, ease: 'sine.out' })
-    gsap.to(blobs[1], { x: -dx * 16, y: -dy * 16, duration: 0.35, ease: 'sine.out' })
-  }
-  wrap.addEventListener('mousemove', onMove)
 
-  onUnmounted(() => { wrap.removeEventListener('mousemove', onMove) })
+    // 使用像素坐标计算向量，便于做半径限制
+    const dx = e.clientX - cx
+    const dy = e.clientY - cy
+    const len = Math.hypot(dx, dy)
+
+    // 归一化距离用于融合阈值判断（不改变现有手感）
+    const nx = dx / rect.width
+    const ny = dy / rect.height
+    const dist = Math.hypot(nx, ny)
+
+    // 计算最大位移：主圆半径 + 10px - 跟随圆半径，并与 R 取较小值以兼容旧配置
+    const mainRadius = (base as HTMLElement).offsetWidth / 2
+    const followRadius = (follow as HTMLElement).offsetWidth / 2
+    const clampR = Math.max(0, mainRadius + 10 - followRadius) // px
+    const maxLen = Math.min(R, clampR)
+
+    // 将向量限制在允许半径内
+    let tx = dx, ty = dy
+    if (len > maxLen && len > 0) {
+      const k = maxLen / len
+      tx = dx * k
+      ty = dy * k
+    }
+
+    gsap.to(follow, { x: tx, y: ty, duration: 0.25, ease: 'sine.out' })
+
+    if (dist < threshold) {
+      gsap.to(follow, { x: 0, y: 0, scale: 0.82, duration: 0.3, ease: 'sine.out' })
+      gsap.to(base, { scale: 1.04, duration: 0.3, ease: 'sine.out' })
+    } else {
+      gsap.to(follow, { scale: 1, duration: 0.3, ease: 'sine.out' })
+      gsap.to(base, { scale: 1, duration: 0.35, ease: 'sine.out' })
+    }
+  }
+
+  const onEnter = () => {
+    gsap.to(base, { scale: 1.03, duration: 0.25, ease: 'power2.out' })
+  }
+  const onLeave = () => {
+    gsap.to([follow], { x: 0, y: 0, scale: 0.9, duration: 0.25, ease: 'sine.out' })
+    gsap.to(base, { scale: 1.0, duration: 0.3, ease: 'sine.out' })
+  }
+
+  // 在可视区域内全局响应鼠标移动：使用 IntersectionObserver 开关监听
+  let listenWin = false
+  const io = new IntersectionObserver((entries) => {
+    const visible = entries.some(e => e.isIntersecting)
+    if (visible && !listenWin) {
+      window.addEventListener('mousemove', onMove)
+      listenWin = true
+    } else if (!visible && listenWin) {
+      window.removeEventListener('mousemove', onMove)
+      listenWin = false
+    }
+  }, { root: null, threshold: 0.1 })
+  io.observe(wrap)
+
+  wrap.addEventListener('mouseenter', onEnter)
+  wrap.addEventListener('mouseleave', onLeave)
+
+  onUnmounted(() => {
+    window.removeEventListener('mousemove', onMove)
+    wrap.removeEventListener('mouseenter', onEnter)
+    wrap.removeEventListener('mouseleave', onLeave)
+    io.disconnect()
+  })
 }
 
 
@@ -341,7 +434,8 @@ onUnmounted(() => {
 
 .loop-item {
   flex: 0 0 auto;
-  width: min(300px, 26vw);
+  /* 缩小卡片尺寸以留出底部按钮空间 */
+  width: min(260px, 22vw);
   margin-block: 8px;
 }
 
@@ -356,33 +450,54 @@ onUnmounted(() => {
 
 .gooey-container {
   position: relative;
-  filter: url(#gooey-soft);
-  isolation: isolate;
+  width: 60px; /* 主圆直径 60px */
+  height: 60px;
 }
+.gooey-container .blob-wrap { position: absolute; inset: 0; filter: url(#gooey-soft); isolation: isolate; z-index: 0; pointer-events: none; }
 
-.more-btn {
-  appearance: none;
-  background: var(--glass-bg);
-  color: var(--text-secondary);
-  border: var(--border-glass);
-  border-radius: 12px;
-  padding: 10px 16px;
+/* 主圆与小圆：仅使用 transform 改变位置/缩放；颜色使用主题变量渐变 */
+.blob {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform;
+}
+.blob-base {
+  width: 60px; height: 60px;
+  background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--primary) 85%, transparent), transparent 60%),
+              radial-gradient(circle at 70% 70%, color-mix(in srgb, var(--accent-blue) 65%, transparent), transparent 70%);
+}
+.blob-follow { width: 32px; height: 32px; background: color-mix(in srgb, var(--primary) 60%, var(--accent-blue) 40%); }
+.blob-pulse   { width: 21px; height: 21px; background: color-mix(in srgb, var(--accent-blue) 70%, transparent); }
+
+/* 文本按钮层：不套 gooey 滤镜，保证清晰 */
+.gooey-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%; height: 100%;
+  border: none;
+  background: transparent;
+  color: #fff; /* 固定白色，提高在浅色背景下的可见性 */
+  text-shadow: 0 1px 2px rgba(0,0,0,.25);
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background .2s ease, color .2s ease, box-shadow .2s ease, border-color .2s ease, transform .1s ease;
+  border-radius: 50%;
+  outline: none;
+  transition: transform .15s ease;
 }
+.gooey-label:focus-visible { box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 60%, transparent); }
 
-.more-btn:hover {
-  color: var(--text-primary);
-  border-color: var(--primary);
-  box-shadow: var(--shadow-glow); }
-.more-btn:active { transform: translateY(1px) scale(0.98); }
 
-/* Gooey blobs：柔和引导球体 */
-.blob { position: absolute; inset: 0; margin: auto; width: 40px; height: 40px; border-radius: 50%; pointer-events: none; mix-blend-mode: screen; opacity: 0.5; will-change: transform; }
-.blob-1 { background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--primary) 70%, transparent), transparent); filter: blur(2px); }
-.blob-2 { background: radial-gradient(circle at 70% 70%, color-mix(in srgb, var(--accent-blue) 70%, transparent), transparent); filter: blur(2px); }
+/* 兼容旧类名，清理矩形按钮视觉（保留无样式影响） */
+.more-btn { display: none; }
 
-@media (max-width: 640px) { .loop-item { width: 78vw; } }
+@media (max-width: 640px) { .loop-item { width: 68vw; } }
 :deep(.daily-card) .cover { aspect-ratio: 4 / 3; }
 </style>
 
