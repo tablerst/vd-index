@@ -13,9 +13,10 @@ v1_router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-# 注册v1版本的路由
+# 注册v1版本的路由（调整顺序，优先注册 users_bind，避免 /members/bindable 被 /members/{member_id} 吞掉）
 v1_router.include_router(auth.router)
 v1_router.include_router(setup.router)
+v1_router.include_router(users_bind.router)
 v1_router.include_router(members.router)
 v1_router.include_router(avatars.router)
 v1_router.include_router(admin.router)
@@ -24,7 +25,6 @@ v1_router.include_router(configs.router)
 v1_router.include_router(cache.router)
 v1_router.include_router(comments.router)
 v1_router.include_router(daily.router)
-v1_router.include_router(users_bind.router)
 
 # 主路由器，包含所有版本
 main_router = APIRouter()

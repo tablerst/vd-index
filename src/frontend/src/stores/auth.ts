@@ -27,6 +27,8 @@ export interface LoginResponse {
   user: User
 }
 
+export type RegisterResponse = LoginResponse
+
 export const useAuthStore = defineStore('auth', () => {
   const router = useRouter()
   
@@ -82,6 +84,22 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
   
+  // 注册（不自动跳转，交给调用者控制后续绑定流程）
+  const register = async (credentials: LoginCredentials) => {
+    isLoading.value = true
+    error.value = null
+    try {
+      const response = await api.post<RegisterResponse>('/api/v1/auth/register', credentials)
+      setAuth(response.data)
+      return true
+    } catch (err: any) {
+      error.value = err.response?.data?.message || '注册失败'
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   // 登出
   const logout = async () => {
     try {
@@ -94,7 +112,7 @@ export const useAuthStore = defineStore('auth', () => {
       await router.push('/')
     }
   }
-  
+
   // 验证token有效性
   const validateToken = async () => {
     if (!token.value) return false
@@ -143,6 +161,7 @@ export const useAuthStore = defineStore('auth', () => {
     
     // 方法
     login,
+    register,
     logout,
     validateToken,
     clearAuth

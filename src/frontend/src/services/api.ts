@@ -269,6 +269,24 @@ class ApiClient {
     })
   }
 
+  // 注册（返回结构与 login 相同，并直接完成登录态）
+  async register(credentials: { username: string; password: string }): Promise<any> {
+    return this.request('/api/v1/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials)
+    })
+  }
+
+  // 修改密码（需要已登录）
+  async changePassword(payload: { old_password: string; new_password: string }): Promise<{ success: boolean }> {
+    return this.request('/api/v1/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+  }
+
   async getCurrentUser(): Promise<any> {
     return this.request('/api/v1/auth/me')
   }
@@ -276,6 +294,19 @@ class ApiClient {
   async logout(): Promise<any> {
     return this.request('/api/v1/auth/logout', {
       method: 'POST'
+    })
+  }
+
+  // 绑定相关
+  async getBindableMembers(page: number = 1, pageSize: number = 50): Promise<{ members: Array<{ id: number; display_name: string; avatar_url: string }>; total: number; page: number; page_size: number; total_pages: number }> {
+    return this.request(`/api/v1/members/bindable?page=${page}&page_size=${pageSize}`)
+  }
+
+  async bindMember(payload: { member_id: number; uin: number }): Promise<{ success: boolean }> {
+    return this.request('/api/v1/users/bind-member', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     })
   }
 
@@ -543,6 +574,10 @@ export const api = {
   post: async <T>(endpoint: string, data: any): Promise<{ data: T }> => {
     if (endpoint === '/api/v1/auth/login') {
       const result = await apiClient.login(data)
+      return { data: result }
+    }
+    if (endpoint === '/api/v1/auth/register') {
+      const result = await apiClient.register(data)
       return { data: result }
     }
     throw new Error(`Unsupported endpoint: ${endpoint}`)

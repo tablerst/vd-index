@@ -9,8 +9,15 @@
           <n-avatar round :size="avatarSize" :src="userAvatar" :fallback-src="fallbackAvatar" />
         </n-dropdown>
         <!-- 未登录：圆形灰底头像占位，点击打开登录模态 -->
-        <n-avatar v-else round :size="avatarSize" class="user-avatar avatar-placeholder"
-          @click="showLoginModal = true">未登录</n-avatar>
+        <n-avatar
+          v-else
+          round
+          :size="avatarSize"
+          class="user-avatar avatar-placeholder"
+          :style="{ background: 'var(--glass-bg-strong, rgba(255,255,255,0.12))', color: 'var(--text-primary, #111)', fontSize: '12px', fontWeight: '600' }"
+          title="未登录，点击登录"
+          @click="showLoginModal = true"
+        >未登录</n-avatar>
       </div>
     </header>
 
@@ -54,22 +61,86 @@
       </n-pagination>
     </footer>
 
-    <!-- 登录模态（内置表单，不跳转页面） -->
-    <n-modal v-model:show="showLoginModal" preset="dialog" title="登录" :mask-closable="true">
+    <!-- 登录/注册模态（内置表单，不跳转页面） -->
+    <n-modal v-model:show="showLoginModal" preset="dialog" title="账号" :mask-closable="true">
       <div class="login-modal-body">
-        <n-form ref="loginFormRef" :model="loginForm" :rules="loginRules" label-placement="left"
-          :show-require-mark="false">
-          <n-form-item path="username" label="用户名">
-            <n-input v-model:value="loginForm.username" placeholder="请输入用户名" />
-          </n-form-item>
-          <n-form-item path="password" label="密码">
-            <n-input v-model:value="loginForm.password" type="password" placeholder="请输入密码" />
-          </n-form-item>
-        </n-form>
-        <div v-if="loginError" class="error">{{ loginError }}</div>
-        <n-button type="primary" block :loading="loginLoading" @click="handleLogin">登录</n-button>
+        <n-tabs v-model:value="authTab" type="line">
+          <n-tab-pane name="login" tab="登录">
+            <div class="login-modal-body">
+              <n-form ref="loginFormRef" :model="loginForm" :rules="loginRules" label-placement="left"
+                :show-require-mark="false">
+                <n-form-item path="username" label="用户名">
+                  <n-input v-model:value="loginForm.username" placeholder="请输入用户名" />
+                </n-form-item>
+                <n-form-item path="password" label="密码">
+                  <n-input v-model:value="loginForm.password" type="password" placeholder="请输入密码" />
+                </n-form-item>
+              </n-form>
+              <div v-if="loginError" class="error">{{ loginError }}</div>
+              <n-button type="primary" block :loading="loginLoading" @click="handleLogin">登录</n-button>
+            </div>
+          </n-tab-pane>
+          <n-tab-pane name="register" tab="注册">
+            <div v-if="registerStep === 1" class="login-modal-body">
+              <n-form ref="registerFormRef" :model="registerForm" :rules="registerRules" label-placement="left"
+                :show-require-mark="false">
+                <n-form-item path="username" label="用户名">
+                  <n-input v-model:value="registerForm.username" placeholder="设置用户名" />
+                </n-form-item>
+                <n-form-item path="password" label="密码">
+                  <n-input v-model:value="registerForm.password" type="password" placeholder="设置密码(≥6位)" />
+                </n-form-item>
+                <n-form-item path="confirm" label="确认密码">
+                  <n-input v-model:value="registerForm.confirm" type="password" placeholder="再次输入密码" />
+                </n-form-item>
+              </n-form>
+              <div v-if="registerError" class="error">{{ registerError }}</div>
+              <n-button type="primary" block :loading="registerLoading" @click="handleRegister">下一步</n-button>
+            </div>
+            <div v-else class="login-modal-body">
+              <n-form ref="bindFormRef" :model="bindForm" :rules="bindRules" label-placement="left"
+                :show-require-mark="false">
+                <n-form-item path="member_id" label="选择成员">
+                  <n-select v-model:value="bindForm.member_id" :options="bindableMemberOptions" placeholder="选择要绑定的成员" filterable />
+                </n-form-item>
+                <n-form-item path="uin" label="成员UIN">
+                  <n-input v-model:value="bindForm.uin" placeholder="请输入该成员的QQ号用于验证" />
+                </n-form-item>
+              </n-form>
+              <div v-if="bindError" class="error">{{ bindError }}</div>
+              <n-button type="primary" block :loading="bindLoading" @click="handleBind">完成绑定</n-button>
+            </div>
+          </n-tab-pane>
+        </n-tabs>
       </div>
     </n-modal>
+
+    <!-- 修改密码模态 -->
+    <n-modal v-model:show="showChangePassword" preset="dialog" title="修改密码" :mask-closable="true">
+      <div class="login-modal-body">
+        <n-form ref="changePwdFormRef" :model="changePwdForm" :rules="changePwdRules" label-placement="left" :show-require-mark="false">
+          <n-form-item path="old_password" label="当前密码">
+            <n-input v-model:value="changePwdForm.old_password" type="password" placeholder="请输入当前密码" />
+          </n-form-item>
+          <n-form-item path="new_password" label="新密码">
+            <n-input v-model:value="changePwdForm.new_password" type="password" placeholder="请输入新密码(≥6位)" />
+          </n-form-item>
+          <n-form-item path="confirm" label="确认密码">
+            <n-input v-model:value="changePwdForm.confirm" type="password" placeholder="请再次输入新密码" />
+          </n-form-item>
+        </n-form>
+        <div v-if="changePwdError" class="error">{{ changePwdError }}</div>
+        <n-button type="primary" block :loading="changePwdLoading" @click="submitChangePassword">保存</n-button>
+      </div>
+    </n-modal>
+
+    <!-- 编辑个人资料模态（占位） -->
+    <n-modal v-model:show="showEditProfile" preset="dialog" title="编辑个人资料" :mask-closable="true">
+      <div class="login-modal-body">
+        <div style="color: var(--text-secondary);">暂未开放，敬请期待。</div>
+      </div>
+    </n-modal>
+
   </div>
 </template>
 
@@ -81,9 +152,10 @@ import DailyCard from '@/components/daily/DailyCard.vue'
 import { dailyApi, type DailyPostItem } from '@/services/daily'
 import { useAuthStore } from '@/stores/auth'
 
-import { NPagination, NDropdown, NAvatar, NButton, NDatePicker, NSelect, NSpace, NModal, NForm, NFormItem, NInput, NSpin, useMessage } from 'naive-ui'
+import { NPagination, NDropdown, NAvatar, NButton, NDatePicker, NSelect, NSpace, NModal, NForm, NFormItem, NInput, NSpin, NTabs, NTabPane, useMessage } from 'naive-ui'
 import type { FormInst, FormRules } from 'naive-ui'
 import { gsap } from 'gsap'
+import { apiClient } from '@/services/api'
 
 // 列表与分页
 const posts = ref<DailyPostItem[]>([])
@@ -140,11 +212,60 @@ const avatarSize = 36
 // 用户下拉菜单
 const userMenuOptions = [
   { label: '修改密码', key: 'change-password' },
-  { label: '编辑个人信息', key: 'edit-profile' }
+  { label: '编辑个人资料', key: 'edit-profile' },
+  { label: '退出登录', key: 'logout' }
 ]
+
+// 修改密码弹窗与表单（先在本页用 Modal 完成交互）
+const showChangePassword = ref(false)
+const showEditProfile = ref(false)
+const changePwdFormRef = ref<FormInst | null>(null)
+const changePwdForm = ref({ old_password: '', new_password: '', confirm: '' })
+const changePwdLoading = ref(false)
+const changePwdError = ref('')
+const changePwdRules: FormRules = {
+  old_password: [{ required: true, message: '请输入当前密码', trigger: 'blur' }],
+  new_password: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { validator: (_r, v) => (v && String(v).length >= 6), message: '新密码至少6位', trigger: ['blur', 'input'] }
+  ],
+  confirm: [
+    { required: true, message: '请再次输入新密码', trigger: 'blur' },
+    { validator: (_r, v) => v === changePwdForm.value.new_password, message: '两次输入的新密码不一致', trigger: ['blur', 'input'] }
+  ]
+}
+
+async function submitChangePassword() {
+  if (!changePwdFormRef.value) return
+  try {
+    await changePwdFormRef.value.validate()
+    changePwdLoading.value = true
+    changePwdError.value = ''
+    await apiClient.changePassword({ old_password: changePwdForm.value.old_password, new_password: changePwdForm.value.new_password })
+    message.success('密码修改成功')
+    showChangePassword.value = false
+    changePwdForm.value = { old_password: '', new_password: '', confirm: '' }
+  } catch (e: any) {
+    changePwdError.value = e?.message || '修改失败'
+  } finally {
+    changePwdLoading.value = false
+  }
+}
+
 function handleUserMenu(key: string) {
-  // 中文注释：此处可根据路由实现具体页面；当前跳转到后台设置首页
-  if (key === 'change-password' || key === 'edit-profile') router.push('/settings')
+  if (key === 'change-password') {
+    showChangePassword.value = true
+    return
+  }
+  if (key === 'edit-profile') {
+    showEditProfile.value = true
+    return
+  }
+  if (key === 'logout') {
+    authStore.logout()
+    message.success('已退出登录')
+    return
+  }
 }
 
 // 作者与标签选项（从当前结果聚合，避免额外接口）
@@ -250,6 +371,104 @@ async function handleLogin() {
   }
 }
 
+// 登录/注册切换与注册-绑定流程状态
+const authTab = ref<'login' | 'register'>('login')
+const registerStep = ref<1 | 2>(1)
+
+// 注册表单
+const registerFormRef = ref<FormInst | null>(null)
+const registerForm = ref({ username: '', password: '', confirm: '' })
+const registerLoading = ref(false)
+const registerError = ref('')
+const registerRules: FormRules = {
+  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { validator: (_r, v) => (v && String(v).length >= 6), message: '密码至少6位', trigger: ['blur', 'input'] }
+  ],
+  confirm: [
+    { required: true, message: '请再次输入密码', trigger: 'blur' },
+    { validator: (_r, v) => v === registerForm.value.password, message: '两次输入的密码不一致', trigger: ['blur', 'input'] }
+  ]
+}
+
+async function handleRegister() {
+  if (!registerFormRef.value) return
+  try {
+    await registerFormRef.value.validate()
+    registerLoading.value = true
+    registerError.value = ''
+    const ok = await authStore.register({ username: registerForm.value.username, password: registerForm.value.password })
+    if (ok) {
+      // 进入绑定步骤并加载可绑定成员
+      registerStep.value = 2
+      await loadBindableMembers()
+      message.success('注册成功，请完成成员绑定')
+    } else {
+      registerError.value = '注册失败，请稍后再试'
+    }
+  } catch (e: any) {
+    registerError.value = e?.message || '注册失败'
+  } finally {
+    registerLoading.value = false
+  }
+}
+
+// 绑定成员表单
+const bindFormRef = ref<FormInst | null>(null)
+const bindForm = ref<{ member_id: number | null; uin: string }>({ member_id: null, uin: '' })
+const bindLoading = ref(false)
+const bindError = ref('')
+const bindRules: FormRules = {
+  member_id: [{ required: true, type: 'number', message: '请选择成员', trigger: 'change' }],
+  uin: [
+    { required: true, message: '请输入成员UIN', trigger: 'blur' },
+    { validator: (_r, v) => /^\d{5,}$/.test(String(v || '')), message: 'UIN格式不正确', trigger: ['blur', 'input'] }
+  ]
+}
+
+// 可绑定成员选项
+const bindableMemberOptions = ref<Array<{ label: string; value: number }>>([])
+
+async function loadBindableMembers() {
+  try {
+    const res = await apiClient.getBindableMembers(1, 50)
+    bindableMemberOptions.value = res.members.map(m => ({ label: m.display_name, value: m.id }))
+  } catch (e: any) {
+    console.error('Failed to load bindable members', e)
+    bindableMemberOptions.value = []
+    // 中文注释：若后端路由注册顺序不当，/members/bindable 可能被 /members/{member_id} 吞掉导致422
+    bindError.value = '加载可绑定成员失败：请确认后端已将 users_bind 路由在 members 之前注册（/api/router.py）'
+    message.error('无法加载可绑定成员，请稍后重试')
+  }
+}
+
+async function handleBind() {
+  if (!bindFormRef.value) return
+  try {
+    await bindFormRef.value.validate()
+    bindLoading.value = true
+    bindError.value = ''
+    const payload = { member_id: Number(bindForm.value.member_id), uin: Number(bindForm.value.uin) }
+    const res = await apiClient.bindMember(payload)
+    if (res?.success) {
+      message.success('绑定成功')
+      showLoginModal.value = false
+      // 重置注册流程，方便下次打开
+      authTab.value = 'login'
+      registerStep.value = 1
+      registerForm.value = { username: '', password: '', confirm: '' }
+      bindForm.value = { member_id: null, uin: '' }
+    } else {
+      bindError.value = '绑定失败，请检查UIN是否正确'
+    }
+  } catch (e: any) {
+    bindError.value = e?.message || '绑定失败'
+  } finally {
+    bindLoading.value = false
+  }
+}
+
 // 监听筛选与分页
 watch([page, pageSize], () => { fetchList() })
 watch([authorUserId, tag, dateRange], () => { page.value = 1; fetchList() })
@@ -294,12 +513,16 @@ onUnmounted(() => { cleanupFns.forEach(fn => { try { fn() } catch { } }); cleanu
 }
 
 .avatar-placeholder {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  /* 使用更强的玻璃态背景，保证深浅主题下都有对比度 */
+  background: var(--glass-bg-strong, rgba(255, 255, 255, 0.12));
+  /* 文字颜色采用主题主文本色，避免浅色主题下看不见 */
+  color: var(--text-primary, #111);
   font-size: 12px;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
+  user-select: none;
 }
 
 .filter-bar {
