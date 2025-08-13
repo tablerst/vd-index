@@ -4,7 +4,8 @@ Daily posts API schemas
 """
 from __future__ import annotations
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from datetime import datetime, timezone
+from pydantic import BaseModel, Field, field_serializer
 
 
 class DailyPostItem(BaseModel):
@@ -23,8 +24,17 @@ class DailyPostItem(BaseModel):
     comments_count: int
     views_count: int
     published: bool
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime
+
+    @field_serializer('created_at', 'updated_at')
+    def serialize_datetime(self, dt: datetime) -> str:
+        """Serialize datetime to ISO string with UTC timezone if naive.
+        中文注释：将UTC naive时间补齐为UTC时区并序列化为ISO字符串，确保前端收到字符串。
+        """
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.isoformat()
 
 
 class DailyPostListResponse(BaseModel):
