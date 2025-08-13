@@ -2,32 +2,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import List, Optional
 
-from sqlalchemy import JSON, TypeDecorator
 from sqlmodel import SQLModel, Field
-
-
-class UnicodePreservingJSON(TypeDecorator):
-    """Custom JSON type that preserves non-ASCII characters (e.g., Chinese) without escaping.
-    Note: Duplicated from Activity model for now. Consider extracting to a shared module if reused more.
-    """
-    impl = JSON
-    cache_ok = True
-
-    def process_bind_param(self, value, dialect):
-        if value is not None:
-            import json
-            return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
-        return value
-
-    def process_result_value(self, value, dialect):
-        if value is not None:
-            import json
-            if isinstance(value, (list, dict)):
-                return value
-            elif isinstance(value, str):
-                return json.loads(value)
-        return value
-
+from services.database.models.db_types import UnicodePreservingJSON
 
 class DailyPost(SQLModel, table=True):
     """Daily posts table model."""
