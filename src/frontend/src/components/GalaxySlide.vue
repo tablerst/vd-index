@@ -5,7 +5,7 @@
       :height="canvasSize.height"></canvas>
 
     <!-- 成员星球 -->
-    <div class="members-nebula">
+    <div class="members-nebula" :class="{ 'animation-paused': animationPaused }">
       <div v-for="(member, index) in members" :key="member.id" class="member-star"
         :class="{ 'member-star--selected': selectedMember?.id === member.id }" :style="getMemberStarStyle(index)"
         @click="selectMember(member)" @mouseenter="(event) => handleMemberHover(member, event)"
@@ -55,6 +55,7 @@ interface Node {
 interface Props {
   members: Member[]
   index: number
+  animationPaused?: boolean
 }
 
 /* ======== 连线样式参数 ======== */
@@ -466,8 +467,12 @@ watch(() => themeStore.currentTheme, () => {
 
 // 统一动画循环
 let animationId: number | null = null
+let isAnimating = false
 
 const animate = () => {
+  // 如果动画被暂停或已停止，不继续循环
+  if (!isAnimating) return
+  
   // 性能标记开始
   performanceProfiler.mark('galaxy-slide-frame')
 
@@ -492,6 +497,33 @@ const animate = () => {
   animationId = requestAnimationFrame(animate)
 }
 
+// 暂停和恢复动画的函数
+const pauseAnimation = () => {
+  if (isAnimating) {
+    isAnimating = false
+    if (animationId) {
+      cancelAnimationFrame(animationId)
+      animationId = null
+    }
+  }
+}
+
+const resumeAnimation = () => {
+  if (!isAnimating && !props.animationPaused) {
+    isAnimating = true
+    animate()
+  }
+}
+
+// 监听animationPaused属性变化
+watch(() => props.animationPaused, (paused) => {
+  if (paused) {
+    pauseAnimation()
+  } else {
+    resumeAnimation()
+  }
+})
+
 // 生命周期管理
 onMounted(() => {
   nextTick(() => {
@@ -500,13 +532,17 @@ onMounted(() => {
     // 初始化连接线系统（动态系统会自动开始创建连接线）
     connectionSystem.reset()
 
-    // 启动统一的动画循环
-    animate()
+    // 如果没有暂停，启动统一的动画循环
+    if (!props.animationPaused) {
+      isAnimating = true
+      animate()
+    }
   })
   window.addEventListener('resize', updateCanvasSize)
 })
 
 onUnmounted(() => {
+  isAnimating = false
   if (animationId) {
     cancelAnimationFrame(animationId)
     animationId = null
@@ -538,6 +574,13 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   z-index: 2;
+
+  // 暂停CSS动画
+  &.animation-paused {
+    .member-star {
+      animation-play-state: paused !important;
+    }
+  }
 }
 
 .member-star {

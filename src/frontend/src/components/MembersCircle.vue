@@ -45,6 +45,7 @@
           <GalaxySlide
             :members="pageMembers"
             :index="pageIndex"
+            :animation-paused="showMemberInfo"
             @member-select="handleMemberSelect"
             @member-hover="handleMemberHover"
             @member-leave="handleMemberLeave"
@@ -326,26 +327,24 @@ const openMemberModal = () => {
   // 遮罩淡入
   tl.fromTo('.member-modal',
     { opacity: 0 },
-    { opacity: 1, duration: 0.25, ease: 'power2.out' }
+    { opacity: 1, duration: 0.2, ease: 'power2.out' }
   )
 
-  // 内容缩放和位移动画
+  // 内容缩放和位移动画 - 移除rotationY 3D变换，缩短动画时长
   tl.fromTo(modalContent.value,
     {
-      scale: 0.8,
-      y: 40,
-      opacity: 0,
-      rotationY: -15
+      scale: 0.85,
+      y: 30,
+      opacity: 0
     },
     {
       scale: 1,
       y: 0,
       opacity: 1,
-      rotationY: 0,
-      duration: 0.45,
+      duration: 0.3,
       ease: 'power3.out'
     },
-    0.1 // 稍微延迟开始
+    0.05 // 稍微延迟开始
   )
 
 
@@ -379,22 +378,21 @@ const closeMemberInfo = () => {
     }
   })
 
-  // 内容缩放和淡出
+  // 内容缩放和淡出 - 移除rotationY 3D变换
   tl.to(modalContent.value, {
     scale: 0.9,
     y: 20,
     opacity: 0,
-    rotationY: 15,
-    duration: 0.3,
+    duration: 0.25,
     ease: 'power2.in'
   })
 
   // 遮罩淡出
   tl.to('.member-modal', {
     opacity: 0,
-    duration: 0.2,
+    duration: 0.15,
     ease: 'power2.in'
-  }, 0.1)
+  }, 0.05)
 }
 
 const formatDate = (dateString?: string) => {
@@ -745,12 +743,13 @@ onUnmounted(() => {
   right: 0;
   bottom: 0;
   background: var(--modal-overlay);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(8px); // 降低模糊强度以12px到8px
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   opacity: 0; // 初始透明，由GSAP控制
+  will-change: opacity; // GPU加速优化
 }
 
 .modal-content {
@@ -758,9 +757,9 @@ onUnmounted(() => {
   max-width: 900px;
   width: 95%;
   max-height: 90vh;
-  // 主题感知的背景效果 - 使用更强的玻璃效果确保可读性
+  // 主题感知的背景效果 - 降低模糊强度
   background: var(--glass-bg-strong);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(10px); // 降低模糊强度以20px到10px
   border: 1px solid var(--glass-border);
   border-radius: 20px;
   padding: 32px 28px;
@@ -768,10 +767,12 @@ onUnmounted(() => {
   text-align: center;
   overflow-y: auto;
   overflow-x: hidden;
+  transform: translateZ(0); // 强制GPU加速
+  will-change: transform, opacity; // GPU加速优化
 
-  // 初始状态，由GSAP控制
+  // 初始状态，由GSAP控制 - 移除rotationY
   opacity: 0;
-  transform: scale(0.8) translateY(40px) rotateY(-15deg);
+  transform: scale(0.85) translateY(30px);
 
   // 自定义滚动条
   &::-webkit-scrollbar {
