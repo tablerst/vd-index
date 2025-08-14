@@ -2,7 +2,7 @@
 用户CRUD操作
 """
 from datetime import datetime
-from backend.services.database.models.base import now_naive
+from ..base import now_naive
 from typing import Optional, List
 from sqlmodel import Session, select
 from sqlalchemy.ext.asyncio import AsyncSession

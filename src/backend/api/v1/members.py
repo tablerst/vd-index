@@ -200,7 +200,7 @@ async def create_member(
     """手动创建新成员"""
     try:
         from services.database.models.member.base import Member
-        from backend.services.database.models.base import now_naive
+        from ...services.database.models.base import now_naive              
         import secrets
 
         # 生成随机UIN（用于测试，实际应该是真实QQ号）

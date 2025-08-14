@@ -10,7 +10,7 @@ from sqlalchemy import cast, literal
 from sqlalchemy.dialects.postgresql import JSONB
 
 from .base import Activity, ActivityCreate, ActivityRead, ActivityUpdate
-from backend.services.database.models.base import now_naive
+from ..base import now_naive
 
 
 class ActivityCRUD:

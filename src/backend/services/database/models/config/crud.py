@@ -2,7 +2,7 @@
 Config表的CRUD操作
 """
 from datetime import datetime
-from backend.services.database.models.base import now_naive
+from ..base import now_naive
 from typing import List, Optional, Dict, Any
 from sqlmodel import select, func
 from sqlmodel.ext.asyncio.session import AsyncSession

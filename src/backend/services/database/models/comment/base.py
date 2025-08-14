@@ -7,7 +7,7 @@ from typing import Optional
 from sqlmodel import SQLModel, Field
 from pydantic import field_serializer, field_validator, model_validator
 
-from backend.services.database.models.base import now_naive, to_naive_beijing
+from ..base import now_naive, to_naive_beijing
 
 
 class Comment(SQLModel, table=True):

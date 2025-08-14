@@ -8,7 +8,7 @@ from typing import List, Optional, Tuple, Dict, Any
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from services.database.models.member import Member, MemberCreate, MemberCRUD, MemberUpdate
-from backend.services.database.models.base import to_naive_beijing
+from services.database.models.base import to_naive_beijing
 
 from services.database.models import ActivityCRUD
 from services.database.models.comment.crud import CommentCRUD

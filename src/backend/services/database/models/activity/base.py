@@ -5,7 +5,7 @@ from pydantic import field_validator, model_validator
 from sqlmodel import SQLModel, Field
 from sqlalchemy.dialects.postgresql import JSONB
 
-from backend.services.database.models.base import now_naive, to_naive_beijing
+from ..base import now_naive, to_naive_beijing
 
 
 class Activity(SQLModel, table=True):

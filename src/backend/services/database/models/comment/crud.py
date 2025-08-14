@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from .base import Comment, CommentCreate, CommentUpdate, CommentStats
-from backend.services.database.models.base import now_naive
+from ..base import now_naive
 
 
 class CommentCRUD:

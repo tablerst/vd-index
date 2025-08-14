@@ -6,7 +6,7 @@ from sqlmodel import select, func
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from .base import Member, MemberCreate, MemberRead, MemberUpdate
-from backend.services.database.models.base import now_naive
+from ..base import now_naive
 
 from services.deps import get_cache_service, get_config_service
 

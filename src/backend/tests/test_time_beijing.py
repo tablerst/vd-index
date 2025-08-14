@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 # 被测目标：时间工具函数与 Activity 模型的时间校验
-from backend.services.database.models.base import now_naive, to_naive_beijing
+from ..services.database.models.base import now_naive, to_naive_beijing
 from backend.services.database.models.activity.base import Activity
 from pydantic import ValidationError
 
