@@ -3,15 +3,19 @@
 """
 from __future__ import annotations
 import math
+import logging
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from services.deps import get_session, get_auth_service
+from services.deps import get_session, get_auth_service, get_cache_service, get_config_service
 from services.auth.utils import get_current_active_user
 from services.database.models import DailyPostCRUD, DailyPostCreate, DailyPostUpdate
 from services.database.models.user import UserCRUD
 from services.database.models.member import MemberCRUD
+
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["daily"])  # 前缀由 api.router v1 统一加 /api/v1
 
@@ -63,8 +67,38 @@ async def get_trending(
     limit: int = Query(12, ge=1, le=50),
     session: AsyncSession = Depends(get_session),
 ):
+    """获取首页精选动态（带缓存）
+
+    Cache key strategy:
+    - Use namespaced key with parameter(s) to avoid collision: daily:trending:limit:{limit}
+    TTL strategy:
+    - Use settings.cache_default_ttl to balance freshness and performance.
+    """
+    cache_key = f"daily:trending:limit:{limit}"
+
+    # Try to return from cache first
+    try:
+        cache_service = get_cache_service()
+        cached_items = await cache_service.get(cache_key)
+        if cached_items is not None:
+            return cached_items
+    except Exception as e:
+        # Cache failure should not break the main flow
+        logger.warning(f"Failed to get trending from cache: {e}")
+
+    # Cache miss: query database and build response
     posts = await DailyPostCRUD.list_trending(session, limit=limit)
     items = [await _to_post_item(session, p) for p in posts]
+
+    # Write to cache with configured TTL
+    try:
+        cache_service = get_cache_service()
+        config_service = get_config_service()
+        settings = config_service.get_settings()
+        await cache_service.set(cache_key, items, ttl=settings.cache_default_ttl)
+    except Exception as e:
+        logger.warning(f"Failed to cache trending items: {e}")
+
     return items
 
 
