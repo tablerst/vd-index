@@ -99,8 +99,8 @@
 
 <script setup lang="ts">
 // 中文注释：独立Tiptap编辑器组件，支持基础富文本与图片插入，提供保存回调
-import { ref, watch, onMounted, onUnmounted } from 'vue'
-import { NButton, NSpace, NIcon, useMessage } from 'naive-ui'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { NButton, NIcon, useMessage } from 'naive-ui'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
@@ -130,7 +130,7 @@ function isActive(name: string, attrs: Record<string, any> = {}) {
   return editor?.value?.isActive(name as any, attrs) ?? false
 }
 
-function setHeading(level: number) {
+function setHeading(level: 1 | 2 | 3 | 4 | 5 | 6) {
   editor?.value?.chain().focus().toggleHeading({ level }).run()
 }
 
@@ -183,7 +183,7 @@ onMounted(() => {
       const raw = localStorage.getItem(props.autosaveKey)
       if (raw) {
         const json = JSON.parse(raw)
-        editor?.value?.commands.setContent(json, false)
+        editor?.value?.commands.setContent(json, { emitUpdate: false })
       }
     } catch { }
   }
