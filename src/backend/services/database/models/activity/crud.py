@@ -1,7 +1,7 @@
 """
 Activity表的CRUD操作
 """
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import List, Optional, Tuple
 from sqlmodel import select, func
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -10,6 +10,7 @@ from sqlalchemy import cast, literal
 from sqlalchemy.dialects.postgresql import JSONB
 
 from .base import Activity, ActivityCreate, ActivityRead, ActivityUpdate
+from backend.services.database.models.base import now_naive
 
 
 class ActivityCRUD:
@@ -147,7 +148,7 @@ class ActivityCRUD:
             activity.participants_total = len(activity.participant_ids)
 
         # 更新时间戳
-        activity.updated_at = datetime.utcnow()
+        activity.updated_at = now_naive()
 
         session.add(activity)
         await session.commit()
@@ -164,7 +165,7 @@ class ActivityCRUD:
         if member_id not in activity.participant_ids:
             activity.participant_ids.append(member_id)
             activity.participants_total = len(activity.participant_ids)
-            activity.updated_at = datetime.utcnow()
+            activity.updated_at = now_naive()
 
             session.add(activity)
             await session.commit()
@@ -182,7 +183,7 @@ class ActivityCRUD:
         if member_id in activity.participant_ids:
             activity.participant_ids.remove(member_id)
             activity.participants_total = len(activity.participant_ids)
-            activity.updated_at = datetime.utcnow()
+            activity.updated_at = now_naive()
 
             session.add(activity)
             await session.commit()
@@ -199,7 +200,7 @@ class ActivityCRUD:
 
         if tag not in activity.tags:
             activity.tags.append(tag)
-            activity.updated_at = datetime.utcnow()
+            activity.updated_at = now_naive()
 
             session.add(activity)
             await session.commit()
@@ -215,7 +216,7 @@ class ActivityCRUD:
             return None
         if tag in activity.tags:
             activity.tags.remove(tag)
-            activity.updated_at = datetime.utcnow()
+            activity.updated_at = now_naive()
             session.add(activity)
             await session.commit()
             await session.refresh(activity)
@@ -259,7 +260,7 @@ class ActivityCRUD:
     @staticmethod
     async def get_upcoming_activities(session: AsyncSession, limit: int = 10) -> List[Activity]:
         """获取即将到来的活动"""
-        now = datetime.utcnow()
+        now = now_naive()
         statement = select(Activity).where(
             Activity.date > now
         ).order_by(Activity.date.asc()).limit(limit)

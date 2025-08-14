@@ -2,6 +2,7 @@
 用户CRUD操作
 """
 from datetime import datetime
+from backend.services.database.models.base import now_naive
 from typing import Optional, List
 from sqlmodel import Session, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -62,7 +63,7 @@ class UserCRUD:
         for field, value in update_data.items():
             setattr(user, field, value)
 
-        user.updated_at = datetime.utcnow()
+        user.updated_at = now_naive()
         await session.commit()
         await session.refresh(user)
         return user
@@ -74,7 +75,7 @@ class UserCRUD:
         if not user:
             return None
 
-        user.last_login = datetime.utcnow()
+        user.last_login = now_naive()
         await session.commit()
         await session.refresh(user)
         return user

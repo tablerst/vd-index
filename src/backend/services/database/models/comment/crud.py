@@ -1,13 +1,14 @@
 """
 评论CRUD操作
 """
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import List, Optional
 from sqlalchemy import desc, func, and_, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from .base import Comment, CommentCreate, CommentUpdate, CommentStats
+from backend.services.database.models.base import now_naive
 
 
 class CommentCRUD:
@@ -87,7 +88,7 @@ class CommentCRUD:
         
         update_data = comment_data.model_dump(exclude_unset=True)
         if update_data:
-            update_data['updated_at'] = datetime.utcnow()
+            update_data['updated_at'] = now_naive()
             for field, value in update_data.items():
                 setattr(comment, field, value)
             
@@ -104,7 +105,7 @@ class CommentCRUD:
             return None
         
         comment.likes += 1
-        comment.updated_at = datetime.utcnow()
+        comment.updated_at = now_naive()
         await db.commit()
         await db.refresh(comment)
         return comment
@@ -117,7 +118,7 @@ class CommentCRUD:
             return None
         
         comment.dislikes += 1
-        comment.updated_at = datetime.utcnow()
+        comment.updated_at = now_naive()
         await db.commit()
         await db.refresh(comment)
         return comment
@@ -130,7 +131,7 @@ class CommentCRUD:
             return None
         
         comment.is_deleted = True
-        comment.updated_at = datetime.utcnow()
+        comment.updated_at = now_naive()
         await db.commit()
         await db.refresh(comment)
         return comment

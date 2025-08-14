@@ -2,6 +2,7 @@
 Config表的CRUD操作
 """
 from datetime import datetime
+from backend.services.database.models.base import now_naive
 from typing import List, Optional, Dict, Any
 from sqlmodel import select, func
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -103,7 +104,7 @@ class ConfigCRUD:
             setattr(config, field, value)
 
         # 更新时间戳
-        config.updated_at = datetime.utcnow()
+        config.updated_at = now_naive()
 
         session.add(config)
         await session.commit()
@@ -125,7 +126,7 @@ class ConfigCRUD:
             setattr(config, field, value)
 
         # 更新时间戳
-        config.updated_at = datetime.utcnow()
+        config.updated_at = now_naive()
 
         session.add(config)
         await session.commit()
@@ -140,7 +141,7 @@ class ConfigCRUD:
             return None
         
         config.value = value
-        config.updated_at = datetime.utcnow()
+        config.updated_at = now_naive()
         
         session.add(config)
         await session.commit()
@@ -157,7 +158,7 @@ class ConfigCRUD:
             config.value = value
             if description is not None:
                 config.description = description
-            config.updated_at = datetime.utcnow()
+            config.updated_at = now_naive()
         else:
             # 创建新配置
             config = Config(
