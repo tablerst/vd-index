@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from sqlmodel import SQLModel, Field
-from services.database.models.db_types import UnicodePreservingJSON
+from sqlalchemy.dialects.postgresql import JSONB
 
 class DailyPost(SQLModel, table=True):
     """Daily posts table model."""
@@ -19,8 +19,8 @@ class DailyPost(SQLModel, table=True):
     content: Optional[str] = Field(default=None, max_length=2000)
 
     # Images and tags as JSON arrays
-    images: List[str] = Field(sa_type=UnicodePreservingJSON, default_factory=list)
-    tags: List[str] = Field(sa_type=UnicodePreservingJSON, default_factory=list)
+    images: List[str] = Field(sa_type=JSONB, default_factory=list)
+    tags: List[str] = Field(sa_type=JSONB, default_factory=list)
 
     # Counters
     likes_count: int = Field(default=0)

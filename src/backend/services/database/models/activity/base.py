@@ -2,7 +2,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import List, Optional
 from sqlmodel import SQLModel, Field
-from services.database.models.db_types import UnicodePreservingJSON
+from sqlalchemy.dialects.postgresql import JSONB
 
 class Activity(SQLModel, table=True):
     """活动表模型"""
@@ -13,11 +13,11 @@ class Activity(SQLModel, table=True):
     title: str = Field(max_length=100, index=True)
     description: str = Field(max_length=500)
     date: datetime
-    tags: List[str] = Field(sa_type=UnicodePreservingJSON, default_factory=list)
+    tags: List[str] = Field(sa_type=JSONB, default_factory=list)
 
     # 参与成员 ID 列表（JSON 数组）
     participant_ids: List[int] = Field(
-        sa_type=UnicodePreservingJSON, default_factory=list, description="Member.id 列表"
+        sa_type=JSONB, default_factory=list, description="Member.id 列表"
     )
 
     # 冗余统计字段，由业务侧在新增/更新时同步
