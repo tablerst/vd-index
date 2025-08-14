@@ -24,6 +24,27 @@ def orjson_dumps(v, *, default=None, sort_keys=False, indent_2=True):
         return orjson.dumps(v, option=option).decode()
     return orjson.dumps(v, default=default, option=option).decode()
 
+
 def orjson_dumps_compact(v):
     # 无缩进、无排序，最紧凑；适合入库/网络传输
     return orjson.dumps(v).decode()
+
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+# 北京时间（Asia/Shanghai）时区对象
+CN = ZoneInfo("Asia/Shanghai")
+
+
+def to_naive_beijing(dt: datetime) -> datetime:
+    """将时间转换为无时区的北京时间"""
+    if dt.tzinfo is None:
+        # 如果是 naive 类型，直接返回
+        return dt
+    # 将时间转换为北京时间，并去除时区信息，返回 naive 类型
+    return dt.astimezone(CN).replace(tzinfo=None)
+
+
+def now_naive() -> datetime:
+    """获取当前的无时区北京时间"""
+    return datetime.now(CN).replace(tzinfo=None)

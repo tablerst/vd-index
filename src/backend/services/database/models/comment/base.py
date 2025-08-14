@@ -5,7 +5,9 @@
 from datetime import datetime, timezone
 from typing import Optional
 from sqlmodel import SQLModel, Field
-from pydantic import field_serializer
+from pydantic import field_serializer, field_validator, model_validator
+
+from backend.services.database.models.base import now_naive, to_naive_beijing
 
 
 class Comment(SQLModel, table=True):
@@ -37,9 +39,35 @@ class Comment(SQLModel, table=True):
     # 软删除标记
     is_deleted: bool = Field(default=False, description="是否已删除")
     
-    # 时间戳 - 存储UTC时间但不包含时区信息（数据库字段为TIMESTAMP WITHOUT TIME ZONE）
-    created_at: datetime = Field(default_factory=lambda: datetime.utcnow(), description="创建时间")
-    updated_at: datetime = Field(default_factory=lambda: datetime.utcnow(), description="更新时间")
+    # 时间戳 - 存储“无时区北京时间”（数据库字段为TIMESTAMP WITHOUT TIME ZONE）
+    created_at: datetime = Field(default_factory=now_naive, description="创建时间")
+    updated_at: datetime = Field(default_factory=now_naive, description="更新时间")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_time_fields(cls, data):
+        """统一将字符串形式的时间字段解析并转换为无时区北京时间。"""
+        if isinstance(data, dict):
+            for key in ("created_at", "updated_at"):
+                v = data.get(key)
+                if isinstance(v, str):
+                    try:
+                        dt = datetime.fromisoformat(v.replace("Z", "+00:00"))
+                    except Exception as e:
+                        raise ValueError(f"Invalid datetime string for {key}: {v}") from e
+                    data[key] = to_naive_beijing(dt)
+        return data
+
+    def model_post_init(self, __context) -> None:  # type: ignore[override]
+        """在模型初始化完成后进行兜底时间字段规范化。"""
+        for key in ("created_at", "updated_at"):
+            v = getattr(self, key, None)
+            if isinstance(v, str):
+                try:
+                    dt = datetime.fromisoformat(v.replace("Z", "+00:00"))
+                except Exception as e:
+                    raise ValueError(f"Invalid datetime string for {key}: {v}") from e
+                setattr(self, key, to_naive_beijing(dt))
 
 
 class CommentCreate(SQLModel):

@@ -4,6 +4,9 @@
 from datetime import datetime
 from typing import Optional
 from sqlmodel import SQLModel, Field
+from pydantic import field_validator, model_validator
+
+from backend.services.database.models.base import now_naive, to_naive_beijing
 
 
 class Config(SQLModel, table=True):
@@ -17,8 +20,41 @@ class Config(SQLModel, table=True):
     description: Optional[str] = Field(default=None, max_length=500)
     type: str = Field(default="string", max_length=20)
     is_active: bool = Field(default=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=now_naive)
+    updated_at: datetime = Field(default_factory=now_naive)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_time_fields(cls, data):
+        if isinstance(data, dict):
+            for key in ("created_at", "updated_at"):
+                v = data.get(key)
+                if isinstance(v, str):
+                    try:
+                        dt = datetime.fromisoformat(v.replace("Z", "+00:00"))
+                    except Exception as e:
+                        raise ValueError(f"Invalid datetime string for {key}: {v}") from e
+                    data[key] = to_naive_beijing(dt)
+        return data
+
+    def model_post_init(self, __context) -> None:  # type: ignore[override]
+        for key in ("created_at", "updated_at"):
+            v = getattr(self, key, None)
+            if isinstance(v, str):
+                try:
+                    dt = datetime.fromisoformat(v.replace("Z", "+00:00"))
+                except Exception as e:
+                    raise ValueError(f"Invalid datetime string for {key}: {v}") from e
+                setattr(self, key, to_naive_beijing(dt))
+
+    @field_validator("created_at", "updated_at", mode="before")
+    @classmethod
+    def _v_ts(cls, v):
+        if v is None:
+            return v
+        if isinstance(v, str):
+            v = datetime.fromisoformat(v.replace("Z", "+00:00"))
+        return to_naive_beijing(v)
 
 
 class ConfigCreate(SQLModel):

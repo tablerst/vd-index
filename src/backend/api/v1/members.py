@@ -200,7 +200,7 @@ async def create_member(
     """手动创建新成员"""
     try:
         from services.database.models.member.base import Member
-        from datetime import datetime
+        from backend.services.database.models.base import now_naive
         import secrets
 
         # 生成随机UIN（用于测试，实际应该是真实QQ号）
@@ -217,7 +217,7 @@ async def create_member(
             group_nick=member_data.group_nick or member_data.display_name,
             qq_nick=member_data.display_name,
             role=member_data.role,
-            join_time=datetime.now(),
+            join_time=now_naive(),
             bio=member_data.bio
         )
 

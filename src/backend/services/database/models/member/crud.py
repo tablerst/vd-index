@@ -1,12 +1,13 @@
 """
 Member表的CRUD操作
 """
-from datetime import datetime
 from typing import List, Optional, Tuple, Dict
 from sqlmodel import select, func
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from .base import Member, MemberCreate, MemberRead, MemberUpdate
+from backend.services.database.models.base import now_naive
+
 from services.deps import get_cache_service, get_config_service
 
 
@@ -74,7 +75,7 @@ class MemberCRUD:
                 logging.getLogger(__name__).warning(f"Failed to cache member {member_id}: {e}")
 
         return member
-    
+
     @staticmethod
     async def get_by_uin_encrypted(session: AsyncSession, uin_encrypted: str) -> Optional[Member]:
         """根据加密UIN获取成员"""
@@ -142,7 +143,7 @@ class MemberCRUD:
         statement = select(Member).order_by(Member.id)
         result = await session.exec(statement)
         return result.all()
-    
+
     @staticmethod
     async def get_paginated(
         session: AsyncSession,
@@ -153,36 +154,36 @@ class MemberCRUD:
         """分页获取成员列表"""
         # 计算偏移量
         offset = (page - 1) * page_size
-        
+
         # 构建排序字段
         order_field = getattr(Member, order_by, Member.id)
-        
+
         # 查询成员
         statement = select(Member).offset(offset).limit(page_size).order_by(order_field)
         result = await session.exec(statement)
         members = result.all()
-        
+
         # 查询总数
         count_statement = select(func.count(Member.id))
         count_result = await session.exec(count_statement)
         total = count_result.one()
-        
+
         return members, total
-    
+
     @staticmethod
     async def get_by_role(session: AsyncSession, role: int) -> List[Member]:
         """根据角色获取成员"""
         statement = select(Member).where(Member.role == role).order_by(Member.id)
         result = await session.exec(statement)
         return result.all()
-    
+
     @staticmethod
     async def get_by_display_name(session: AsyncSession, display_name: str) -> List[Member]:
         """根据显示名称搜索成员（模糊匹配）"""
         statement = select(Member).where(Member.display_name.contains(display_name)).order_by(Member.id)
         result = await session.exec(statement)
         return result.all()
-    
+
     @staticmethod
     async def update(session: AsyncSession, member_id: int, member_data: MemberUpdate) -> Optional[Member]:
         """更新成员信息"""
@@ -195,8 +196,8 @@ class MemberCRUD:
         for field, value in update_data.items():
             setattr(member, field, value)
 
-        # 更新时间戳
-        member.updated_at = datetime.utcnow()
+        # 更新时间戳（无时区北京时间）
+        member.updated_at = now_naive()
 
         session.add(member)
         await session.commit()
@@ -213,7 +214,7 @@ class MemberCRUD:
             logging.getLogger(__name__).warning(f"Failed to update cache for member {member_id}: {e}")
 
         return member
-    
+
     @staticmethod
     async def delete(session: AsyncSession, member_id: int) -> bool:
         """删除成员"""
@@ -234,40 +235,40 @@ class MemberCRUD:
             logging.getLogger(__name__).warning(f"Failed to delete cache for member {member_id}: {e}")
 
         return True
-    
+
     @staticmethod
     async def count_total(session: AsyncSession) -> int:
         """获取成员总数"""
         statement = select(func.count(Member.id))
         result = await session.exec(statement)
         return result.one()
-    
+
     @staticmethod
     async def count_by_role(session: AsyncSession, role: int) -> int:
         """根据角色统计成员数量"""
         statement = select(func.count(Member.id)).where(Member.role == role)
         result = await session.exec(statement)
         return result.one()
-    
+
     @staticmethod
     async def get_latest_members(session: AsyncSession, limit: int = 10) -> List[Member]:
         """获取最新加入的成员"""
         statement = select(Member).order_by(Member.created_at.desc()).limit(limit)
         result = await session.exec(statement)
         return result.all()
-    
+
     @staticmethod
     async def get_active_members(session: AsyncSession, days: int = 30) -> List[Member]:
         """获取最近活跃的成员（根据最后发言时间）"""
         from datetime import timedelta
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
-        
+        cutoff_date = now_naive() - timedelta(days=days)
+
         statement = select(Member).where(
             Member.last_speak_time >= cutoff_date
         ).order_by(Member.last_speak_time.desc())
         result = await session.exec(statement)
         return result.all()
-    
+
     @staticmethod
     async def bulk_create(session: AsyncSession, members_data: List[MemberCreate]) -> List[Member]:
         """批量创建成员"""
@@ -295,7 +296,7 @@ class MemberCRUD:
             logging.getLogger(__name__).warning(f"Failed to cache bulk created members: {e}")
 
         return members
-    
+
     @staticmethod
     async def exists_by_uin_encrypted(session: AsyncSession, uin_encrypted: str) -> bool:
         """检查加密UIN是否已存在"""

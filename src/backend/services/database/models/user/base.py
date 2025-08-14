@@ -5,6 +5,9 @@
 from datetime import datetime
 from typing import Optional
 from sqlmodel import SQLModel, Field
+from pydantic import field_validator, model_validator
+
+from backend.services.database.models.base import now_naive, to_naive_beijing
 
 
 class User(SQLModel, table=True):
@@ -30,12 +33,45 @@ class User(SQLModel, table=True):
     # 绑定的成员ID（唯一，一对一绑定）
     member_id: Optional[int] = Field(default=None, foreign_key="members.id", unique=True, index=True)
 
-    # 时间戳
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    # 时间戳（无时区北京时间）
+    created_at: datetime = Field(default_factory=now_naive)
+    updated_at: datetime = Field(default_factory=now_naive)
 
-    # 最后登录时间
+    # 最后登录时间（无时区北京时间）
     last_login: Optional[datetime] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_time_fields(cls, data):
+        if isinstance(data, dict):
+            for key in ("created_at", "updated_at", "last_login"):
+                v = data.get(key)
+                if isinstance(v, str):
+                    try:
+                        dt = datetime.fromisoformat(v.replace("Z", "+00:00"))
+                    except Exception as e:
+                        raise ValueError(f"Invalid datetime string for {key}: {v}") from e
+                    data[key] = to_naive_beijing(dt)
+        return data
+
+    def model_post_init(self, __context) -> None:  # type: ignore[override]
+        for key in ("created_at", "updated_at", "last_login"):
+            v = getattr(self, key, None)
+            if isinstance(v, str):
+                try:
+                    dt = datetime.fromisoformat(v.replace("Z", "+00:00"))
+                except Exception as e:
+                    raise ValueError(f"Invalid datetime string for {key}: {v}") from e
+                setattr(self, key, to_naive_beijing(dt))
+
+    @field_validator("last_login", "created_at", "updated_at", mode="before")
+    @classmethod
+    def _v_ts(cls, v):
+        if v is None:
+            return v
+        if isinstance(v, str):
+            v = datetime.fromisoformat(v.replace("Z", "+00:00"))
+        return to_naive_beijing(v)
 
 
 class UserCreate(SQLModel):

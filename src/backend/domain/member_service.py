@@ -3,11 +3,13 @@
 """
 import secrets
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, Tuple, Dict, Any
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from services.database.models.member import Member, MemberCreate, MemberCRUD, MemberUpdate
+from backend.services.database.models.base import to_naive_beijing
+
 from services.database.models import ActivityCRUD
 from services.database.models.comment.crud import CommentCRUD
 from schema.member import MemberResponse, MemberDetailResponse, ImportMemberRequest
@@ -141,8 +143,8 @@ class MemberService:
             uin_encrypted=encrypted_uin,
             salt=salt,
             role=member_data.role,
-            join_time=datetime.fromtimestamp(member_data.join_time),
-            last_speak_time=datetime.fromtimestamp(member_data.last_speak_time) if member_data.last_speak_time else None,
+            join_time=to_naive_beijing(datetime.fromtimestamp(member_data.join_time, tz=timezone.utc)),
+            last_speak_time=to_naive_beijing(datetime.fromtimestamp(member_data.last_speak_time, tz=timezone.utc)) if member_data.last_speak_time else None,
             level_point=member_data.lv.get("point", 0),
             level_value=member_data.lv.get("level", 1),
             q_age=member_data.qage or 0
@@ -206,7 +208,7 @@ class MemberService:
                     group_nick=group_nick,
                     qq_nick=qq_nick,
                     role=md.role,
-                    last_speak_time=datetime.fromtimestamp(md.last_speak_time) if md.last_speak_time else None,
+                    last_speak_time=to_naive_beijing(datetime.fromtimestamp(md.last_speak_time, tz=timezone.utc)) if md.last_speak_time else None,
                     level_point=md.lv.get("point", 0) if md.lv else None,
                     level_value=md.lv.get("level", 1) if md.lv else None,
                     q_age=md.qage or 0
@@ -227,8 +229,8 @@ class MemberService:
                     uin_encrypted=encrypted_uin,
                     salt=salt,
                     role=md.role,
-                    join_time=datetime.fromtimestamp(md.join_time),
-                    last_speak_time=datetime.fromtimestamp(md.last_speak_time) if md.last_speak_time else None,
+                    join_time=to_naive_beijing(datetime.fromtimestamp(md.join_time, tz=timezone.utc)),
+                    last_speak_time=to_naive_beijing(datetime.fromtimestamp(md.last_speak_time, tz=timezone.utc)) if md.last_speak_time else None,
                     level_point=md.lv.get("point", 0) if md.lv else 0,
                     level_value=md.lv.get("level", 1) if md.lv else 1,
                     q_age=md.qage or 0
