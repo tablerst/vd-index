@@ -8,6 +8,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+import orjson
 from alembic import command
 from alembic.config import Config
 from loguru import logger
@@ -18,6 +19,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from . import models
+from .models.base import orjson_dumps, orjson_dumps_compact
 
 
 class DatabaseService:
@@ -63,6 +65,8 @@ class DatabaseService:
             echo=False,  # 可以根据需要设置为 True 来调试 SQL
             pool_size=10,
             max_overflow=20,
+            json_serializer=orjson_dumps_compact,
+            json_deserializer=orjson.loads,
         )
 
     @retry(wait=wait_fixed(2), stop=stop_after_attempt(10))

@@ -23,3 +23,7 @@ def orjson_dumps(v, *, default=None, sort_keys=False, indent_2=True):
     if default is None:
         return orjson.dumps(v, option=option).decode()
     return orjson.dumps(v, default=default, option=option).decode()
+
+def orjson_dumps_compact(v):
+    # 无缩进、无排序，最紧凑；适合入库/网络传输
+    return orjson.dumps(v).decode()
