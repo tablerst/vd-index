@@ -87,6 +87,7 @@ class UserRead(SQLModel):
     """读取用户的数据模型"""
     id: int
     username: str
+    member_id: int
     role: str
     is_active: bool
     created_at: datetime

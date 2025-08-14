@@ -14,6 +14,7 @@ export interface User {
   role: string
   is_active: boolean
   created_at: string
+  member_id?: number // 中文注释：后端 /auth/me 返回的绑定成员ID，用于头像/权限等
 }
 
 export interface LoginCredentials {

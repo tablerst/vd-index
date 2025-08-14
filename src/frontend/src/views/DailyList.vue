@@ -62,7 +62,7 @@
     </footer>
 
     <!-- 登录/注册模态（内置表单，不跳转页面） -->
-    <n-modal v-model:show="showLoginModal" preset="dialog" title="账号" :mask-closable="true">
+    <n-modal v-model:show="showLoginModal" preset="dialog" title="账号" :mask-closable="registerStep !== 2" :close-on-esc="registerStep !== 2" :closable="registerStep !== 2">
       <div class="login-modal-body">
         <n-tabs v-model:value="authTab" type="line">
           <n-tab-pane name="login" tab="登录">
@@ -204,17 +204,32 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
 // 用户头像：优先使用绑定成员头像（若后端暂未返回member_id则回退为DiceBear）
 // TODO: 后端 /auth/me 返回 member_id 后可在此优先使用 api.getAvatarUrl(member_id)
 const fallbackAvatar = computed(() => `https://api.dicebear.com/7.x/avataaars/svg?seed=${authStore.user?.username || 'guest'}`)
-const userAvatar = computed(() => fallbackAvatar.value)
+const memberId = computed(() => authStore.user?.member_id as number | undefined)
+const avatarVersion = ref(0) // 中文注释：绑定成功后递增以刷新头像缓存
+const userAvatar = computed(() => {
+  if (memberId.value) {
+    const base = apiClient.getAvatarUrl(memberId.value)
+    return avatarVersion.value ? `${base}?v=${avatarVersion.value}` : base
+  }
+  return fallbackAvatar.value
+})
 
 // 统一用户头像尺寸
 const avatarSize = 36
 
-// 用户下拉菜单
-const userMenuOptions = [
-  { label: '修改密码', key: 'change-password' },
-  { label: '编辑个人资料', key: 'edit-profile' },
-  { label: '退出登录', key: 'logout' }
-]
+// 用户下拉菜单（未绑定时动态增加“绑定成员”）
+const isBound = computed(() => Boolean(authStore.user?.member_id))
+const userMenuOptions = computed(() => {
+  const options = [
+    { label: '修改密码', key: 'change-password' },
+    { label: '编辑个人资料', key: 'edit-profile' },
+    { label: '退出登录', key: 'logout' }
+  ] as Array<{ label: string; key: string }>
+  if (!isBound.value) {
+    options.unshift({ label: '绑定成员', key: 'bind-member' })
+  }
+  return options
+})
 
 // 修改密码弹窗与表单（先在本页用 Modal 完成交互）
 const showChangePassword = ref(false)
@@ -253,6 +268,16 @@ async function submitChangePassword() {
 }
 
 function handleUserMenu(key: string) {
+  if (key === 'bind-member') {
+    // 中文注释：未绑定时从菜单进入绑定步骤
+    showLoginModal.value = true
+    authTab.value = 'register'
+    registerStep.value = 2
+    bindError.value = ''
+    bindForm.value = { member_id: null, uin: '' }
+    loadBindableMembers()
+    return
+  }
   if (key === 'change-password') {
     showChangePassword.value = true
     return
@@ -443,6 +468,21 @@ async function loadBindableMembers() {
   }
 }
 
+async function waitForAvatarReady(memberId: number, retries = 5, delayMs = 800): Promise<boolean> {
+  // 中文注释：轮询头像是否可用（HEAD 200），用于绑定后后端生成头像存在延迟的情况
+  for (let i = 0; i < retries; i++) {
+    try {
+      const url = apiClient.getAvatarUrl(memberId) + `?t=${Date.now()}`
+      const res = await fetch(url, { method: 'HEAD', cache: 'no-store' })
+      if (res.ok) return true
+    } catch (_) {
+      // 忽略网络错误，继续重试
+    }
+    await new Promise(resolve => setTimeout(resolve, delayMs))
+  }
+  return false
+}
+
 async function handleBind() {
   if (!bindFormRef.value) return
   try {
@@ -453,6 +493,17 @@ async function handleBind() {
     const res = await apiClient.bindMember(payload)
     if (res?.success) {
       message.success('绑定成功')
+      // 绑定成功后刷新用户信息，确保拿到最新 member_id
+      try {
+        await authStore.validateToken()
+      } catch (e) {
+        console.warn('刷新用户信息失败，但继续后续流程', e)
+      }
+      // 若后端异步生成头像文件，等待头像可用（HEAD 200）再强制刷新
+      if (memberId.value) {
+        await waitForAvatarReady(memberId.value, 6, 800)
+        avatarVersion.value++
+      }
       showLoginModal.value = false
       // 重置注册流程，方便下次打开
       authTab.value = 'login'
