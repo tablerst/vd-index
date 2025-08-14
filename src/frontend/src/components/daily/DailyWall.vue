@@ -59,7 +59,17 @@ const titleTextRef = ref<HTMLElement | null>(null)
 const moreBarRef = ref<HTMLElement | null>(null)
 const gooeyRef = ref<HTMLElement | null>(null)
 const paused = ref(false)
-const marqueePosts = computed(() => posts.value.length ? [...posts.value, ...posts.value] : [])
+// 中文注释：保证最少 12 条，若不足则循环复用后端返回的条目进行补齐；再复制一份以实现无缝滚动
+const marqueePosts = computed(() => {
+  const base = posts.value
+  if (!base.length) return []
+  const MIN = 12
+  const filled = base.length >= MIN
+    ? base
+    : Array.from({ length: MIN }, (_, i) => base[i % base.length])
+  // 返回双份内容：上/下两条轨道动画按 scrollWidth/2 计算，要求内容成对
+  return [...filled, ...filled]
+})
 const trackTop = ref<HTMLElement | null>(null)
 const trackBottom = ref<HTMLElement | null>(null)
 
