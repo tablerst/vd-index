@@ -140,8 +140,8 @@ class ActivityCRUD:
 
         # 更新字段
         update_data = activity_data.model_dump(exclude_unset=True)
-        for field, value in update_data.items():
-            setattr(activity, field, value)
+
+        activity.sqlmodel_update(update_data)
 
         # 如果更新了参与成员列表，重新计算总数
         if 'participant_ids' in update_data:
@@ -150,7 +150,6 @@ class ActivityCRUD:
         # 更新时间戳
         activity.updated_at = now_naive()
 
-        session.add(activity)
         await session.commit()
         await session.refresh(activity)
         return activity

@@ -4,7 +4,7 @@
 from datetime import datetime
 from typing import Optional
 from sqlmodel import SQLModel, Field
-from pydantic import field_validator, model_validator
+from pydantic import ConfigDict, field_validator, model_validator
 
 from ..base import now_naive, to_naive_beijing
 
@@ -13,6 +13,7 @@ class Config(SQLModel, table=True):
     """配置表"""
     __tablename__ = "config"
     __table_args__ = {'extend_existing': True}
+    model_config = ConfigDict(validate_assignment=True)
 
     id: Optional[int] = Field(default=None, primary_key=True)
     key: str = Field(max_length=100, unique=True, index=True)

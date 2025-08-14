@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from sqlmodel import SQLModel, Field
 from sqlalchemy.dialects.postgresql import JSONB
-from pydantic import field_validator, model_validator
+from pydantic import ConfigDict, field_validator, model_validator
 
 from ..base import now_naive, to_naive_beijing
 
@@ -12,6 +12,7 @@ class DailyPost(SQLModel, table=True):
     """Daily posts table model."""
     __tablename__ = "daily_posts"
     __table_args__ = {"extend_existing": True}
+    model_config = ConfigDict(validate_assignment=True)
 
     id: Optional[int] = Field(default=None, primary_key=True)
 

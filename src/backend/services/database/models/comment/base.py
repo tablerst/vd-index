@@ -5,7 +5,7 @@
 from datetime import datetime, timezone
 from typing import Optional
 from sqlmodel import SQLModel, Field
-from pydantic import field_serializer, field_validator, model_validator
+from pydantic import ConfigDict, field_serializer, field_validator, model_validator
 
 from ..base import now_naive, to_naive_beijing
 
@@ -14,6 +14,7 @@ class Comment(SQLModel, table=True):
     """评论模型"""
     __tablename__ = "comments"
     __table_args__ = {'extend_existing': True}
+    model_config = ConfigDict(validate_assignment=True)
     
     # 主键
     id: Optional[int] = Field(default=None, primary_key=True)

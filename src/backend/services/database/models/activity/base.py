@@ -1,7 +1,7 @@
 from __future__ import annotations
 from datetime import datetime, timezone
 from typing import List, Optional
-from pydantic import field_validator, model_validator
+from pydantic import ConfigDict, field_validator, model_validator
 from sqlmodel import SQLModel, Field
 from sqlalchemy.dialects.postgresql import JSONB
 
@@ -13,6 +13,7 @@ class Activity(SQLModel, table=True):
 
     __tablename__ = "activities"
     __table_args__ = {"extend_existing": True}
+    model_config = ConfigDict(validate_assignment=True)
 
     id: Optional[int] = Field(default=None, primary_key=True)
     title: str = Field(max_length=100, index=True)
