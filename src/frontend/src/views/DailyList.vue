@@ -46,6 +46,31 @@
         </div>
       </n-spin>
       <div v-if="error" class="error">{{ error }}</div>
+
+      <!-- 左下角浮动“+”按钮（已登录显示） -->
+      <n-button
+        class="fab"
+        circle
+        type="primary"
+        size="large"
+        @click="openEditor"
+        title="发布日常"
+        aria-label="新建日常"
+      >+
+      </n-button>
+
+      <!-- 编辑器模态框 -->
+      <n-modal
+        v-model:show="showEditor"
+        preset="card"
+        :title="'发布日常'"
+        :mask-closable="false"
+        class="daily-editor-modal"
+        :style="editorModalStyle"
+        :content-style="editorModalContentStyle"
+      >
+        <DailyEditor :autosave-key="'daily_editor_autosave'" @save="handleEditorSave" @cancel="closeEditor" />
+      </n-modal>
     </main>
 
     <!-- 4) 分页组件（底部可见） -->
@@ -149,6 +174,7 @@
 import { ref, onMounted, watch, nextTick, onUnmounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import DailyCard from '@/components/daily/DailyCard.vue'
+import DailyEditor from '@/components/daily/DailyEditor.vue'
 import { dailyApi, type DailyPostItem } from '@/services/daily'
 import { useAuthStore } from '@/stores/auth'
 
@@ -164,6 +190,13 @@ const pageSize = ref(20)
 const total = ref(0)
 const loading = ref(false)
 const error = ref('')
+
+// 编辑器状态
+const showEditor = ref(false)
+
+// Modal 尺寸（确保不占满屏）
+const editorModalStyle = { width: 'min(820px, 80vw)', maxWidth: '80vw' }
+const editorModalContentStyle = { maxHeight: '60vh', overflow: 'auto' }
 
 // 筛选（作者/标签/日期范围）
 const authorUserId = ref<number | null>(null)
@@ -526,6 +559,32 @@ watch([authorUserId, tag, dateRange], () => { page.value = 1; fetchList() })
 
 
 onMounted(fetchList)
+
+// 打开/关闭编辑器
+function openEditor() {
+  if (!isAuthenticated.value) {
+    message.info('请先登录')
+    showLoginModal.value = true
+    return
+  }
+  showEditor.value = true
+}
+function closeEditor() { showEditor.value = false }
+
+// 处理保存
+async function handleEditorSave(json: Record<string, any>) {
+  try {
+    await dailyApi.createPost({ content_jsonb: json, published: true })
+    message.success('发布成功')
+    // 清除本地草稿
+    try { localStorage.removeItem('daily_editor_autosave') } catch {}
+    showEditor.value = false
+    // 刷新列表
+    await fetchList()
+  } catch (e: any) {
+    message.error(e?.message || '发布失败')
+  }
+}
 onUnmounted(() => { cleanupFns.forEach(fn => { try { fn() } catch { } }); cleanupFns = [] })
 </script>
 
@@ -814,4 +873,26 @@ onUnmounted(() => { cleanupFns.forEach(fn => { try { fn() } catch { } }); cleanu
   color: var(--text-secondary, #bbb);
   margin: 0 0 4px;
 }
+.fab {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 50;
+  width: 44px;
+  height: 44px;
+  font-size: 24px;
+  border-radius: 50%;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+/* DailyEditor modal 尺寸与滚动控制 */
+.daily-editor-modal :deep(.n-card) {
+  width: min(800px, 80vw);
+  max-width: 80vw;
+}
+.daily-editor-modal :deep(.n-card__content) {
+  max-height: 60vh;
+  overflow: auto;
+}
+
 </style>

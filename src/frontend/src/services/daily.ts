@@ -1,11 +1,14 @@
 // Daily Posts API 封装（独立文件，避免污染 api.ts 类）
 // 代码注释：中文
 
+import { RequestInterceptor, TokenRefreshManager } from '@/utils/token'
+
 export interface DailyPostItem {
   id: number
   author_user_id: number
   author_display_name?: string | null
   author_avatar_url?: string | null
+  content_jsonb?: Record<string, any> | null
   content?: string | null
   images: string[]
   tags: string[]
@@ -89,8 +92,23 @@ function buildMockPosts(count: number = 16): DailyPostItem[] {
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`
-  const resp = await fetch(url, options)
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+
+  // 自动刷新Token并注入认证头
+  await TokenRefreshManager.autoRefreshToken()
+  const config = RequestInterceptor.addAuthHeader({
+    headers: {
+      ...options.headers,
+    },
+    ...options,
+  })
+
+  const resp = await fetch(url, config)
+  if (!resp.ok) {
+    // 简化错误信息（尽量读取detail）
+    const err = await resp.json().catch(() => ({} as any))
+    const msg = (err && (err.detail || err.message)) || `HTTP ${resp.status}`
+    throw new Error(msg)
+  }
   return resp.json()
 }
 
@@ -124,7 +142,7 @@ export const dailyApi = {
     return request<DailyPostItem>(`/api/v1/daily/posts/${id}`)
   },
   // 创建帖子（需要鉴权）
-  async createPost(payload: { content?: string; images?: string[]; tags?: string[]; published?: boolean }): Promise<DailyPostItem> {
+  async createPost(payload: { content_jsonb?: Record<string, any>; content?: string; images?: string[]; tags?: string[]; published?: boolean }): Promise<DailyPostItem> {
     return request<DailyPostItem>(`/api/v1/daily/posts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

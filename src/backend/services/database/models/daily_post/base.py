@@ -1,6 +1,6 @@
 from __future__ import annotations
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from sqlmodel import SQLModel, Field
 from sqlalchemy.dialects.postgresql import JSONB
@@ -19,10 +19,13 @@ class DailyPost(SQLModel, table=True):
     # Author user id (FK -> users.id)
     author_user_id: int = Field(foreign_key="users.id", index=True)
 
-    # Main content text
+    # Main rich content JSONB (Tiptap full JSON)
+    content_jsonb: Optional[Dict[str, Any]] = Field(default=None, sa_type=JSONB)
+
+    # Derived summary text (first paragraph plain text)
     content: Optional[str] = Field(default=None, max_length=2000)
 
-    # Images and tags as JSON arrays
+    # Images and tags as JSON arrays (images[0] should mirror first image from content_jsonb when available)
     images: List[str] = Field(sa_type=JSONB, default_factory=list)
     tags: List[str] = Field(sa_type=JSONB, default_factory=list)
 
@@ -73,7 +76,10 @@ class DailyPost(SQLModel, table=True):
 
 
 class DailyPostCreate(SQLModel):
-    """Payload to create a DailyPost."""
+    """Payload to create a DailyPost.
+    Backward compatible: either provide content_jsonb (preferred) or legacy content/images.
+    """
+    content_jsonb: Optional[Dict[str, Any]] = None
     content: Optional[str] = Field(default=None, max_length=2000)
     images: List[str] = Field(default_factory=list)
     tags: List[str] = Field(default_factory=list)
@@ -84,6 +90,7 @@ class DailyPostRead(SQLModel):
     """Read model for DailyPost."""
     id: int
     author_user_id: int
+    content_jsonb: Optional[Dict[str, Any]] = None
     content: Optional[str]
     images: List[str]
     tags: List[str]
@@ -96,7 +103,10 @@ class DailyPostRead(SQLModel):
 
 
 class DailyPostUpdate(SQLModel):
-    """Patch-update model for DailyPost."""
+    """Patch-update model for DailyPost.
+    Backward compatible: allow updating content_jsonb or legacy fields.
+    """
+    content_jsonb: Optional[Dict[str, Any]] = None
     content: Optional[str] = None
     images: Optional[List[str]] = None
     tags: Optional[List[str]] = None

@@ -50,6 +50,19 @@ async def _get_author_info(session: AsyncSession, author_user_id: int):
 
 async def _to_post_item(session: AsyncSession, post) -> DailyPostItem:
     base = post.model_dump()
+
+    # 中文注释：兼容历史数据，将 /static/pics/... 统一映射到 /api/v1/daily/pics/...
+    imgs = base.get("images") or []
+    mapped: list[str] = []
+    for u in imgs:
+        if isinstance(u, str) and u.startswith("/static/pics/"):
+            # /static/pics/yyyy/mm/file -> /api/v1/daily/pics/yyyy/mm/file
+            mapped.append(u.replace("/static/pics/", "/api/v1/daily/pics/", 1))
+        else:
+            mapped.append(u)
+    if mapped:
+        base["images"] = mapped
+
     name, avatar = await _get_author_info(session, post.author_user_id)
     if name is not None:
         base["author_display_name"] = name
@@ -208,13 +221,55 @@ async def upload_images(
     images: List[UploadFile] = File(...),
     current_user=Depends(get_current_active_user),
 ):
-    # 保存到 /static/pics/yyyy/mm 并返回 URL
+    # 保存到 /static/pics/yyyy/mm 并返回 URL（已统一到 /api/v1/daily/pics/...）
     from utils.uploads import save_upload_images
     saved = await save_upload_images(images)
+    try:
+        logger.debug(f"daily.upload_images by user={getattr(current_user, 'id', None)} count={len(images)}")
+    except Exception:
+        pass
     return {
         "files": [
             {"name": name, "url": url, "width": width, "height": height}
             for (name, url, width, height) in saved
         ]
     }
+
+
+from fastapi.responses import FileResponse
+import mimetypes
+import re
+from utils.uploads import PICS_ROOT
+
+
+@router.get(
+    "/daily/pics/{year}/{month}/{filename}",
+    summary="获取日常动态图片（字节流）",
+)
+async def get_daily_pic(year: int, month: str, filename: str):
+    # 中文注释：安全校验，禁止路径穿越，仅允许固定格式
+    if not re.fullmatch(r"\d{4}", str(year)):
+        raise HTTPException(status_code=400, detail="Invalid year")
+    if not re.fullmatch(r"\d{2}", month):
+        raise HTTPException(status_code=400, detail="Invalid month")
+    if not re.fullmatch(r"[A-Za-z0-9._-]+", filename):
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    file_path = PICS_ROOT / str(year) / month / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Image not found")
+    mime, _ = mimetypes.guess_type(str(file_path))
+    headers = {
+        "Cache-Control": "public, max-age=31536000",
+        "ETag": f'"{filename}"',
+    }
+    return FileResponse(path=str(file_path), media_type=mime or "application/octet-stream", headers=headers)
+
+
+# 兼容旧数据：/static/pics/... 在生产环境未挂载 /static 时也可工作
+@router.get(
+    "/static/pics/{year}/{month}/{filename}",
+    include_in_schema=False,
+)
+async def get_legacy_daily_pic(year: int, month: str, filename: str):
+    return await get_daily_pic(year, month, filename)
 

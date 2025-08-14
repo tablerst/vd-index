@@ -2,7 +2,7 @@
 CRUD operations for DailyPost
 """
 from __future__ import annotations
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict, Any
 
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -14,10 +14,62 @@ class DailyPostCRUD:
     """CRUD utilities for DailyPost."""
 
     @staticmethod
+    def _extract_from_tiptap(doc: Dict[str, Any] | None) -> tuple[Optional[str], Optional[str]]:
+        """从 tiptap JSON 提取第一段纯文本与第一张图片URL。
+        - 返回 (summary_text, first_image_url)
+        - 若无法提取返回 (None, None)
+        """
+        if not doc or not isinstance(doc, dict):
+            return None, None
+
+        first_image: Optional[str] = None
+        first_text: Optional[str] = None
+
+        def walk(node: Any):
+            nonlocal first_image, first_text
+            if not isinstance(node, dict):
+                return
+            node_type = node.get('type')
+            if node_type == 'image' and first_image is None:
+                # tiptap Image extension usually stores src in attrs.src
+                src = node.get('attrs', {}).get('src') if isinstance(node.get('attrs'), dict) else None
+                if isinstance(src, str) and src:
+                    first_image = src
+            if node_type == 'paragraph' and first_text is None:
+                # 提取 paragraph 下所有 text 节点串联（简单处理）
+                texts: list[str] = []
+                for child in node.get('content', []) or []:
+                    if isinstance(child, dict) and child.get('type') == 'text':
+                        t = child.get('text')
+                        if isinstance(t, str):
+                            texts.append(t)
+                if texts:
+                    first_text = ''.join(texts).strip()
+            # 递归 children
+            for child in node.get('content', []) or []:
+                if isinstance(child, dict):
+                    walk(child)
+
+        walk(doc)
+        return first_text or None, first_image or None
+
+    @staticmethod
     async def create(session: AsyncSession, data: DailyPostCreate, author_user_id: int) -> DailyPost:
+        payload = data.model_dump()
+        content_jsonb = payload.get('content_jsonb')
+        # 从 content_jsonb 提取摘要与首图
+        summary, first_image = DailyPostCRUD._extract_from_tiptap(content_jsonb)
+
+        # 回填旧字段（兼容）
+        if summary:
+            payload['content'] = summary[:2000]
+        if first_image:
+            payload['images'] = [first_image]
+        # 若无 content_jsonb 则沿用传入的 content/images
+
         post = DailyPost(
             author_user_id=author_user_id,
-            **data.model_dump(),
+            **payload,
         )
         session.add(post)
         await session.commit()
@@ -34,6 +86,16 @@ class DailyPostCRUD:
         if not post:
             return None
         update_data = data.model_dump(exclude_unset=True)
+
+        # 若传入 content_jsonb 则自动提取并更新摘要与首图
+        if 'content_jsonb' in update_data and update_data.get('content_jsonb') is not None:
+            summary, first_image = DailyPostCRUD._extract_from_tiptap(update_data.get('content_jsonb'))
+            if summary is not None:
+                update_data['content'] = summary[:2000]
+            # 重置 images 为仅首图，或保留原有其余？本次实现：以首图为主
+            if first_image is not None:
+                update_data['images'] = [first_image]
+
         for k, v in update_data.items():
             setattr(post, k, v)
         await session.commit()

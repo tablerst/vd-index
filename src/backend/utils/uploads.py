@@ -85,8 +85,8 @@ async def save_upload_images(images: List[UploadFile]) -> List[Tuple[str, str, O
         out_path = target_dir / name
         # 写入磁盘
         out_path.write_bytes(data)
-        # 构建 URL（相对后端 static 挂载）
-        url = f"/static/pics/{subdir.as_posix()}/{name}"
+        # 构建 URL：统一通过 API 字节流端点返回，避免生产环境静态挂载差异
+        url = f"/api/v1/daily/pics/{subdir.as_posix()}/{name}"
         results.append((name, url, width, height))
 
     return results
