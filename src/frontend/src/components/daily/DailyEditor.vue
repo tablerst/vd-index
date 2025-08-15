@@ -7,26 +7,19 @@
           <n-button quaternary size="small" :disabled="!editor" @click="editor?.chain().focus().toggleBold().run()"
             :type="isActive('bold') ? 'primary' : 'default'" title="加粗">
             <template #icon>
-              <n-icon size="16" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                  <path d="M7 5h6a4 4 0 1 1 0 8H7V5zm0 10h7a4 4 0 1 1 0 8H7v-8z" />
-                </svg></n-icon>
+              <n-icon size="16" aria-hidden="true"><Bold /></n-icon>
             </template>
           </n-button>
           <n-button quaternary size="small" :disabled="!editor" @click="editor?.chain().focus().toggleItalic().run()"
             :type="isActive('italic') ? 'primary' : 'default'" title="斜体">
             <template #icon>
-              <n-icon size="16"><svg viewBox="0 0 24 20" width="16" height="16" fill="currentColor">
-                  <path d="M10 5v2h2.58l-3.16 10H7v2h7v-2h-2.58l3.16-10H17V5z" />
-                </svg></n-icon>
+              <n-icon size="16"><Italic /></n-icon>
             </template>
           </n-button>
           <n-button quaternary size="small" :disabled="!editor" @click="editor?.chain().focus().toggleStrike().run()"
             :type="isActive('strike') ? 'primary' : 'default'" title="删除线">
             <template #icon>
-              <n-icon size="16"><svg viewBox="0 0 24 18" width="16" height="16" fill="currentColor">
-                  <path
-                    d="M4 12h16v2H4zM7 8c0-2.21 2.46-3 5-3 1.73 0 3.41.41 4.5 1.17l-1.5 1.5C13.99 7.25 12.64 7 12 7c-1.81 0-3 .5-3 1 0 .53.56.92 1.76 1.34L9.5 11H7V8zM15 13l-1.5 3H17v-2c0-.76-.86-1.4-2-1z" />
-                </svg></n-icon>
+              <n-icon size="16"><Strikethrough /></n-icon>
             </template>
           </n-button>
         </div>
@@ -34,19 +27,13 @@
           <n-button quaternary size="small" :disabled="!editor" @click="setHeading(2)"
             :type="isActive('heading', { level: 2 }) ? 'primary' : 'default'" title="二级标题">
             <template #icon>
-              <n-icon size="16"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                  <path
-                    d="M4 5h2v6h6V5h2v14h-2v-6H6v6H4zM18 19h4v-2h-2.6c.22-.5.84-.92 1.6-1.5.78-.6 1.5-1.34 1.5-2.5 0-1.65-1.35-3-3-3-1.2 0-2.23.67-2.72 1.64l1.78.92c.21-.46.6-.76.94-.76.56 0 1 .45 1 1 0 .54-.52.95-1.22 1.5-.95.75-2.28 1.8-2.28 3.2V19z" />
-                </svg></n-icon>
+              <n-icon size="16"><Heading2 /></n-icon>
             </template>
           </n-button>
           <n-button quaternary size="small" :disabled="!editor" @click="setHeading(3)"
             :type="isActive('heading', { level: 3 }) ? 'primary' : 'default'" title="三级标题">
             <template #icon>
-              <n-icon size="16"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                  <path
-                    d="M4 5h2v6h6V5h2v14h-2v-6H6v6H4zM18.5 11c-1.38 0-2.5 1.12-2.5 2.5h2a.5.5 0 1 1 1 0c0 .28-.22.5-.5.5H18v2h.5c.28 0 .5.22.5.5a.5.5 0 1 1-1 0h-2A2.5 2.5 0 1 0 21 14.5 2.5 2.5 0 0 0 18.5 11z" />
-                </svg></n-icon>
+              <n-icon size="16"><Heading3 /></n-icon>
             </template>
           </n-button>
         </div>
@@ -55,28 +42,21 @@
             @click="editor?.chain().focus().toggleBulletList().run()"
             :type="isActive('bulletList') ? 'primary' : 'default'" title="无序列表">
             <template #icon>
-              <n-icon size="16"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                  <path d="M4 7h2v2H4V7zm4 0h12v2H8V7zm-4 6h2v2H4v-2zm4 0h12v2H8v-2zm-4 6h2v2H4v-2zm4 0h12v2H8v-2z" />
-                </svg></n-icon>
+              <n-icon size="16"><List /></n-icon>
             </template>
           </n-button>
           <n-button quaternary size="small" :disabled="!editor"
             @click="editor?.chain().focus().toggleOrderedList().run()"
             :type="isActive('orderedList') ? 'primary' : 'default'" title="有序列表">
             <template #icon>
-              <n-icon size="16"><svg viewBox="0 0 24 20" width="16" height="16" fill="currentColor">
-                  <path
-                    d="M4 6h2V4H3v1h1v1zm0 6h2v-2H3v1h1v1zm0 6h2v-2H3v1h1v1zM8 5h12v2H8V5zm0 6h12v2H8v-2zm0 6h12v2H8v-2z" />
-                </svg></n-icon>
+              <n-icon size="16"><ListOrdered /></n-icon>
             </template>
           </n-button>
         </div>
         <div class="group">
           <n-button quaternary size="small" :disabled="!editor" @click="insertImage" title="插入图片">
             <template #icon>
-              <n-icon size="16"><svg viewBox="0 0 24 22" width="16" height="16" fill="currentColor">
-                  <path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14h18zM5 5h14v8l-3-3-4 5-3-4-4 5V5z" />
-                </svg></n-icon>
+              <n-icon size="16"><ImageIcon /></n-icon>
             </template>
           </n-button>
         </div>
@@ -104,7 +84,9 @@ import { NButton, NIcon, useMessage } from 'naive-ui'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
+import Placeholder from '@tiptap/extension-placeholder'
 import { dailyApi } from '@/services/daily'
+import { Bold, Italic, Strikethrough, Heading2, Heading3, List, ListOrdered, Image as ImageIcon } from 'lucide-vue-next'
 
 const props = defineProps<{ autosaveKey?: string }>()
 const emits = defineEmits<{ (e: 'save', json: Record<string, any>): void; (e: 'cancel'): void }>()
@@ -116,13 +98,35 @@ let autosaveTimer: number | undefined
 
 // 初始化编辑器
 const editor = useEditor({
-  content: '<p>分享你的日常…</p>',
+  content: '',
   extensions: [
     StarterKit,
-    Image.configure({ inline: true, allowBase64: true })
+    Image.configure({ inline: true, allowBase64: true }),
+    // Placeholder: Notion-like hint text
+    Placeholder.configure({
+      placeholder: '输入 “/” 以插入块，或开始输入…',
+      includeChildren: true
+    })
   ],
   editorProps: {
-    attributes: { class: 'prose prose-invert focus:outline-none' }
+    attributes: {
+      // Attach typography and Notion-like classes on ProseMirror root
+      class: [
+        'tiptap',
+        'ProseMirror',
+        'prose', // Tailwind Typography
+        'prose-notion',
+        'prose-invert',
+        'max-w-none',
+        'focus:outline-none',
+        // Fine-tune: headings weight, paragraph leading, list spacing, image radius/shadow
+        'prose-headings:font-semibold',
+        'prose-p:leading-7',
+        'prose-li:my-0.5',
+        'prose-img:rounded-lg',
+        'prose-img:shadow-md'
+      ].join(' ')
+    }
   }
 })
 
@@ -300,4 +304,31 @@ onUnmounted(() => {
 .tiptap-content :deep(p) {
   margin: 0.5em 0;
 }
+.tiptap-content { display:flex; justify-content:center; }
+.tiptap-content :deep(.ProseMirror){ width:100%; max-width:720px; margin:0 auto; line-height:1.75; font-size:15px; }
+.tiptap-content :deep(h1,h2,h3){ line-height:1.25; font-weight:700; }
+.tiptap-content :deep(h1){ font-size:28px; margin:1.2em 0 .6em; }
+.tiptap-content :deep(h2){ font-size:22px; margin:1.1em 0 .5em; }
+.tiptap-content :deep(h3){ font-size:18px; margin:1em 0 .4em; }
+.tiptap-content :deep(blockquote){ margin:.8em 0; padding:.6em .9em; border-left:3px solid color-mix(in oklch, var(--primary) 40%, white); background: color-mix(in oklch, var(--glass-bg) 88%, transparent); border-radius:8px; }
+.tiptap-content :deep(hr){ border:none; height:1px; background: color-mix(in oklch, var(--glass-border) 80%, transparent); margin:1.2em 0; }
+.tiptap-content :deep(p,ul,ol,blockquote,h1,h2,h3){ position:relative; }
+.tiptap-content :deep(p:hover,ul:hover,ol:hover,blockquote:hover,h1:hover,h2:hover,h3:hover)::before{
+  content:'⋮⋮'; position:absolute; left:-24px; top:.1em; font-size:14px; opacity:.35; cursor:grab; user-select:none;
+}
+.tiptap-content :deep(ul){ list-style: disc outside; padding-left:1.5rem; margin:.5em 0; }
+.tiptap-content :deep(ol){ list-style: decimal outside; padding-left:1.5rem; margin:.5em 0; }
+.tiptap-content :deep(li){ margin:.25em 0; }
+.tiptap-content :deep(.ProseMirror:focus),
+.tiptap-content :deep(.ProseMirror-focused){ outline: none; }
+
+/* 中文注释：占位符样式（Notion 风格的淡色提示） */
+.tiptap-content :deep(p.is-editor-empty:first-child::before){
+  content: attr(data-placeholder);
+  color: color-mix(in oklch, var(--text-primary) 45%, transparent);
+  pointer-events: none;
+  height: 0;
+  float: left;
+}
+
 </style>
