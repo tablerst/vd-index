@@ -1,5 +1,12 @@
 <template>
-  <div class="daily-card">
+  <div
+    class="daily-card"
+    role="button"
+    tabindex="0"
+    @click="$emit('open', post.id)"
+    @keydown.enter.prevent="$emit('open', post.id)"
+    @keydown.space.prevent="$emit('open', post.id)"
+  >
     <!-- 主图区域 -->
     <div class="cover">
       <img v-if="firstImage" :src="firstImage" alt="cover" loading="lazy" decoding="async" />
@@ -32,11 +39,12 @@
 </template>
 
 <script setup lang="ts">
-// 中文注释：展示单条 DailyPost 卡片，暗色主题变量适配；移除持续动画与 hover 状态，降低并行动画负载
+// 中文注释：展示单条 DailyPost 卡片，支持点击/键盘打开详情
 import { computed } from 'vue'
 import type { DailyPostItem } from '@/services/daily'
 
 const props = defineProps<{ post: DailyPostItem }>()
+const emit = defineEmits<{ (e: 'open', id: number): void }>()
 const firstImage = computed(() => props.post.images?.[0] || '')
 
 function formatTime(iso: string) {
@@ -51,7 +59,7 @@ function formatTime(iso: string) {
 </script>
 
 <style scoped>
-/* 中文注释：颜色使用主题变量，卡片有轻微内阴影，暗色适配 */
+/* 中文注释：颜色使用主题变量，卡片有轻微内阴影，暗色适配；可点击指针 */
 .daily-card {
   background: var(--glass-bg);
   color: var(--text-primary);
@@ -61,6 +69,7 @@ function formatTime(iso: string) {
   display: flex;
   flex-direction: column;
   transition: transform .25s ease, box-shadow .25s ease, opacity .25s ease;
+  cursor: pointer;
 }
 
 .daily-card:hover {
@@ -70,6 +79,8 @@ function formatTime(iso: string) {
 
 .daily-card:focus-within {
   transform: scale(1.015);
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--primary) 28%, transparent);
 }
 
 .cover {
@@ -148,6 +159,7 @@ function formatTime(iso: string) {
   font-size: 12px;
   white-space: nowrap;
 }
+</style>
 
 .stats {
   display: flex;

@@ -10,6 +10,7 @@ const Home = () => import('@/views/Home.vue')
 const BadgePreview = () => import('@/views/BadgePreview.vue')
 const Login = () => import('@/views/Login.vue')
 const DailyList = () => import('@/views/DailyList.vue')
+const DailyDetail = () => import('@/views/DailyDetail.vue')
 const SettingsLayout = () => import('@/views/settings/SettingsLayout.vue')
 const MemberManagement = () => import('@/views/settings/MemberManagement.vue')
 const ActivityManagement = () => import('@/views/settings/ActivityManagement.vue')
@@ -40,6 +41,12 @@ const routes = [
     meta: {
       title: '群员日常'
     }
+  },
+  {
+    path: '/daily/:id',
+    name: 'DailyDetail',
+    component: DailyDetail,
+    meta: { title: '日常详情' }
   },
   {
     path: '/login',

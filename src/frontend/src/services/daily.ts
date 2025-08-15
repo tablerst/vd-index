@@ -150,7 +150,7 @@ export const dailyApi = {
     })
   },
   // 更新帖子
-  async updatePost(id: number, payload: Partial<{ content: string; images: string[]; tags: string[]; published: boolean; likes_count: number; comments_count: number }>): Promise<DailyPostItem> {
+  async updatePost(id: number, payload: Partial<{ content_jsonb: Record<string, any>; content: string; images: string[]; tags: string[]; published: boolean; likes_count: number; comments_count: number }>): Promise<DailyPostItem> {
     return request<DailyPostItem>(`/api/v1/daily/posts/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },

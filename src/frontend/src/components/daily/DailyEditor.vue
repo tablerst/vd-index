@@ -88,7 +88,7 @@ import Placeholder from '@tiptap/extension-placeholder'
 import { dailyApi } from '@/services/daily'
 import { Bold, Italic, Strikethrough, Heading2, Heading3, List, ListOrdered, Image as ImageIcon } from 'lucide-vue-next'
 
-const props = defineProps<{ autosaveKey?: string }>()
+const props = defineProps<{ autosaveKey?: string; initialContent?: Record<string, any> | null }>()
 const emits = defineEmits<{ (e: 'save', json: Record<string, any>): void; (e: 'cancel'): void }>()
 
 const message = useMessage()
@@ -98,7 +98,7 @@ let autosaveTimer: number | undefined
 
 // 初始化编辑器
 const editor = useEditor({
-  content: '',
+  content: props.initialContent || '',
   extensions: [
     StarterKit,
     Image.configure({ inline: true, allowBase64: true }),
@@ -181,8 +181,10 @@ function doAutosave() {
 }
 
 onMounted(() => {
-  // 恢复本地草稿
-  if (props.autosaveKey) {
+  // 恢复本地草稿（若传入 initialContent 则优先生效）
+  if (props.initialContent) {
+    try { editor?.value?.commands.setContent(props.initialContent, { emitUpdate: false }) } catch {}
+  } else if (props.autosaveKey) {
     try {
       const raw = localStorage.getItem(props.autosaveKey)
       if (raw) {

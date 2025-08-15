@@ -42,7 +42,7 @@
       <n-spin :show="loading" size="large" class="masonry-spin">
         <template #description>正在加载</template>
         <div class="masonry" ref="masonryRef">
-          <DailyCard v-for="p in displayedPosts" :key="p.id" :post="p" class="masonry-item" />
+          <DailyCard v-for="p in displayedPosts" :key="p.id" :post="p" class="masonry-item" @open="goDetail" />
         </div>
       </n-spin>
       <div v-if="error" class="error">{{ error }}</div>
@@ -59,7 +59,7 @@
       >+
       </n-button>
 
-      <!-- 编辑器模态框 -->
+      <!-- 发布编辑器模态框（保留） -->
       <n-modal
         v-model:show="showEditor"
         preset="card"
@@ -71,6 +71,8 @@
       >
         <DailyEditor :autosave-key="'daily_editor_autosave'" @save="handleEditorSave" @cancel="closeEditor" />
       </n-modal>
+
+
     </main>
 
     <!-- 4) 分页组件（底部可见） -->
@@ -169,12 +171,14 @@
   </div>
 </template>
 
+
 <script setup lang="ts">
 // 中文注释：重构为四层布局（标题栏/筛选栏/内容/分页），高度严格100vh，正文区域可滚动
 import { ref, onMounted, watch, nextTick, onUnmounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import DailyCard from '@/components/daily/DailyCard.vue'
 import DailyEditor from '@/components/daily/DailyEditor.vue'
+
 import { dailyApi, type DailyPostItem } from '@/services/daily'
 import { useAuthStore } from '@/stores/auth'
 
@@ -246,6 +250,10 @@ const userAvatar = computed(() => {
   }
   return fallbackAvatar.value
 })
+
+function goDetail(id: number) {
+  router.push({ name: 'DailyDetail', params: { id } })
+}
 
 // 统一用户头像尺寸
 const avatarSize = 36
