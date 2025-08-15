@@ -12,18 +12,21 @@
     </header>
 
     <main class="detail-content">
-      <div v-if="loading" class="loading">加载中…</div>
-      <div v-else-if="error" class="error">{{ error }}</div>
-      <template v-else>
-        <DailyEditor
-          v-if="isAuthor(post?.author_user_id)"
-          :initial-content="post?.content_jsonb || undefined"
-          :autosave-key="post ? `daily_edit_${post.id}` : undefined"
-          @save="saveDetail"
-          @cancel="goBack"
-        />
-        <TiptapViewer v-else :doc="post?.content_jsonb || null" />
-      </template>
+      <n-spin :show="loading" size="large" class="detail-spin">
+        <template #description>加载中…</template>
+        <div v-if="error" class="error">{{ error }}</div>
+        <template v-else>
+          <DailyEditor
+            v-if="isAuthor(post?.author_user_id)"
+            class="detail-editor"
+            :initial-content="post?.content_jsonb || undefined"
+            :autosave-key="post ? `daily_edit_${post.id}` : undefined"
+            @save="saveDetail"
+            @cancel="goBack"
+          />
+          <TiptapViewer v-else :doc="post?.content_jsonb || null" />
+        </template>
+      </n-spin>
     </main>
   </div>
 </template>
@@ -34,6 +37,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import DailyEditor from '@/components/daily/DailyEditor.vue'
 import TiptapViewer from '@/components/daily/TiptapViewer.vue'
+import { NSpin } from 'naive-ui'
 import { dailyApi, type DailyPostItem } from '@/services/daily'
 import { useAuthStore } from '@/stores/auth'
 
@@ -102,8 +106,15 @@ onMounted(fetchDetail)
 .author { display:flex; flex-direction:column; }
 .name { font-weight:600; }
 .time { font-size:12px; color: var(--text-secondary); }
-.detail-content { padding: 16px; }
-.loading { padding: 16px; color: var(--text-secondary); }
+.detail-content { padding: 16px; min-height: 50vh; }
+/* 中文注释：让 NSpin 居中显示加载动画与描述文案 */
+.detail-spin { display: block; width: 100%; }
+.detail-spin :deep(.n-spin-body) { min-height: 260px; display: flex; align-items: center; justify-content: center; }
+.detail-spin :deep(.n-spin-content) { width: 100%; }
+
+/* 中文注释：作者编辑模式下，提升编辑器可视高度 */
+.detail-editor :deep(.editor-pane) { min-height: 360px; max-height: 70vh; }
+
 .error { color: #ff6b6b; text-align: center; padding: 16px; }
 </style>
 
