@@ -1,6 +1,6 @@
 <template>
-  <div class="daily-card" role="button" tabindex="0" @click="$emit('open', post.id)"
-    @keydown.enter.prevent="$emit('open', post.id)" @keydown.space.prevent="$emit('open', post.id)">
+  <div class="daily-card" role="button" tabindex="0" @click="emit('open', post.id)"
+    @keydown.enter.prevent="emit('open', post.id)" @keydown.space.prevent="emit('open', post.id)">
     <!-- 主图区域 -->
     <div class="cover">
       <img v-if="firstImage" :src="firstImage" alt="cover" loading="lazy" decoding="async" />

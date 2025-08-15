@@ -75,30 +75,28 @@
           </svg>
         </button>
 
-        <!-- 头像 -->
-        <div class="profile-avatar">
-          <img :src="selectedMember.avatarURL" :alt="selectedMember.groupNick || selectedMember.qqNick || selectedMember.name">
-        </div>
-
-        <!-- 名称区 -->
-        <h3 :id="`member-${selectedMember.id}-title`" class="profile-name">
-          {{ selectedMember.groupNick || selectedMember.qqNick || selectedMember.name }}
-        </h3>
-        <p class="profile-subname" v-if="selectedMember.qqNick && selectedMember.groupNick">
-          QQ：{{ selectedMember.qqNick }}
-        </p>
-
-        <!-- 角色徽章 -->
-        <div class="profile-role" v-if="selectedMember.role !== undefined">
-          <span class="role-badge" :class="`role-${selectedMember.role}`">
-            {{ getRoleText(selectedMember.role) }}
-          </span>
-        </div>
-
-        <!-- 入群时间 -->
-        <div class="join-date" v-if="selectedMember.joinDate">
-          <CalendarIcon class="cal-icon" />
-          <span>{{ formatDate(selectedMember.joinDate) }}</span>
+        <!-- 头部：左右布局 -->
+        <div class="profile-header">
+          <div class="profile-avatar">
+            <img :src="selectedMember.avatarURL" :alt="selectedMember.groupNick || selectedMember.qqNick || selectedMember.name">
+          </div>
+          <div class="profile-info">
+            <h3 :id="`member-${selectedMember.id}-title`" class="profile-name">
+              {{ selectedMember.groupNick || selectedMember.qqNick || selectedMember.name }}
+            </h3>
+            <p class="profile-subname" v-if="selectedMember.qqNick && selectedMember.groupNick">
+              QQ：{{ selectedMember.qqNick }}
+            </p>
+            <div class="profile-role" v-if="selectedMember.role !== undefined">
+              <span class="role-badge" :class="`role-${selectedMember.role}`">
+                {{ getRoleText(selectedMember.role) }}
+              </span>
+            </div>
+            <div class="join-date" v-if="selectedMember.joinDate">
+              <CalendarIcon class="cal-icon" />
+              <span>{{ formatDate(selectedMember.joinDate) }}</span>
+            </div>
+          </div>
         </div>
 
         <!-- 评论区域 -->
@@ -792,6 +790,53 @@ onUnmounted(() => {
       background: var(--primary);
     }
   }
+
+/* 头部左右布局容器：头像在左，信息在右 */
+.profile-header {
+  display: flex;
+  align-items: center; /* 改为垂直居中，使头像中心与右侧内容中心线对齐 */
+  gap: 24px; /* 增加头像与信息的水平间距 */
+  text-align: left; /* 覆盖 modal-content 的居中 */
+  margin-bottom: 12px;
+}
+
+.profile-header .profile-avatar {
+  margin: 0; /* 取消“居中+下边距” */
+  width: 112px; /* 再次调大头像，使视觉权重与信息区域匹配，可根据需要微调 */
+  height: 112px;
+  flex: 0 0 112px;
+}
+
+.profile-info {
+  text-align: left;
+  display: grid; /* 右侧信息使用网格布局，充分利用横向空间 */
+  grid-template-columns: 1fr auto;
+  /* 名字+角色 同一行；subname 独占第二行；日期独占第三行 */
+  grid-template-areas:
+    "name role"
+    "sub  sub"
+    "date date";
+  column-gap: 16px;
+  row-gap: 6px;
+  align-items: center;
+}
+
+/* 指定网格区域与紧凑化间距 */
+.profile-info .profile-name { grid-area: name; margin-bottom: 0; }
+.profile-info .profile-role { grid-area: role; margin: 0; }
+.profile-info .profile-subname { grid-area: sub; margin: 0; }
+.profile-info .join-date { grid-area: date; margin: 0; }
+
+
+@media (max-width: 768px) {
+  .profile-header {
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .profile-header .profile-avatar { width: 80px; height: 80px; flex: 0 0 80px; }
+  .profile-info { display: block; } /* 小屏改回纵向，避免拥挤 */
+}
+
 }
 
 .modal-close {
@@ -812,6 +857,8 @@ onUnmounted(() => {
     background: var(--primary-light);
     border-color: var(--primary);
     transform: scale(1.05);
+
+
   }
 }
 
@@ -853,17 +900,17 @@ onUnmounted(() => {
 }
 
 .profile-role {
-  margin-bottom: 20px;
-  text-align: center;
+  margin-bottom: 12px;
+  text-align: left;
 }
 
 .join-date {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 8px;
-  margin-top: 20px;
-  padding: 12px 16px;
+  margin-top: 12px;
+  padding: 10px 14px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: 12px;
@@ -916,38 +963,70 @@ onUnmounted(() => {
   :deep(.comment-section) {
     padding: 0;
     max-width: none;
+    font-size: 13px;
   }
 
   :deep(.section-header) {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 
     .section-title {
-      font-size: 18px;
+      font-size: 16px;
       justify-content: flex-start;
     }
   }
 
   :deep(.comment-input) {
     padding: 0;
+    font-size: 13px;
 
     .input-container {
       background: var(--glass-bg);
       border-color: var(--glass-border);
       color: var(--text-primary);
     }
+
+    .comment-textarea {
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .input-title {
+      font-size: 16px;
+    }
+
+    .cancel-btn,
+    .submit-btn {
+      font-size: 13px;
+      padding: 6px 12px;
+    }
+
+    .char-count {
+      font-size: 11px;
+    }
   }
 
   :deep(.comment-timeline) {
     padding: 0;
+    font-size: 13px;
 
     .timeline-container {
-      padding-left: 30px;
+      padding-left: 26px;
     }
+
+    .comment-header { font-size: 13px; }
+    .comment-time { font-size: 11px; }
+    .comment-actions { margin-top: 0; }
 
     .comment-box {
       background: var(--glass-bg);
       border-color: var(--glass-border);
       color: var(--text-primary);
+      padding: 14px;
+    }
+
+    .action-btn {
+      font-size: 12px;
+      padding: 6px 10px;
     }
   }
 }
