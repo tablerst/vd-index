@@ -5,11 +5,9 @@
 @use './base.scss';
 @use './components.scss';
 @use './pages/home.scss';
+@use './performance-optimizations.scss';
 
-// 第三方库样式
-@import 'swiper/css';
-@import 'swiper/css/navigation';
-@import 'swiper/css/mousewheel';
-
-// 性能优化样式
-@import './performance-optimizations.scss';
+// 第三方库样式 - 使用 @forward 确保全局可用
+@forward 'swiper/css';
+@forward 'swiper/css/navigation';
+@forward 'swiper/css/mousewheel';

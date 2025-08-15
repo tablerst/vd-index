@@ -3,7 +3,8 @@
     "allow": [
       "mcp__mcp-feedback-enhanced__interactive_feedback",
       "Bash(npm run dev:*)",
-      "mcp__sequential-thinking__sequentialthinking"
+      "mcp__sequential-thinking__sequentialthinking",
+      "Bash(pnpm dev:*)"
     ],
     "deny": []
   }
