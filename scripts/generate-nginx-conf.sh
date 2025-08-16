@@ -91,7 +91,7 @@ http {
         index index.html index.htm;
         
         # API 代理到后端服务
-        location /api/ {
+        location ^~ /api/ {
             proxy_pass http://localhost:8000;
             proxy_set_header Host \$host;
             proxy_set_header X-Real-IP \$remote_addr;

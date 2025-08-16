@@ -261,7 +261,16 @@ export class RequestInterceptor {
    * 处理认证错误响应
    */
   static async handleAuthError(error: any): Promise<any> {
-    const originalRequest = error.config
+    const originalRequest = error.config || {}
+    const url: string | undefined = originalRequest.url || error?.config?.url
+
+    // 对登录/注册等认证端点：交给调用方自行处理错误，不要全局跳转
+    if (error.response?.status === 401 && url && (
+      url.includes('/api/v1/auth/login') ||
+      url.includes('/api/v1/auth/register')
+    )) {
+      return Promise.reject(error)
+    }
 
     // 如果是401错误且还没有重试过
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -271,10 +280,16 @@ export class RequestInterceptor {
       const newToken = await TokenRefreshManager.refreshAccessToken()
       if (newToken) {
         // 更新请求头并重试
+        originalRequest.headers = originalRequest.headers || {}
         originalRequest.headers.Authorization = `Bearer ${newToken}`
         return originalRequest
       } else {
-        // 刷新失败，跳转到登录页
+        // 无可用token或刷新失败：若当前本就未登录，则不强制跳转，交给调用方处理
+        try {
+          const hasToken = !!TokenManager.getAccessToken()
+          if (!hasToken) return Promise.reject(error)
+        } catch {}
+        // 已登录但刷新失败，回到登录页
         window.location.href = '/login'
         return Promise.reject(error)
       }

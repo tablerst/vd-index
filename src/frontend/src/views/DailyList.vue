@@ -2,7 +2,10 @@
   <div class="daily-page">
     <!-- 1) 标题栏 -->
     <header class="header-bar">
-      <h2 class="title">群员日常</h2>
+      <div class="left-area">
+        <n-button size="small" tertiary @click="goHome">返回</n-button>
+        <h2 class="title">群员日常</h2>
+      </div>
       <div class="user-area">
         <!-- 已登录：头像+下拉 -->
         <n-dropdown v-if="isAuthenticated" trigger="click" :options="userMenuOptions" @select="handleUserMenu">
@@ -396,6 +399,12 @@ function runStagger() {
   cleanupFns.push(() => tween.kill())
 }
 
+
+// 中文注释：返回主界面按钮
+function goHome() {
+  router.push('/')
+}
+
 const router = useRouter()
 const route = useRoute()
 
@@ -617,6 +626,12 @@ onUnmounted(() => { cleanupFns.forEach(fn => { try { fn() } catch { } }); cleanu
   font-size: 18px;
   color: var(--text-primary, #fff);
   font-weight: 600;
+}
+
+.left-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .user-area {
