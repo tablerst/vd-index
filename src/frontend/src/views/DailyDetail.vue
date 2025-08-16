@@ -1,7 +1,17 @@
 <template>
   <div class="daily-detail-page">
     <header class="detail-header">
-      <button class="back" @click="goBack">← 返回</button>
+      <n-button
+        class="icon-circle-btn back-btn"
+        circle
+        type="primary"
+        size="small"
+        @click="goBack"
+        title="返回"
+        aria-label="返回"
+      >
+        <ArrowLeft :size="18" />
+      </n-button>
       <div class="meta">
         <img v-if="post?.author_avatar_url" :src="post.author_avatar_url" class="avatar" alt="avatar" />
         <div class="author">
@@ -43,7 +53,8 @@ import { useRoute, useRouter } from 'vue-router'
 import DailyEditor from '@/components/daily/DailyEditor.vue'
 import TiptapViewer from '@/components/daily/TiptapViewer.vue'
 import DailyComments from '@/components/daily/DailyComments.vue'
-import { NSpin } from 'naive-ui'
+import { NSpin, NButton } from 'naive-ui'
+import { ArrowLeft } from 'lucide-vue-next'
 import { dailyApi, type DailyPostItem } from '@/services/daily'
 import { useAuthStore } from '@/stores/auth'
 
@@ -106,7 +117,6 @@ onMounted(fetchDetail)
 /* 中文注释：路由详情页的布局与样式（与列表页风格一致） */
 .daily-detail-page { min-height: 100vh; background: var(--base-dark, #0f0f12); color: var(--text-primary); }
 .detail-header { display:flex; align-items:center; justify-content:space-between; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,.06); }
-.back { background: transparent; border:1px solid var(--glass-border); color: var(--text-primary); border-radius: 8px; padding: 6px 10px; cursor: pointer; }
 .meta { display:flex; align-items:center; gap:12px; }
 .detail-content { padding: 12px 16px; }
 .detail-editor { margin: 0 auto; max-width: 880px; }
@@ -123,6 +133,28 @@ onMounted(fetchDetail)
 
 /* 中文注释：作者编辑模式下，提升编辑器可视高度 */
 .detail-editor :deep(.editor-pane) { min-height: 360px; max-height: 70vh; }
+
+/* 中文注释：圆形主题按钮动效（与列表页一致） */
+.icon-circle-btn :deep(.n-button__content) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.icon-circle-btn.n-button--primary-type {
+  background: var(--primary) !important;
+  border: none !important;
+  color: var(--text-inverse) !important;
+}
+.icon-circle-btn.n-button--primary-type:hover {
+  background: var(--primary-hover) !important;
+  box-shadow: 0 8px 22px rgba(170, 131, 255, 0.25);
+  transform: translateY(-1px);
+}
+.icon-circle-btn.n-button--primary-type:active {
+  background: var(--primary-pressed) !important;
+  transform: translateY(0);
+}
+.icon-circle-btn svg { color: var(--text-inverse); }
 
 .error { color: #ff6b6b; text-align: center; padding: 16px; }
 </style>

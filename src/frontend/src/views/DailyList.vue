@@ -3,7 +3,17 @@
     <!-- 1) 标题栏 -->
     <header class="header-bar">
       <div class="left-area">
-        <n-button size="small" tertiary @click="goHome">返回</n-button>
+        <n-button
+          class="icon-circle-btn back-btn"
+          circle
+          type="primary"
+          size="small"
+          @click="goHome"
+          title="返回"
+          aria-label="返回"
+        >
+          <ArrowLeft :size="18" />
+        </n-button>
         <h2 class="title">群员日常</h2>
       </div>
       <div class="user-area">
@@ -52,14 +62,15 @@
 
       <!-- 左下角浮动“+”按钮（已登录显示） -->
       <n-button
-        class="fab"
+        class="fab icon-circle-btn"
         circle
         type="primary"
         size="large"
         @click="openEditor"
         title="发布日常"
         aria-label="新建日常"
-      >+
+      >
+        <Plus :size="22" />
       </n-button>
 
       <!-- 发布编辑器模态框（保留） -->
@@ -188,6 +199,7 @@ import { useAuthStore } from '@/stores/auth'
 import { NPagination, NDropdown, NAvatar, NButton, NDatePicker, NSelect, NSpace, NModal, NForm, NFormItem, NInput, NSpin, NTabs, NTabPane, useMessage } from 'naive-ui'
 import type { FormInst, FormRules } from 'naive-ui'
 import { gsap } from 'gsap'
+import { ArrowLeft, Plus } from 'lucide-vue-next'
 import { apiClient } from '@/services/api'
 
 // 列表与分页
@@ -634,6 +646,32 @@ onUnmounted(() => { cleanupFns.forEach(fn => { try { fn() } catch { } }); cleanu
   gap: 10px;
 }
 
+/* 中文注释：圆形图标按钮（主题填充 + 微动效），用于返回与新增 */
+.icon-circle-btn :deep(.n-button__content) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.icon-circle-btn.n-button--primary-type {
+  /* 主题色填充背景 */
+  background: var(--primary) !important;
+  border: none !important;
+  color: var(--text-inverse) !important;
+}
+.icon-circle-btn.n-button--primary-type:hover {
+  background: var(--primary-hover) !important;
+  box-shadow: 0 8px 22px rgba(170, 131, 255, 0.25);
+  transform: translateY(-1px);
+}
+.icon-circle-btn.n-button--primary-type:active {
+  background: var(--primary-pressed) !important;
+  transform: translateY(0);
+}
+/* 中文注释：lucide 图标颜色也用主题色的反色，确保明暗主题可见 */
+.icon-circle-btn svg {
+  color: var(--text-inverse);
+}
+
 .user-area {
   display: flex;
   align-items: center;
@@ -901,12 +939,12 @@ onUnmounted(() => { cleanupFns.forEach(fn => { try { fn() } catch { } }); cleanu
   right: 20px;
   bottom: 20px;
   z-index: 50;
-  width: 44px;
-  height: 44px;
-  font-size: 24px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   box-shadow: 0 8px 24px rgba(0,0,0,0.3);
 }
+.fab svg { color: var(--text-inverse); }
 
 /* DailyEditor modal 尺寸与滚动控制 */
 .daily-editor-modal :deep(.n-card) {
