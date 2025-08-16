@@ -165,8 +165,7 @@ uv run pylint .
 ## 开发规范 / Development Standards
 
 ### 后端开发规范 / Backend Standards
-- **API版本控制**: 所有端点统一使用 `/api/v1` 前缀
-- **路由管理**: 使用 `router.py` 集中管理路由
+- **API版本控制**: 所有端点统一使用 `/api/v1` 前缀，使用 `router.py` 集中管理路由
 - **数据库模型组织**:
   ```
   services/database/models/
@@ -177,30 +176,53 @@ uv run pylint .
   ├── config/
   └── comment/
   ```
-- **异步数据库**: 使用 asyncpg + 依赖注入 (services/deps.py)
-- **数据库迁移**: 必须在 src/backend 目录执行 `python -m alembic`
-- **缓存策略**: MemberCache 全局字典缓存，异步安全读写锁
-- **安全设计**: UIN加密在后端处理，前端永不接触真实UIN
+- **异步数据库**: 使用 asyncpg + 依赖注入 (services/deps.py)，连接池配置 size=10, max_overflow=20
+- **数据库迁移**: 必须在 src/backend 目录执行 `python -m alembic revision --autogenerate -m 'xxx'`
+- **时间处理标准**: 所有新时间必须使用 `now_naive()` 返回北京时间 (UTC+8)，定义在 `src/backend/services/database/models/base.py`，替换任何 `datetime.now()/datetime.utcnow()` 的使用
+- **缓存策略**: MemberCache 全局字典缓存，异步安全读写锁，CRUD操作先查缓存→数据库→更新缓存
+- **安全设计**: UIN加密解密从前端移至后端FastAPI服务，前端永不接触真实UIN，使用代理ID系统
+- **认证保护**: 除首页数据端点和认证相关端点外，所有API端点需要JWT认证
+- **数据库设计**: Activity表采用单表JSON存储成员列表+冗余总数字段设计，支持PostgreSQL特性
 
 ### 前端开发规范 / Frontend Standards
-- **技术栈**: Vue3 + TypeScript + Vite + pnpm
-- **UI框架**: NaiveUI (使用官方文档保持一致性)
+- **技术栈**: Vue3 Composition API + TypeScript + Vite + pnpm，NaiveUI组件库 + Pinia状态管理 + Three.js 3D效果 + GSAP动画 + Swiper分页 + SCSS样式系统
+- **UI框架**: NaiveUI (使用官方文档保持一致性)，统一深色主题，n-tag/n-transfer使用深色主题色代替白色
 - **目录结构**:
   ```
   src/frontend/src/
-  ├── components/   # 组件 (HeroSection, MembersCircle, GalaxySlide)
-  ├── views/        # 页面 (Home, Login, Settings/*)
+  ├── components/   # 组件 (HeroSection, MembersCircle, GalaxySlide, Ring2D, MemberStarfield)
+  ├── views/        # 页面 (Home, Login, Settings/*, BadgePreview)
   ├── stores/       # Pinia状态 (auth, members, theme)
-  ├── services/     # API服务
-  ├── composables/  # 组合式函数
+  ├── services/     # API服务 (api.ts 完整后端API接口封装)
+  ├── composables/  # 组合式函数 (useSnapScroll, useDeviceDetection)
   ├── utils/        # 工具函数
   └── styles/       # SCSS模块化样式
   ```
-- **主题系统**: 6层架构 (Pinia→Provider→Config→UI→色彩科学→CSS变量)
-- **测试验证**: 使用 Playwright 进行视觉验证
-- **性能优化**: Canvas需要devicePixelRatio缩放，使用Web Workers
+- **组件架构**: 
+  - 核心组件: HeroSection主页展示、MembersCircle成员圆环、StarCalendar星历日历
+  - 视觉效果: DeepSpaceBackground深空背景、GlobalParticles全局粒子效果、3D效果组件
+  - 系统组件: ThemeProvider主题提供者、CustomPointer自定义光标
+  - 评论系统: CommentSection/CommentInput/CommentTimeline
+- **状态管理**: Pinia管理全局状态，包括auth.ts身份验证状态、members.ts成员数据状态，支持响应式数据更新和持久化存储
+- **服务层**: api.ts提供完整的后端API接口封装，支持Token自动刷新、请求拦截、错误处理
+- **主题系统**: 6层架构 (状态管理层→主题提供者层→主题配置层→UI交互层→色彩科学层→样式层)，支持OKLCH色彩空间+WCAG对比度验证
+- **测试验证**: 使用 Playwright 进行实时视觉验证，不绕过认证/代码进行测试
+- **性能优化**: Canvas需要devicePixelRatio缩放，使用Web Workers，初始连接线激活设置避免空白屏幕
 
 ## 核心功能模块 / Core Features
+
+### QQ群成员展示系统 / QQ Group Member System
+- **数据结构**: 头像存储在 `data/avatars`，JSON配置包含 uin/card/nick/join_time/role 字段
+- **安全设计**: UIN加密解密从前端移至后端FastAPI服务，使用代理ID系统
+- **权限管理**: 管理员徽章使用浅绿色，移除贡献指标
+- **成员管理**: 支持创建、编辑、删除成员，JSON导入和QQ群导入功能
+
+### 3D徽章预览系统 / 3D Badge Preview
+- **路由设计**: `/badge-preview` - 新窗口界面，移除导航组件
+- **功能特性**: 图像上传/定位、徽章操作(拖拽/旋转/缩放)、可调光照控制
+- **布局设计**: 上下布局，渲染区域在上，参数控制在下
+- **3D特性**: 弯曲前表面(用户可调)、圆形半圆边缘、纹理映射跟随表面曲率
+- **背景设置**: 可自定义背景色(preferably black)，图像大小/位置/方向控制
 
 ### 视觉效果系统 / Visual Effects
 - **星际门 (Stargate)**:
@@ -211,18 +233,25 @@ uv run pylint .
 
 - **成员星云 (Member Galaxy)**:
   - 横向全屏分页，40-50人/页 (Swiper + GSAP)
-  - 随机散布布局 (避免等级感)
+  - 随机散布布局 (避免等级感)，围绕中央分页框分布
   - 动态连接线系统:
     - 呼吸alpha效果 (0→1→0 使用sin(t·π))
-    - 曲线连接，裁剪到头像圆边缘
+    - 二次曲线连接，裁剪到头像圆边缘
     - 3-5秒随机激活2-4条线，持续4-5秒
     - 主题色混合渐变，高亮度显示
+    - 成员数据加载时生成，数据刷新时重新生成
+    - 时间轴连接: 节点延伸短线到评论框，无箭头设计
 
 - **粒子系统 (Particles)**:
-  - 全局粒子: Teleport突破容器限制
-  - 中心密度增强，特定梯度递减
+  - 全局粒子: Teleport突破容器限制，中心密度增强
+  - 统一圆形粒子动画，粒子浓度围绕关键视觉元素
   - 环形粒子: OffscreenCanvas + Web Workers
-  - 性能自适应 (45fps阈值监控)
+  - 性能自适应 (45fps阈值监控)，设备检测优化配置
+
+### 星历活动日历系统 / Star Calendar System
+- **设计文档**: 基于 starCalendar.md 设计文档
+- **数据管理**: Activity表JSON存储成员列表+冗余总数字段
+- **API接口**: `/api/v1/star_calendar/activities` 公开接口
 
 ### 路由设计 / Route Design
 - `/` - 主页 (成员星云展示)
@@ -304,22 +333,25 @@ SUPER_USER_PASSWORD=change-this-in-production
 
 ### 布局设计
 - **星际门**: 左侧定位 (480-520px)，右侧文字内容
-- **成员布局**: 随机散布 (避免等级感)，围绕中央分页框
+- **成员布局**: 随机散布 (避免等级感)，成员头像围绕中央分页框分布，减少拥挤感
 - **横向分页**: 全屏40-50人/页，左右箭头导航 (Swiper)
-- **管理界面**: 统一深色主题，非透明模态框
+- **管理界面**: 统一深色主题，非透明模态框，统一页面标题风格(Dashboard.vue)，表格样式(MemberManagement.vue)
+- **设置页面**: 输入文本颜色可见性修复，缓存监控集成到Dashboard UI
 
 ### 连接线设计
-- **动态效果**: 真实呼吸效果 (弱→强→弱渐变)
-- **视觉样式**: 主题色混合渐变，高亮度显示
+- **动态效果**: 真实呼吸效果 (弱→强→弱渐变)，动态跟随浮动头像移动
+- **视觉样式**: 主题色混合渐变，高亮度显示，单线混合渐变而非不同纯色线条
 - **激活机制**: 3-5秒随机激活2-4条线，持续4-5秒
-- **路径设计**: 二次曲线，裁剪到头像边缘
-- **时间轴连接**: 节点延伸短线到评论框，无箭头设计
+- **路径设计**: 二次曲线，裁剪到头像边缘，使用半径计算
+- **连接逻辑**: 始终从一个成员头像中心指向另一个，关键点日志调试
+- **时间轴连接**: 节点延伸短线到评论框，无箭头设计，不穿过评论框
 
 ### 颜色设计
 - **管理员徽章**: 浅绿色
-- **主题一致性**: 所有界面统一主题色
-- **文字颜色**: 使用 var(--text-primary/secondary/inverse)
-- **n-tag/n-transfer**: 深色主题色代替白色
+- **主题一致性**: 所有界面统一主题色 (首页、登录、管理后台)
+- **文字颜色**: 使用 var(--text-primary/secondary/inverse) 确保深色/浅色主题正确显示
+- **n-tag/n-transfer**: 深色主题色代替白色，保持视觉一致性
+- **鼠标样式**: 统一鼠标显示样式
 
 ## 性能优化 / Performance Optimization
 
@@ -333,12 +365,13 @@ ctx.scale(dpr, dpr)
 ```
 
 ### 移动端优化 (useSnapScroll)
-- **设备检测**: mobile/tablet/desktop智能识别
+- **设备检测**: mobile/tablet/desktop智能识别 (useDeviceDetection)
 - **差异化配置**: 
   - 移动端: 0.8s动画, 30px阈值, 速度检测
   - 桌面端: 1.2s动画, 50px阈值
-- **手势识别**: 距离+速度+方向综合判断
-- **性能提升**: 50%响应速度, 67%准确率
+- **手势识别**: 距离+速度+方向综合判断的智能手势识别算法
+- **移动端进度条**: 误触防护，自动禁用点击保持视觉
+- **性能提升**: 50%响应速度提升，67%准确率提升，100%向后兼容
 
 ### 数据库优化
 - 连接池: size=10, max_overflow=20
@@ -362,9 +395,12 @@ manualChunks: {
 3. **头像404**: 确认文件在 AVATAR_ROOT，检查成员是否存在
 4. **CORS错误**: 更新后端.env中的ALLOWED_ORIGINS
 5. **构建失败**: 前端运行 `pnpm install`，后端运行 `uv sync`
-6. **热重载问题**: 日志文件移到项目根目录避免触发
+6. **热重载问题**: 日志文件移到项目根目录避免uvicorn watchfiles检测日志变化触发
 7. **连接线不显示**: 检查初始激活设置，避免空白屏幕
 8. **主题色不一致**: 确保使用CSS变量而非硬编码颜色
+9. **Canvas线条压缩**: HiDPI显示器需要devicePixelRatio缩放
+10. **SQLite遗留代码**: 数据库已迁移到PostgreSQL，需清理旧代码
+11. **移动端响应问题**: 检查useSnapScroll配置和设备检测
 
 ## 重要提醒 / Important Notes
 
