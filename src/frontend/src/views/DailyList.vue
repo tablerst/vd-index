@@ -3,15 +3,8 @@
     <!-- 1) 标题栏 -->
     <header class="header-bar">
       <div class="left-area">
-        <n-button
-          class="icon-circle-btn back-btn"
-          circle
-          type="primary"
-          size="small"
-          @click="goHome"
-          title="返回"
-          aria-label="返回"
-        >
+        <n-button class="icon-circle-btn back-btn" circle type="primary" size="small" @click="goHome" title="返回"
+          aria-label="返回">
           <ArrowLeft :size="18" />
         </n-button>
         <h2 class="title">群员日常</h2>
@@ -22,15 +15,9 @@
           <n-avatar round :size="avatarSize" :src="userAvatar" :fallback-src="fallbackAvatar" />
         </n-dropdown>
         <!-- 未登录：圆形灰底头像占位，点击打开登录模态 -->
-        <n-avatar
-          v-else
-          round
-          :size="avatarSize"
-          class="user-avatar avatar-placeholder"
+        <n-avatar v-else round :size="avatarSize" class="user-avatar avatar-placeholder"
           :style="{ background: 'var(--glass-bg-strong, rgba(255,255,255,0.12))', color: 'var(--text-primary, #111)', fontSize: '12px', fontWeight: '600' }"
-          title="未登录，点击登录"
-          @click="showLoginModal = true"
-        >未登录</n-avatar>
+          title="未登录，点击登录" @click="showLoginModal = true">未登录</n-avatar>
       </div>
     </header>
 
@@ -61,28 +48,14 @@
       <div v-if="error" class="error">{{ error }}</div>
 
       <!-- 左下角浮动“+”按钮（已登录显示） -->
-      <n-button
-        class="fab icon-circle-btn"
-        circle
-        type="primary"
-        size="large"
-        @click="openEditor"
-        title="发布日常"
-        aria-label="新建日常"
-      >
+      <n-button class="fab icon-circle-btn" circle type="primary" size="large" @click="openEditor" title="发布日常"
+        aria-label="新建日常">
         <Plus :size="22" />
       </n-button>
 
       <!-- 发布编辑器模态框（保留） -->
-      <n-modal
-        v-model:show="showEditor"
-        preset="card"
-        :title="'发布日常'"
-        :mask-closable="false"
-        class="daily-editor-modal"
-        :style="editorModalStyle"
-        :content-style="editorModalContentStyle"
-      >
+      <n-modal v-model:show="showEditor" preset="card" :title="'发布日常'" :mask-closable="false" class="daily-editor-modal"
+        :style="editorModalStyle" :content-style="editorModalContentStyle">
         <DailyEditor :autosave-key="'daily_editor_autosave'" @save="handleEditorSave" @cancel="closeEditor" />
       </n-modal>
 
@@ -103,7 +76,8 @@
     </footer>
 
     <!-- 登录/注册模态（内置表单，不跳转页面） -->
-    <n-modal v-model:show="showLoginModal" preset="dialog" title="账号" :mask-closable="registerStep !== 2" :close-on-esc="registerStep !== 2" :closable="registerStep !== 2">
+    <n-modal v-model:show="showLoginModal" preset="dialog" title="账号" :mask-closable="registerStep !== 2"
+      :close-on-esc="registerStep !== 2" :closable="registerStep !== 2">
       <div class="login-modal-body">
         <n-tabs v-model:value="authTab" type="line">
           <n-tab-pane name="login" tab="登录">
@@ -142,7 +116,8 @@
               <n-form ref="bindFormRef" :model="bindForm" :rules="bindRules" label-placement="left"
                 :show-require-mark="false">
                 <n-form-item path="member_id" label="选择成员">
-                  <n-select v-model:value="bindForm.member_id" :options="bindableMemberOptions" placeholder="选择要绑定的成员" filterable />
+                  <n-select v-model:value="bindForm.member_id" :options="bindableMemberOptions" placeholder="选择要绑定的成员"
+                    filterable />
                 </n-form-item>
                 <n-form-item path="uin" label="成员UIN">
                   <n-input v-model:value="bindForm.uin" placeholder="请输入该成员的QQ号用于验证" />
@@ -159,7 +134,8 @@
     <!-- 修改密码模态 -->
     <n-modal v-model:show="showChangePassword" preset="dialog" title="修改密码" :mask-closable="true">
       <div class="login-modal-body">
-        <n-form ref="changePwdFormRef" :model="changePwdForm" :rules="changePwdRules" label-placement="left" :show-require-mark="false">
+        <n-form ref="changePwdFormRef" :model="changePwdForm" :rules="changePwdRules" label-placement="left"
+          :show-require-mark="false">
           <n-form-item path="old_password" label="当前密码">
             <n-input v-model:value="changePwdForm.old_password" type="password" placeholder="请输入当前密码" />
           </n-form-item>
@@ -606,7 +582,7 @@ async function handleEditorSave(json: Record<string, any>) {
     await dailyApi.createPost({ content_jsonb: json, published: true })
     message.success('发布成功')
     // 清除本地草稿
-    try { localStorage.removeItem('daily_editor_autosave') } catch {}
+    try { localStorage.removeItem('daily_editor_autosave') } catch { }
     showEditor.value = false
     // 刷新列表
     await fetchList()
@@ -652,21 +628,25 @@ onUnmounted(() => { cleanupFns.forEach(fn => { try { fn() } catch { } }); cleanu
   align-items: center;
   justify-content: center;
 }
+
 .icon-circle-btn.n-button--primary-type {
   /* 主题色填充背景 */
   background: var(--primary) !important;
   border: none !important;
   color: var(--text-inverse) !important;
 }
+
 .icon-circle-btn.n-button--primary-type:hover {
   background: var(--primary-hover) !important;
   box-shadow: 0 8px 22px rgba(170, 131, 255, 0.25);
   transform: translateY(-1px);
 }
+
 .icon-circle-btn.n-button--primary-type:active {
   background: var(--primary-pressed) !important;
   transform: translateY(0);
 }
+
 /* 中文注释：lucide 图标颜色也用主题色的反色，确保明暗主题可见 */
 .icon-circle-btn svg {
   color: var(--text-inverse);
@@ -719,7 +699,8 @@ onUnmounted(() => { cleanupFns.forEach(fn => { try { fn() } catch { } }); cleanu
 
 .masonry {
   column-gap: 16px;
-  min-height: 200px; /* 中文注释：当使用 NSpin 包裹时，给容器一个最小高度，便于加载器在中间居中 */
+  min-height: 200px;
+  /* 中文注释：当使用 NSpin 包裹时，给容器一个最小高度，便于加载器在中间居中 */
 }
 
 /* 中文注释：确保 NSpin 作为块级元素占满可用宽度，内部加载器可居中 */
@@ -877,7 +858,8 @@ onUnmounted(() => { cleanupFns.forEach(fn => { try { fn() } catch { } }); cleanu
 /* 中文注释：让外层容器也使用一致圆角，并裁剪内部方形边框 */
 :deep(.n-date-picker) {
   border-radius: var(--radius-md);
-  overflow: hidden; /* 防止内部方形层在圆角外露 */
+  overflow: hidden;
+  /* 防止内部方形层在圆角外露 */
 }
 
 /* 中文注释：DatePicker（range）使用 n-input，统一高度与去重边框 */
@@ -889,6 +871,33 @@ onUnmounted(() => { cleanupFns.forEach(fn => { try { fn() } catch { } }); cleanu
   border-radius: var(--radius-md);
   background: var(--glass-bg);
 }
+
+/* 中文注释：确保 DatePicker 使用 wrapper 的背景与边框，移除黑底 */
+:deep(.n-date-picker .n-input .n-input-wrapper) {
+  background-color: var(--glass-bg) !important;
+  /* 统一玻璃态背景，去掉黑底 */
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+/* 悬停/聚焦时改变 wrapper 的样式 */
+:deep(.n-date-picker .n-input:hover .n-input-wrapper) {
+  background-color: var(--glass-bg-strong) !important;
+  border-color: var(--border-focus) !important;
+}
+
+:deep(.n-date-picker .n-input:focus-within .n-input-wrapper) {
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, .25) !important;
+  border-color: var(--primary) !important;
+}
+
+/* 清理内部节点背景，避免再次出现内层底色 */
+:deep(.n-date-picker .n-input__input-el),
+:deep(.n-date-picker .n-input__input),
+:deep(.n-date-picker .n-input__separator) {
+  background: transparent !important;
+}
+
 
 :deep(.n-date-picker .n-input:hover) {
   border-color: var(--border-focus);
