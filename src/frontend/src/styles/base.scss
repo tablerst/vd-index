@@ -37,7 +37,7 @@ a {
   &:focus {
     outline: none;
   }
-  
+
   &:focus-visible {
     outline: 3px solid var(--secondary);
     outline-offset: 2px;
@@ -49,7 +49,7 @@ a {
   color: var(--accent-blue);
   text-decoration: none;
   transition: color var(--transition-base);
-  
+
   &:hover {
     color: var(--primary);
   }
@@ -77,16 +77,40 @@ select {
   border-radius: var(--radius-md);
   padding: var(--spacing-sm) var(--spacing-md);
   transition: all var(--transition-base);
-  
+
   &:focus {
     border-color: var(--primary);
     box-shadow: var(--shadow-glow);
   }
-  
+
   &::placeholder {
     color: var(--text-muted);
   }
 }
+
+// 全局修复：统一 NaiveUI NInput 边框为单层圆角外边框
+// 说明：
+// - 我们仅使用 .n-input-wrapper 的边框作为可视边框
+// - 移除内部原生 input/textarea 的边框与背景
+// - 隐藏 NaiveUI 的 .n-input__border 与 .n-input__state-border，避免产生第二层内边框
+.n-input {
+  .n-input-wrapper {
+    border-radius: var(--radius-md) !important; // 外层圆角，保证不是方形
+  }
+
+  .n-input__input-el,
+  .n-input__textarea-el {
+    border: none !important;             // 移除内层原生边框
+    background: transparent !important;  // 避免出现内框底色
+    box-shadow: none !important;
+  }
+
+  .n-input__border,
+  .n-input__state-border {
+    display: none !important;            // 禁用组件自带的内边框/状态边框
+  }
+}
+
 
 // 图片响应式
 img {
@@ -202,11 +226,11 @@ select,
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 var(--spacing-md);
-  
+
   @include media-up(sm) {
     padding: 0 var(--spacing-lg);
   }
-  
+
   @include media-up(lg) {
     padding: 0 var(--spacing-xl);
   }
