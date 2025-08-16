@@ -31,6 +31,29 @@ export interface DailyPostListResponse {
 export interface UploadImageItem { name: string; url: string; width?: number; height?: number }
 export interface UploadImagesResponse { files: UploadImageItem[] }
 
+// 新增：Daily 评论类型
+export interface DailyCommentItem {
+  id: number
+  post_id: number
+  author_user_id: number
+  parent_id?: number | null
+  content: string
+  likes: number
+  dislikes: number
+  is_deleted: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface DailyCommentListResponse {
+  top_comments: DailyCommentItem[]
+  children_map: Record<number, DailyCommentItem[]>
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? '' : 'http://localhost:8000')
 
 // 开发环境开关：通过 VITE_DAILY_USE_MOCK 控制是否使用Mock数据
@@ -169,6 +192,27 @@ export const dailyApi = {
       method: 'POST',
       body: form
     })
+  },
+
+  // ===== 新增：Daily 评论 API =====
+  async getComments(postId: number, page: number = 1, pageSize: number = 20): Promise<DailyCommentListResponse> {
+    return request<DailyCommentListResponse>(`/api/v1/daily/posts/${postId}/comments?page=${page}&page_size=${pageSize}`)
+  },
+  async createComment(postId: number, content: string, parentId?: number): Promise<DailyCommentItem> {
+    return request<DailyCommentItem>(`/api/v1/daily/posts/${postId}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content, parent_id: parentId ?? null })
+    })
+  },
+  async likeComment(commentId: number) {
+    return request<{ success: boolean; message: string; comment: DailyCommentItem }>(`/api/v1/daily/comments/${commentId}/like`, { method: 'PUT' })
+  },
+  async dislikeComment(commentId: number) {
+    return request<{ success: boolean; message: string; comment: DailyCommentItem }>(`/api/v1/daily/comments/${commentId}/dislike`, { method: 'PUT' })
+  },
+  async deleteComment(commentId: number) {
+    return request<{ success: boolean; message: string; comment: DailyCommentItem }>(`/api/v1/daily/comments/${commentId}`, { method: 'DELETE' })
   }
 }
 

@@ -25,6 +25,11 @@
             @cancel="goBack"
           />
           <TiptapViewer v-else :doc="post?.content_jsonb || null" />
+
+          <!-- 新增：评论区 -->
+          <section class="comments-section" v-if="post">
+            <DailyComments :post-id="post.id" />
+          </section>
         </template>
       </n-spin>
     </main>
@@ -37,6 +42,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import DailyEditor from '@/components/daily/DailyEditor.vue'
 import TiptapViewer from '@/components/daily/TiptapViewer.vue'
+import DailyComments from '@/components/daily/DailyComments.vue'
 import { NSpin } from 'naive-ui'
 import { dailyApi, type DailyPostItem } from '@/services/daily'
 import { useAuthStore } from '@/stores/auth'
@@ -102,6 +108,9 @@ onMounted(fetchDetail)
 .detail-header { display:flex; align-items:center; justify-content:space-between; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,.06); }
 .back { background: transparent; border:1px solid var(--glass-border); color: var(--text-primary); border-radius: 8px; padding: 6px 10px; cursor: pointer; }
 .meta { display:flex; align-items:center; gap:12px; }
+.detail-content { padding: 12px 16px; }
+.detail-editor { margin: 0 auto; max-width: 880px; }
+.comments-section { margin: 16px auto; max-width: 880px; }
 .avatar { width:32px; height:32px; border-radius:50%; object-fit: cover; }
 .author { display:flex; flex-direction:column; }
 .name { font-weight:600; }
