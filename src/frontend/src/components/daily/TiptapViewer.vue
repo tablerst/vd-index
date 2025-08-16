@@ -7,13 +7,24 @@
 
 <script setup lang="ts">
 // 中文注释：Tiptap 只读渲染组件，接受 JSON 文档渲染
-import { onUnmounted, watch, toRef } from 'vue'
+import { onUnmounted, watch, toRef, computed } from 'vue'
+import { useThemeStore } from '@/stores/theme'
+import { storeToRefs } from 'pinia'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
 
 const props = defineProps<{ doc: Record<string, any> | null | undefined }>()
 const jsonRef = toRef(props, 'doc')
+// 中文注释：根据主题动态决定是否启用 prose-invert（仅在深色主题下启用，避免浅色主题文字变浅灰）
+const themeStore = useThemeStore()
+const { isDark } = storeToRefs(themeStore)
+const editorClass = computed(() => [
+  'tiptap', 'ProseMirror', 'prose', 'prose-notion',
+  isDark.value ? 'prose-invert' : '',
+  'max-w-none', 'focus:outline-none'
+].filter(Boolean).join(' '))
+
 
 // 初始化只读编辑器
 const editor = useEditor({
@@ -22,12 +33,15 @@ const editor = useEditor({
   extensions: [StarterKit, Image.configure({ inline: true })],
   editorProps: {
     attributes: {
-      class: [
-        'tiptap', 'ProseMirror', 'prose', 'prose-notion', 'prose-invert',
-        'max-w-none', 'focus:outline-none'
-      ].join(' ')
+      class: editorClass.value
     }
+
   }
+})
+
+// 中文注释：主题切换时，动态更新 ProseMirror 根元素的类名，避免浅色主题文字变灰
+watch(isDark, () => {
+  try { editor?.value && (editor.value.view.dom.className = editorClass.value) } catch {}
 })
 
 // 当外部 doc 变化时更新内容
@@ -42,7 +56,7 @@ onUnmounted(() => { editor?.value?.destroy() })
 
 <style scoped>
 /* 中文注释：沿用编辑器的内容样式，但不显示占位符/拖拽句柄等编辑态样式 */
-.tiptap-content { display:flex; justify-content:center; }
+.tiptap-content { display:flex; justify-content:center; color: var(--text-primary); }
 .tiptap-content :deep(.ProseMirror){ width:100%; max-width:720px; margin:0 auto; line-height:1.75; font-size:15px; }
 .tiptap-content :deep(h1,h2,h3){ line-height:1.25; font-weight:700; }
 .tiptap-content :deep(h1){ font-size:28px; margin:1.2em 0 .6em; }
