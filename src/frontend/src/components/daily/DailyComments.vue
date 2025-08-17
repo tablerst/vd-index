@@ -31,15 +31,23 @@
         </div>
         <div class="content">{{ c.content }}</div>
         <div class="ops">
-          <n-button text @click="like(c.id)">👍 {{ c.likes }}</n-button>
-          <n-button text @click="dislike(c.id)">👎 {{ c.dislikes }}</n-button>
-          <n-button text @click="replyTo(c.id)">回复</n-button>
-          <n-popconfirm v-if="canDelete(c)" @positive-click="remove(c.id)">
-            <template #trigger>
-              <n-button text>删除</n-button>
-            </template>
-            确认删除此评论？
-          </n-popconfirm>
+          <n-button text class="reaction-btn" @click="like(c.id)" aria-label="点赞">
+            <ThumbsUp :size="16" />
+            <span class="count">{{ c.likes }}</span>
+          </n-button>
+          <n-button text class="reaction-btn dislike" @click="dislike(c.id)" aria-label="点踩">
+            <ThumbsDown :size="16" />
+            <span class="count">{{ c.dislikes }}</span>
+          </n-button>
+          <div class="more-actions">
+            <n-button quaternary size="tiny" class="text-action-btn" @click="replyTo(c.id)">回复</n-button>
+            <n-popconfirm v-if="canDelete(c)" @positive-click="remove(c.id)">
+              <template #trigger>
+                <n-button quaternary size="tiny" class="text-action-btn">删除</n-button>
+              </template>
+              确认删除此评论？
+            </n-popconfirm>
+          </div>
         </div>
 
         <!-- 子回复 -->
@@ -54,14 +62,22 @@
             </div>
             <div class="content">{{ rc.content }}</div>
             <div class="ops">
-              <n-button text @click="like(rc.id)">👍 {{ rc.likes }}</n-button>
-              <n-button text @click="dislike(rc.id)">👎 {{ rc.dislikes }}</n-button>
-              <n-popconfirm v-if="canDelete(rc)" @positive-click="remove(rc.id)">
-                <template #trigger>
-                  <n-button text>删除</n-button>
-                </template>
-                确认删除此评论？
-              </n-popconfirm>
+              <n-button text class="reaction-btn" @click="like(rc.id)" aria-label="点赞">
+                <ThumbsUp :size="16" />
+                <span class="count">{{ rc.likes }}</span>
+              </n-button>
+              <n-button text class="reaction-btn dislike" @click="dislike(rc.id)" aria-label="点踩">
+                <ThumbsDown :size="16" />
+                <span class="count">{{ rc.dislikes }}</span>
+              </n-button>
+              <div class="more-actions">
+                <n-popconfirm v-if="canDelete(rc)" @positive-click="remove(rc.id)">
+                  <template #trigger>
+                    <n-button quaternary size="tiny" class="text-action-btn">删除</n-button>
+                  </template>
+                  确认删除此评论？
+                </n-popconfirm>
+              </div>
             </div>
           </div>
         </div>
@@ -99,6 +115,7 @@ import { NButton, NPagination, NPopconfirm, useMessage } from 'naive-ui'
 import { dailyApi, type DailyCommentListResponse, type DailyCommentItem } from '@/services/daily'
 import { useAuthStore } from '@/stores/auth'
 import CommentInput from '@/components/Comment/CommentInput.vue'
+import { ThumbsUp, ThumbsDown } from 'lucide-vue-next'
 
 const props = defineProps<{ postId: number }>()
 
@@ -252,7 +269,38 @@ onMounted(load)
   .author-info .name { color: var(--text-primary); font-weight: 600; }
 
   .comment-card .content, .reply-card .content { margin: 8px 0; color: var(--text-primary); line-height: 1.7; }
-  .ops { display: flex; gap: 6px; }
+  .ops { display: flex; align-items: center; gap: 6px; }
+
+  /* 中文注释：点赞/点踩按钮——图标与数字在一个按钮内对齐 */
+  .reaction-btn {
+    :deep(.n-button__content) {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      line-height: 1;
+    }
+    padding: 2px 6px;
+    border-radius: 8px;
+
+    :deep(svg) {
+      color: var(--text-secondary);
+      transition: color .2s ease;
+      display: block; /* 中文注释：移除内联 SVG 的基线偏移，确保垂直对齐 */
+    }
+    .count {
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      display: inline-block;
+    }
+    &:hover { :deep(svg), .count { color: var(--primary); } }
+  }
+  .reaction-btn.dislike:hover { :deep(svg), .count { color: var(--warning, #f0ad4e); } }
+
+  /* 中文注释：右侧更多动作（回复/删除）整体右移一点，并保持间距 */
+  .more-actions { margin-left: 10px; display: inline-flex; align-items: center; gap: 6px; }
+  .text-action-btn { color: var(--text-secondary); }
+  .text-action-btn:hover { color: var(--primary); }
 
   .children { margin-left: 14px; border-left: 2px dashed rgba(255,255,255,0.06); padding-left: 12px; }
   .pager { display: flex; justify-content: center; margin-top: 12px; }
