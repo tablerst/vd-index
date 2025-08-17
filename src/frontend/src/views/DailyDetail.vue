@@ -47,7 +47,9 @@
             @save="saveDetail"
             @cancel="goBack"
           />
-          <TiptapViewer v-else :doc="post?.content_jsonb || null" />
+          <div v-else class="viewer-card" role="region" aria-label="日常内容">
+            <TiptapViewer :doc="post?.content_jsonb || null" />
+          </div>
 
           <!-- 内容与评论的视觉分割线 -->
           <div class="content-divider" aria-hidden="true"></div>
@@ -157,6 +159,30 @@ onMounted(fetchDetail)
 .avatar { width:32px; height:32px; border-radius:50%; object-fit: cover; }
 .author { display:flex; flex-direction:column; }
 .name { font-weight:600; }
+
+/* 中文注释：未登录/非作者时，Tiptap 内容使用卡片式容器展示，带阴影与轻微动效 */
+.viewer-card {
+  margin: 12px auto 0;
+  max-width: 880px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 20px 22px;
+  box-shadow: var(--shadow-soft);
+  transition: transform .25s var(--ease-hover, ease), box-shadow .25s var(--ease-hover, ease);
+  animation: viewerCardIn .32s cubic-bezier(.22,.61,.36,1) both;
+}
+
+.viewer-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-medium), 0 6px 24px rgba(0,0,0,.15);
+}
+
+@keyframes viewerCardIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .time { font-size:12px; color: var(--text-secondary); }
 .detail-content { padding: 16px; min-height: 50vh; }
 
