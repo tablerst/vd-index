@@ -2,13 +2,19 @@
   <div class="comment-input">
     <div class="input-container">
       <div class="input-header">
-        <h3 class="input-title">发表匿名评论</h3>
-        <div class="anonymous-badge">
+        <h3 class="input-title">{{ title }}</h3>
+        <div class="anonymous-badge" v-if="!showAnonymousOption && isAnonymous">
           <i class="icon-anonymous"></i>
           <span>匿名</span>
         </div>
+        <div class="anonymous-toggle" v-else>
+          <label class="toggle-label">
+            <input type="checkbox" v-model="isAnonymous" />
+            <span>匿名</span>
+          </label>
+        </div>
       </div>
-      
+
       <div class="input-body">
         <textarea
           v-model="content"
@@ -19,14 +25,14 @@
           @input="handleInput"
           @keydown="handleKeydown"
         ></textarea>
-        
+
         <div class="input-footer">
           <div class="char-count">
             <span :class="{ warning: content.length > 450, error: content.length >= 500 }">
               {{ content.length }}/500
             </span>
           </div>
-          
+
           <div class="input-actions">
             <button
               class="cancel-btn"
@@ -36,7 +42,7 @@
             >
               取消
             </button>
-            
+
             <button
               class="submit-btn"
               @click="handleSubmit"
@@ -48,10 +54,10 @@
           </div>
         </div>
       </div>
-      
+
       <!-- 输入提示 -->
       <div v-if="showTips" class="input-tips">
-        <div class="tip-item">
+        <div class="tip-item" v-if="showAnonTip">
           <i class="icon-tip"></i>
           <span>评论将以匿名形式发布，请文明发言</span>
         </div>
@@ -60,7 +66,7 @@
           <span>支持 Ctrl+Enter 快速发布</span>
         </div>
       </div>
-      
+
       <!-- 错误提示 -->
       <div v-if="error" class="error-message">
         <i class="icon-error"></i>
@@ -78,16 +84,22 @@ interface Props {
   memberId: number
   loading?: boolean
   placeholder?: string
+  title?: string
+  showAnonymousOption?: boolean
+  anonymousDefault?: boolean
 }
 
 interface Emits {
-  (e: 'submit', content: string): void
+  (e: 'submit', content: string, isAnonymous?: boolean): void
   (e: 'cancel'): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
-  placeholder: '说点什么吧... (最多500字)'
+  placeholder: '说点什么吧... (最多500字)',
+  title: '发表匿名评论',
+  showAnonymousOption: false,
+  anonymousDefault: true
 })
 
 const emit = defineEmits<Emits>()
@@ -96,6 +108,15 @@ const emit = defineEmits<Emits>()
 const content = ref('')
 const error = ref('')
 const showTips = ref(false)
+const isAnonymous = ref<boolean>(props.anonymousDefault)
+
+
+// 中文注释：只有在显示匿名开关且已开启匿名时，才展示匿名相关提示
+const showAnonTip = computed(() => props.showAnonymousOption && isAnonymous.value)
+
+// 派生展示标题
+const title = props.title
+const showAnonymousOption = props.showAnonymousOption
 
 // 计算属性
 const canSubmit = computed(() => {
@@ -106,7 +127,7 @@ const canSubmit = computed(() => {
 // 处理输入
 const handleInput = () => {
   error.value = ''
-  
+
   // 显示提示（首次输入时）
   if (content.value.length > 0 && !showTips.value) {
     showTips.value = true
@@ -125,15 +146,15 @@ const handleKeydown = (event: KeyboardEvent) => {
 // 提交评论
 const handleSubmit = async () => {
   if (!canSubmit.value) return
-  
+
   const validation = commentApi.validateContent(content.value)
   if (!validation.valid) {
     error.value = validation.message || '评论内容无效'
     return
   }
-  
+
   try {
-    emit('submit', content.value.trim())
+    emit('submit', content.value.trim(), isAnonymous.value)
     // 成功后清空内容
     content.value = ''
     showTips.value = false
@@ -215,6 +236,16 @@ defineExpose({
   font-size: 12px;
   font-weight: 500;
 }
+.anonymous-toggle .toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+}
+.anonymous-toggle input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+}
 
 .input-body {
   position: relative;
@@ -284,7 +315,7 @@ defineExpose({
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-  
+
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -292,41 +323,41 @@ defineExpose({
 }
 
 .cancel-btn {
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--glass-border);
   background: transparent;
-  color: rgba(255, 255, 255, 0.7);
-  
+  color: var(--text-secondary);
+
   &:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.9);
+    background: var(--surface-2);
+    color: var(--text-primary);
   }
 }
 
 .submit-btn {
-  border: 1px solid var(--primary-color, #AA83FF);
-  background: var(--primary-color, #AA83FF);
-  color: white;
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   gap: 8px;
-  
+
   &:hover:not(:disabled) {
-    background: rgba(170, 131, 255, 0.8);
+    background: var(--primary-hover);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(170, 131, 255, 0.3);
+    box-shadow: 0 4px 12px color-mix(in oklch, var(--primary) 30%, transparent);
   }
-  
+
   &:disabled {
-    background: rgba(170, 131, 255, 0.5);
-    border-color: rgba(170, 131, 255, 0.5);
+    background: color-mix(in oklch, var(--primary) 60%, transparent);
+    border-color: color-mix(in oklch, var(--primary) 60%, transparent);
   }
 }
 
 .loading-spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid white;
+  border: 2px solid color-mix(in oklch, var(--text-inverse) 30%, transparent);
+  border-top: 2px solid var(--text-inverse);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -339,8 +370,8 @@ defineExpose({
 .input-tips {
   margin-top: 16px;
   padding: 12px;
-  background: rgba(170, 131, 255, 0.1);
-  border: 1px solid rgba(170, 131, 255, 0.2);
+  background: color-mix(in oklch, var(--primary) 12%, transparent);
+  border: 1px solid color-mix(in oklch, var(--primary) 22%, transparent);
   border-radius: 8px;
   animation: fadeInUp 0.3s ease-out;
 }
@@ -349,10 +380,10 @@ defineExpose({
   display: flex;
   align-items: center;
   gap: 8px;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary);
   font-size: 12px;
   margin-bottom: 4px;
-  
+
   &:last-child {
     margin-bottom: 0;
   }
@@ -361,10 +392,10 @@ defineExpose({
 .error-message {
   margin-top: 12px;
   padding: 12px;
-  background: rgba(244, 67, 54, 0.1);
-  border: 1px solid rgba(244, 67, 54, 0.3);
+  background: color-mix(in oklch, var(--error-alert) 12%, transparent);
+  border: 1px solid color-mix(in oklch, var(--error-alert) 30%, transparent);
   border-radius: 8px;
-  color: #f44336;
+  color: var(--error-alert);
   font-size: 14px;
   display: flex;
   align-items: center;
@@ -399,37 +430,37 @@ defineExpose({
   .comment-input {
     padding: 10px;
   }
-  
+
   .input-container {
     padding: 16px;
   }
-  
+
   .input-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
-  
+
   .input-title {
     font-size: 16px;
   }
-  
+
   .comment-textarea {
     min-height: 100px;
     padding: 12px;
     font-size: 13px;
   }
-  
+
   .input-footer {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
   }
-  
+
   .input-actions {
     justify-content: flex-end;
   }
-  
+
   .cancel-btn,
   .submit-btn {
     padding: 10px 16px;

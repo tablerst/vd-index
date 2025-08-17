@@ -12,6 +12,8 @@ from services.auth.utils import get_current_active_user
 from services.database.models.daily_post_comment.crud import DailyPostCommentCRUD
 from services.database.models.daily_post_comment.base import DailyPostCommentCreate
 from services.database.models import DailyPostCRUD
+from services.database.models.user import UserCRUD
+from services.database.models.member import MemberCRUD
 from schema.daily_comment import (
     DailyCommentItem,
     DailyCommentListResponse,
@@ -29,6 +31,7 @@ router = APIRouter(prefix="/daily", tags=["daily-comments"])  # 统一由 api.ro
 )
 async def list_post_comments(
     post_id: int,
+    request: Request,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     include_deleted: bool = False,
@@ -43,12 +46,23 @@ async def list_post_comments(
         session, post_id=post_id, page=page, page_size=page_size, include_deleted=include_deleted
     )
 
-    # 转换为 schema
-    def to_item(c) -> DailyCommentItem:
-        return DailyCommentItem(**c.model_dump())
+    # 构造基础URL用于头像
+    base_url = f"{request.url.scheme}://{request.url.netloc}"
 
-    top_items = [to_item(c) for c in tops]
-    children_items = {k: [to_item(c) for c in v] for k, v in children_map.items()}
+    async def enrich(c) -> DailyCommentItem:
+        data = c.model_dump()
+        # 关联用户与成员以获取显示名与头像
+        user = await UserCRUD.get_by_id(session, c.author_user_id)
+        if user and getattr(user, "member_id", None):
+            member = await MemberCRUD.get_by_id(session, user.member_id)
+            if member:
+                data["author_display_name"] = getattr(member, "display_name", None)
+                data["author_avatar_url"] = f"{base_url}/api/v1/avatar/{member.id}"
+        return DailyCommentItem(**data)
+
+    # 转换为 schema
+    top_items = [await enrich(c) for c in tops]
+    children_items = {k: [await enrich(c) for c in v] for k, v in children_map.items()}
 
     total_pages = math.ceil(total / page_size) if page_size else 1
     return DailyCommentListResponse(
@@ -86,7 +100,17 @@ async def create_post_comment(
         author_ip=author_ip,
     )
     c = await DailyPostCommentCRUD.create(session, create_data, author_user_id=current_user.id)
-    return DailyCommentItem(**c.model_dump())
+
+    # 聚合作者信息
+    base_url = f"{request.url.scheme}://{request.url.netloc}"
+    data = c.model_dump()
+    user = await UserCRUD.get_by_id(session, c.author_user_id)
+    if user and getattr(user, "member_id", None):
+        member = await MemberCRUD.get_by_id(session, user.member_id)
+        if member:
+            data["author_display_name"] = getattr(member, "display_name", None)
+            data["author_avatar_url"] = f"{base_url}/api/v1/avatar/{member.id}"
+    return DailyCommentItem(**data)
 
 
 @router.put(
@@ -96,13 +120,22 @@ async def create_post_comment(
 )
 async def like_comment(
     comment_id: int,
+    request: Request,
     current_user=Depends(get_current_active_user),
     session: AsyncSession = Depends(get_session),
 ):
     c = await DailyPostCommentCRUD.like(session, comment_id)
     if not c:
         raise HTTPException(status_code=404, detail="Comment not found")
-    return DailyCommentActionResponse(success=True, message="liked", comment=DailyCommentItem(**c.model_dump()))
+    base_url = f"{request.url.scheme}://{request.url.netloc}"
+    data = c.model_dump()
+    user = await UserCRUD.get_by_id(session, c.author_user_id)
+    if user and getattr(user, "member_id", None):
+        member = await MemberCRUD.get_by_id(session, user.member_id)
+        if member:
+            data["author_display_name"] = getattr(member, "display_name", None)
+            data["author_avatar_url"] = f"{base_url}/api/v1/avatar/{member.id}"
+    return DailyCommentActionResponse(success=True, message="liked", comment=DailyCommentItem(**data))
 
 
 @router.put(
@@ -112,13 +145,22 @@ async def like_comment(
 )
 async def dislike_comment(
     comment_id: int,
+    request: Request,
     current_user=Depends(get_current_active_user),
     session: AsyncSession = Depends(get_session),
 ):
     c = await DailyPostCommentCRUD.dislike(session, comment_id)
     if not c:
         raise HTTPException(status_code=404, detail="Comment not found")
-    return DailyCommentActionResponse(success=True, message="disliked", comment=DailyCommentItem(**c.model_dump()))
+    base_url = f"{request.url.scheme}://{request.url.netloc}"
+    data = c.model_dump()
+    user = await UserCRUD.get_by_id(session, c.author_user_id)
+    if user and getattr(user, "member_id", None):
+        member = await MemberCRUD.get_by_id(session, user.member_id)
+        if member:
+            data["author_display_name"] = getattr(member, "display_name", None)
+            data["author_avatar_url"] = f"{base_url}/api/v1/avatar/{member.id}"
+    return DailyCommentActionResponse(success=True, message="disliked", comment=DailyCommentItem(**data))
 
 
 @router.delete(
@@ -128,6 +170,7 @@ async def dislike_comment(
 )
 async def delete_comment(
     comment_id: int,
+    request: Request,
     current_user=Depends(get_current_active_user),
     session: AsyncSession = Depends(get_session),
 ):
@@ -141,5 +184,13 @@ async def delete_comment(
     c2 = await DailyPostCommentCRUD.soft_delete(session, comment_id)
     if not c2:
         raise HTTPException(status_code=404, detail="Comment not found")
-    return DailyCommentActionResponse(success=True, message="deleted", comment=DailyCommentItem(**c2.model_dump()))
+    base_url = f"{request.url.scheme}://{request.url.netloc}"
+    data = c2.model_dump()
+    user = await UserCRUD.get_by_id(session, c2.author_user_id)
+    if user and getattr(user, "member_id", None):
+        member = await MemberCRUD.get_by_id(session, user.member_id)
+        if member:
+            data["author_display_name"] = getattr(member, "display_name", None)
+            data["author_avatar_url"] = f"{base_url}/api/v1/avatar/{member.id}"
+    return DailyCommentActionResponse(success=True, message="deleted", comment=DailyCommentItem(**data))
 

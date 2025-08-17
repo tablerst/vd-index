@@ -36,6 +36,9 @@ export interface DailyCommentItem {
   id: number
   post_id: number
   author_user_id: number
+  // 可选的作者展示信息（后端可选聚合，前端需容错）
+  author_display_name?: string | null
+  author_avatar_url?: string | null
   parent_id?: number | null
   content: string
   likes: number

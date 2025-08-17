@@ -36,6 +36,9 @@
           />
           <TiptapViewer v-else :doc="post?.content_jsonb || null" />
 
+          <!-- 内容与评论的视觉分割线 -->
+          <div class="content-divider" aria-hidden="true"></div>
+
           <!-- 新增：评论区 -->
           <section class="comments-section" v-if="post">
             <DailyComments :post-id="post.id" />
@@ -126,6 +129,27 @@ onMounted(fetchDetail)
 .name { font-weight:600; }
 .time { font-size:12px; color: var(--text-secondary); }
 .detail-content { padding: 16px; min-height: 50vh; }
+
+  /* 内容与评论的视觉分割线样式 */
+  .content-divider {
+    /* 上下间距加大，明确分区 */
+    margin: 28px auto 20px;
+    max-width: 880px;
+    height: 2px;
+    /* 渐变 + 主题混合，提升在深浅主题下的可见性 */
+    background: linear-gradient(90deg,
+      transparent,
+      color-mix(in oklch, var(--primary) 75%, #ffffff) 15%,
+      color-mix(in oklch, var(--primary) 85%, #000000) 50%,
+      color-mix(in oklch, var(--primary) 75%, #ffffff) 85%,
+      transparent
+    );
+    border: none;
+    filter: drop-shadow(0 0 4px color-mix(in oklch, var(--primary) 35%, transparent));
+    opacity: .9;
+    border-radius: 2px;
+  }
+
 /* 中文注释：让 NSpin 居中显示加载动画与描述文案 */
 .detail-spin { display: block; width: 100%; }
 .detail-spin :deep(.n-spin-body) { min-height: 260px; display: flex; align-items: center; justify-content: center; }

@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, ConfigDict
 
 
 class DailyCommentItem(BaseModel):
-    """单条评论（含基本字段）"""
+    """单条评论（含基本字段+可选作者聚合信息）"""
     model_config = ConfigDict(
         json_encoders={
             datetime: lambda v: (
@@ -21,6 +21,9 @@ class DailyCommentItem(BaseModel):
     id: int
     post_id: int
     author_user_id: int
+    # 可选：作者显示名与头像URL（服务端按需聚合，前端需容错）
+    author_display_name: Optional[str] = None
+    author_avatar_url: Optional[str] = None
     parent_id: Optional[int] = None
     content: str
     likes: int
