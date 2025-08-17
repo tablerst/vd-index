@@ -9,6 +9,9 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from .base import DailyPost, DailyPostCreate, DailyPostUpdate
 
+from sqlalchemy import delete as sa_delete
+from ..daily_post_comment.base import DailyPostComment
+
 
 class DailyPostCRUD:
     """CRUD utilities for DailyPost."""
@@ -104,9 +107,18 @@ class DailyPostCRUD:
 
     @staticmethod
     async def delete(session: AsyncSession, post_id: int) -> bool:
+        """
+        删除帖子并级联清理其下的所有评论（物理删除）。
+        中文注释：由于数据库外键未设置 ON DELETE CASCADE，需在业务层手动删除关联评论，避免外键约束错误。
+        """
         post = await session.get(DailyPost, post_id)
         if not post:
             return False
+        # 先删除关联评论
+        await session.execute(
+            sa_delete(DailyPostComment).where(DailyPostComment.post_id == post_id)
+        )
+        # 再删除帖子
         await session.delete(post)
         await session.commit()
         return True

@@ -19,6 +19,19 @@
           <div class="time" v-if="post">{{ formatTime(post.created_at) }}</div>
         </div>
       </div>
+    <div class="actions" v-if="post && isAuthor(post.author_user_id)">
+      <n-popconfirm
+        @positive-click="onDelete"
+        positive-text="删除"
+        negative-text="取消"
+      >
+        <template #trigger>
+          <n-button size="small" type="error" quaternary>删除</n-button>
+        </template>
+        确认删除该日常？该操作将同时删除其下所有评论。
+      </n-popconfirm>
+    </div>
+
     </header>
 
     <main class="detail-content">
@@ -56,7 +69,7 @@ import { useRoute, useRouter } from 'vue-router'
 import DailyEditor from '@/components/daily/DailyEditor.vue'
 import TiptapViewer from '@/components/daily/TiptapViewer.vue'
 import DailyComments from '@/components/daily/DailyComments.vue'
-import { NSpin, NButton } from 'naive-ui'
+import { NSpin, NButton, NPopconfirm, useMessage } from 'naive-ui'
 import { ArrowLeft } from 'lucide-vue-next'
 import { dailyApi, type DailyPostItem } from '@/services/daily'
 import { useAuthStore } from '@/stores/auth'
@@ -64,6 +77,7 @@ import { useAuthStore } from '@/stores/auth'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const message = useMessage()
 
 const id = computed(() => Number(route.params.id))
 const post = ref<DailyPostItem | null>(null)
@@ -86,6 +100,22 @@ async function fetchDetail() {
     loading.value = false
   }
 }
+
+async function onDelete() {
+  if (!post.value) return
+  try {
+    const res = await dailyApi.deletePost(post.value.id)
+    if (res?.success) {
+      message.success('删除成功')
+      goBack()
+    } else {
+      message.error('删除失败')
+    }
+  } catch (e: any) {
+    message.error(e?.message || '删除失败')
+  }
+}
+
 
 async function saveDetail(json: Record<string, any>) {
   if (!post.value) return
