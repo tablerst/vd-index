@@ -244,9 +244,10 @@ onUnmounted(() => {
   position: sticky;
   top: 0;
   z-index: 2;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
+  gap: 8px;
   padding: 8px 10px;
   /* 中文注释：iOS 刘海/安全区适配，防止 sticky 工具栏顶边被遮挡 */
   padding-top: calc(8px + env(safe-area-inset-top));
@@ -258,6 +259,11 @@ onUnmounted(() => {
     0 0 0 1px rgba(255, 255, 255, 0.04) inset;
   backdrop-filter: saturate(120%) blur(6px);
 }
+
+  /* 显式指定网格放置，确保默认两列时分别占据第1/第2列 */
+  .toolbar-groups { grid-column: 1; }
+  .toolbar-actions { grid-column: 2; justify-self: end; }
+
 
 /* 分组容器：左侧功能分区更显著 */
 .toolbar-groups {
@@ -451,4 +457,31 @@ onUnmounted(() => {
   height: 0;
   float: left;
 }
+
+  /* 响应式修复：移动端工具栏两行布局（按宽度自动换行），不强制横向滚动 */
+  .toolbar-groups {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: visible;
+  }
+
+  /* 断点：<= 900px 自动两行显示（工具组容器允许换行） */
+  @media (max-width: 900px) {
+    .toolbar { grid-template-columns: 1fr; }
+    .toolbar-actions { justify-self: end; }
+    .toolbar-groups {
+      width: 100%;
+      flex-wrap: wrap;
+      gap: 6px 8px;
+      overflow-x: visible;
+    }
+  }
+
+  /* 超小屏进一步收紧按钮与图标尺寸 */
+  @media (max-width: 480px) {
+    .group { padding: 2px 4px; gap: 2px; }
+    .toolbar :deep(.n-button .n-button__icon) { width: 18px; height: 18px; }
+    .toolbar :deep(.n-button .n-button__icon svg) { width: 16px !important; height: 16px !important; }
+  }
+
 </style>
