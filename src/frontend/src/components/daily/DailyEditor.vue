@@ -248,6 +248,8 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 8px 10px;
+  /* 中文注释：iOS 刘海/安全区适配，防止 sticky 工具栏顶边被遮挡 */
+  padding-top: calc(8px + env(safe-area-inset-top));
   border-radius: var(--radius-md);
   border: 1px solid var(--glass-border);
   background: linear-gradient(180deg, color-mix(in oklch, var(--glass-bg) 85%, transparent) 0%, var(--glass-bg) 100%);
@@ -303,7 +305,9 @@ onUnmounted(() => {
 .editor-pane {
   min-height: 260px;
   max-height: 52vh;
-  overflow: auto;
+  /* 中文注释：仅允许纵向滚动，禁止横向溢出以避免移动端偏移 */
+  overflow-x: hidden;
+  overflow-y: auto;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
@@ -348,6 +352,13 @@ onUnmounted(() => {
   line-height: 1.75;
   font-size: 15px;
 }
+
+/* 中文注释：移动端防止超长URL/英文导致横向溢出 */
+.tiptap-content :deep(.ProseMirror) {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 
 .tiptap-content :deep(h1, h2, h3) {
   line-height: 1.25;
@@ -418,6 +429,18 @@ onUnmounted(() => {
 .tiptap-content :deep(.ProseMirror:focus),
 .tiptap-content :deep(.ProseMirror-focused) {
   outline: none;
+}
+
+/* 中文注释：移动端隐藏块级“⋮⋮”拖拽手柄，避免 left:-24px 造成横向溢出；平板缩短偏移 */
+@media (max-width: 640px) {
+  .tiptap-content :deep(p:hover, ul:hover, ol:hover, blockquote:hover, h1:hover, h2:hover, h3:hover)::before {
+    display: none;
+  }
+}
+@media (min-width: 641px) and (max-width: 960px) {
+  .tiptap-content :deep(p:hover, ul:hover, ol:hover, blockquote:hover, h1:hover, h2:hover, h3:hover)::before {
+    left: -12px;
+  }
 }
 
 /* 中文注释：占位符样式（Notion 风格的淡色提示） */

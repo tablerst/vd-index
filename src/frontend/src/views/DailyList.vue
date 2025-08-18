@@ -600,7 +600,10 @@ onUnmounted(() => { cleanupFns.forEach(fn => { try { fn() } catch { } }); cleanu
   display: flex;
   flex-direction: column;
   background: var(--base-dark, #0f0f12);
+  /* 中文注释：防止子元素因伪元素/超长内容导致页面级横向滚动 */
+  overflow-x: hidden;
 }
+
 
 .header-bar {
   display: flex;

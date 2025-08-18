@@ -13,25 +13,33 @@
         <ArrowLeft :size="18" />
       </n-button>
       <div class="meta">
-        <img v-if="post?.author_avatar_url" :src="post.author_avatar_url" class="avatar" alt="avatar" />
+        <img
+          v-if="post?.author_avatar_url"
+          :src="post.author_avatar_url"
+          class="avatar"
+          alt="avatar"
+        />
         <div class="author">
-          <div class="name">{{ post?.author_display_name || `用户${post?.author_user_id || ''}` }}</div>
+          <div class="name">
+            {{
+              post?.author_display_name || `用户${post?.author_user_id || ""}`
+            }}
+          </div>
           <div class="time" v-if="post">{{ formatTime(post.created_at) }}</div>
         </div>
       </div>
-    <div class="actions" v-if="post && isAuthor(post.author_user_id)">
-      <n-popconfirm
-        @positive-click="onDelete"
-        positive-text="删除"
-        negative-text="取消"
-      >
-        <template #trigger>
-          <n-button size="small" type="error" quaternary>删除</n-button>
-        </template>
-        确认删除该日常？该操作将同时删除其下所有评论。
-      </n-popconfirm>
-    </div>
-
+      <div class="actions" v-if="post && isAuthor(post.author_user_id)">
+        <n-popconfirm
+          @positive-click="onDelete"
+          positive-text="删除"
+          negative-text="取消"
+        >
+          <template #trigger>
+            <n-button size="small" type="error" quaternary>删除</n-button>
+          </template>
+          确认删除该日常？该操作将同时删除其下所有评论。
+        </n-popconfirm>
+      </div>
     </header>
 
     <main class="detail-content">
@@ -66,99 +74,138 @@
 
 <script setup lang="ts">
 // 中文注释：路由详情页；作者可编辑，非作者只读
-import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import DailyEditor from '@/components/daily/DailyEditor.vue'
-import TiptapViewer from '@/components/daily/TiptapViewer.vue'
-import DailyComments from '@/components/daily/DailyComments.vue'
-import { NSpin, NButton, NPopconfirm, useMessage } from 'naive-ui'
-import { ArrowLeft } from 'lucide-vue-next'
-import { dailyApi, type DailyPostItem } from '@/services/daily'
-import { useAuthStore } from '@/stores/auth'
+import { ref, computed, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import DailyEditor from "@/components/daily/DailyEditor.vue";
+import TiptapViewer from "@/components/daily/TiptapViewer.vue";
+import DailyComments from "@/components/daily/DailyComments.vue";
+import { NSpin, NButton, NPopconfirm, useMessage } from "naive-ui";
+import { ArrowLeft } from "lucide-vue-next";
+import { dailyApi, type DailyPostItem } from "@/services/daily";
+import { useAuthStore } from "@/stores/auth";
 
-const route = useRoute()
-const router = useRouter()
-const authStore = useAuthStore()
-const message = useMessage()
+const route = useRoute();
+const router = useRouter();
+const authStore = useAuthStore();
+const message = useMessage();
 
-const id = computed(() => Number(route.params.id))
-const post = ref<DailyPostItem | null>(null)
-const loading = ref(false)
-const error = ref('')
+const id = computed(() => Number(route.params.id));
+const post = ref<DailyPostItem | null>(null);
+const loading = ref(false);
+const error = ref("");
 
 function isAuthor(authorUserId?: number | null) {
-  const uid = authStore.user?.id
-  return !!uid && !!authorUserId && uid === authorUserId
+  const uid = authStore.user?.id;
+  return !!uid && !!authorUserId && uid === authorUserId;
 }
 
 async function fetchDetail() {
-  loading.value = true
-  error.value = ''
+  loading.value = true;
+  error.value = "";
   try {
-    post.value = await dailyApi.getDetail(id.value)
+    post.value = await dailyApi.getDetail(id.value);
   } catch (e: any) {
-    error.value = e?.message || '加载失败'
+    error.value = e?.message || "加载失败";
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 async function onDelete() {
-  if (!post.value) return
+  if (!post.value) return;
   try {
-    const res = await dailyApi.deletePost(post.value.id)
+    const res = await dailyApi.deletePost(post.value.id);
     if (res?.success) {
-      message.success('删除成功')
-      goBack()
+      message.success("删除成功");
+      goBack();
     } else {
-      message.error('删除失败')
+      message.error("删除失败");
     }
   } catch (e: any) {
-    message.error(e?.message || '删除失败')
+    message.error(e?.message || "删除失败");
   }
 }
 
-
 async function saveDetail(json: Record<string, any>) {
-  if (!post.value) return
+  if (!post.value) return;
   try {
-    const updated = await dailyApi.updatePost(post.value.id, { content_jsonb: json })
-    post.value = updated
+    const updated = await dailyApi.updatePost(post.value.id, {
+      content_jsonb: json,
+    });
+    post.value = updated;
     // 保存后返回列表
-    goBack()
+    goBack();
   } catch (e: any) {
-    error.value = e?.message || '保存失败'
+    error.value = e?.message || "保存失败";
   }
 }
 
 function goBack() {
-  router.back()
+  router.back();
 }
 
 function formatTime(iso: string) {
-  const d = new Date(iso)
-  const now = new Date()
-  const diff = (now.getTime() - d.getTime()) / 1000
-  if (diff < 60) return '刚刚'
-  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`
-  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`
-  return d.toLocaleDateString('zh-CN', { year: 'numeric', month: 'short', day: 'numeric' })
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = (now.getTime() - d.getTime()) / 1000;
+  if (diff < 60) return "刚刚";
+  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`;
+  return d.toLocaleDateString("zh-CN", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
-onMounted(fetchDetail)
+onMounted(fetchDetail);
 </script>
 
 <style scoped>
 /* 中文注释：路由详情页的布局与样式（与列表页风格一致） */
-.daily-detail-page { min-height: 100vh; background: var(--base-dark, #0f0f12); color: var(--text-primary); }
-.detail-header { display:flex; align-items:center; justify-content:space-between; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,.06); }
-.meta { display:flex; align-items:center; gap:12px; }
-.detail-content { padding: 12px 16px; }
-.detail-editor { margin: 0 auto; max-width: 880px; }
-.comments-section { margin: 16px auto; max-width: 880px; }
-.avatar { width:32px; height:32px; border-radius:50%; object-fit: cover; }
-.author { display:flex; flex-direction:column; }
-.name { font-weight:600; }
+.daily-detail-page {
+  min-height: 100vh;
+  background: var(--base-dark, #0f0f12);
+  color: var(--text-primary);
+  overflow-x: hidden;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.detail-content {
+  padding: 12px 16px;
+}
+.detail-editor {
+  margin: 0 auto;
+  max-width: 880px;
+}
+.comments-section {
+  margin: 16px auto;
+  max-width: 880px;
+}
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.author {
+  display: flex;
+  flex-direction: column;
+}
+.name {
+  font-weight: 600;
+}
 
 /* 中文注释：未登录/非作者时，Tiptap 内容使用卡片式容器展示，带阴影与轻微动效 */
 .viewer-card {
@@ -169,50 +216,79 @@ onMounted(fetchDetail)
   border-radius: 14px;
   padding: 20px 22px;
   box-shadow: var(--shadow-soft);
-  transition: transform .25s var(--ease-hover, ease), box-shadow .25s var(--ease-hover, ease);
-  animation: viewerCardIn .32s cubic-bezier(.22,.61,.36,1) both;
+  transition: transform 0.25s var(--ease-hover, ease),
+    box-shadow 0.25s var(--ease-hover, ease);
+  animation: viewerCardIn 0.32s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
 .viewer-card:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-medium), 0 6px 24px rgba(0,0,0,.15);
+  box-shadow: var(--shadow-medium), 0 6px 24px rgba(0, 0, 0, 0.15);
 }
 
 @keyframes viewerCardIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.time { font-size:12px; color: var(--text-secondary); }
-.detail-content { padding: 16px; min-height: 50vh; }
+.time {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.detail-content {
+  padding: 16px;
+  min-height: 50vh;
+}
 
-  /* 内容与评论的视觉分割线样式 */
-  .content-divider {
-    /* 上下间距加大，明确分区 */
-    margin: 28px auto 20px;
-    max-width: 880px;
-    height: 2px;
-    /* 渐变 + 主题混合，提升在深浅主题下的可见性 */
-    background: linear-gradient(90deg,
-      transparent,
-      color-mix(in oklch, var(--primary) 75%, #ffffff) 15%,
-      color-mix(in oklch, var(--primary) 85%, #000000) 50%,
-      color-mix(in oklch, var(--primary) 75%, #ffffff) 85%,
-      transparent
-    );
-    border: none;
-    filter: drop-shadow(0 0 4px color-mix(in oklch, var(--primary) 35%, transparent));
-    opacity: .9;
-    border-radius: 2px;
-  }
+/* 内容与评论的视觉分割线样式 */
+.content-divider {
+  /* 上下间距加大，明确分区 */
+  margin: 28px auto 20px;
+  max-width: 880px;
+  height: 2px;
+  /* 渐变 + 主题混合，提升在深浅主题下的可见性 */
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklch, var(--primary) 75%, #ffffff) 15%,
+    color-mix(in oklch, var(--primary) 85%, #000000) 50%,
+    color-mix(in oklch, var(--primary) 75%, #ffffff) 85%,
+    transparent
+  );
+  border: none;
+  filter: drop-shadow(
+    0 0 4px color-mix(in oklch, var(--primary) 35%, transparent)
+  );
+  opacity: 0.9;
+  border-radius: 2px;
+}
 
 /* 中文注释：让 NSpin 居中显示加载动画与描述文案 */
-.detail-spin { display: block; width: 100%; }
-.detail-spin :deep(.n-spin-body) { min-height: 260px; display: flex; align-items: center; justify-content: center; }
-.detail-spin :deep(.n-spin-content) { width: 100%; }
+.detail-spin {
+  display: block;
+  width: 100%;
+}
+.detail-spin :deep(.n-spin-body) {
+  min-height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.detail-spin :deep(.n-spin-content) {
+  width: 100%;
+}
 
 /* 中文注释：作者编辑模式下，提升编辑器可视高度 */
-.detail-editor :deep(.editor-pane) { min-height: 360px; max-height: 70vh; }
+.detail-editor :deep(.editor-pane) {
+  min-height: 360px;
+  max-height: 70vh;
+}
 
 /* 中文注释：圆形主题按钮动效（与列表页一致） */
 .icon-circle-btn :deep(.n-button__content) {
@@ -234,8 +310,13 @@ onMounted(fetchDetail)
   background: var(--primary-pressed) !important;
   transform: translateY(0);
 }
-.icon-circle-btn svg { color: var(--text-inverse); }
+.icon-circle-btn svg {
+  color: var(--text-inverse);
+}
 
-.error { color: #ff6b6b; text-align: center; padding: 16px; }
+.error {
+  color: #ff6b6b;
+  text-align: center;
+  padding: 16px;
+}
 </style>
-
