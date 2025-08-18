@@ -65,14 +65,7 @@
     <!-- 4) 分页组件（底部可见） -->
     <footer class="pagination-bar">
       <n-pagination v-model:page="page" v-model:page-size="pageSize" :item-count="itemCount" :page-sizes="[10, 20, 30]"
-        :page-slot="7" size="small" :show-size-picker="true" :show-quick-jumper="true">
-        <template #prefix="{ itemCount }">
-          共 {{ itemCount }} 条
-        </template>
-        <template #suffix="{ page, pageCount }">
-          第 {{ page }} 页，共 {{ pageCount }} 页
-        </template>
-      </n-pagination>
+        :page-slot="7" size="small" :show-size-picker="true" :show-quick-jumper="true" />
     </footer>
 
     <!-- 登录/注册模态（内置表单，不跳转页面） -->
@@ -725,6 +718,17 @@ onUnmounted(() => { cleanupFns.forEach(fn => { try { fn() } catch { } }); cleanu
     width: 200px;
     max-width: 70vw;
   }
+
+  /* 中文注释：移动端上移“新增日常”悬浮按钮，避免遮挡底部分页 */
+  .fab {
+    /* 中文注释：进一步上移，确保不与分页组件重叠 */
+    bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+
+  /* 中文注释：为分页区域留出更多竖向空间，增强可读性 */
+  .pagination-bar {
+    padding: 12px 0 18px;
+  }
 }
 
 @media (min-width: 641px) and (max-width: 960px) {
@@ -957,6 +961,14 @@ onUnmounted(() => { cleanupFns.forEach(fn => { try { fn() } catch { } }); cleanu
   box-shadow: 0 8px 24px rgba(0,0,0,0.3);
 }
 .fab svg { color: var(--text-inverse); }
+
+
+/* 中文注释：为了保证覆盖顺序，移动端下在文件末端再次提升 FAB 的 bottom 值 */
+@media (max-width: 640px) {
+  .fab {
+    bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+}
 
 /* DailyEditor modal 尺寸与滚动控制 */
 .daily-editor-modal :deep(.n-card) {
