@@ -268,8 +268,7 @@ onUnmounted(() => {
   width: 100vw;
   height: 100vh;
   pointer-events: none;
-  /* 保持粒子层在全局最底层，避免覆盖任何 UI 组件 */
-  z-index: -1;
+  z-index: 1;
   opacity: 0;
   transition: opacity 2s ease-in-out;
 
