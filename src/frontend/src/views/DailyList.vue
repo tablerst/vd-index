@@ -109,8 +109,33 @@
               <n-form ref="bindFormRef" :model="bindForm" :rules="bindRules" label-placement="left"
                 :show-require-mark="false">
                 <n-form-item path="member_id" label="选择成员">
-                  <n-select v-model:value="bindForm.member_id" :options="bindableMemberOptions" placeholder="选择要绑定的成员"
-                    filterable />
+                  <n-select
+                    v-model:value="bindForm.member_id"
+                    v-model:show="bindableSelectOpen"
+                    :options="bindableMemberOptions"
+                    placeholder="选择要绑定的成员"
+                    filterable
+                    :virtual-scroll="true"
+                    :loading="bindableLoading"
+                    :reset-menu-on-options-change="false"
+                    @update:show="onBindableShowChange"
+                  >
+                    <template #action>
+                      <div style="padding: 8px 12px; text-align: center;">
+                        <n-button
+                          type="primary"
+                          round
+                          size="small"
+                          :loading="bindableLoading"
+                          :disabled="!bindableHasMore || bindableLoading"
+                          style="min-width: 120px;"
+                          @click.stop="handleLoadMoreBindable"
+                        >
+                          {{ bindableHasMore ? (bindableLoading ? '加载中...' : '加载更多') : (bindableMemberOptions.length === 0 ? '暂无可绑定成员' : '已全部加载') }}
+                        </n-button>
+                      </div>
+                    </template>
+                  </n-select>
                 </n-form-item>
                 <n-form-item path="uin" label="成员UIN">
                   <n-input v-model:value="bindForm.uin" placeholder="请输入该成员的QQ号用于验证" />
@@ -158,6 +183,7 @@
 <script setup lang="ts">
 // 中文注释：重构为四层布局（标题栏/筛选栏/内容/分页），高度严格100vh，正文区域可滚动
 import { ref, onMounted, watch, nextTick, onUnmounted, computed } from 'vue'
+import type { ComponentPublicInstance } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import DailyCard from '@/components/daily/DailyCard.vue'
 import DailyEditor from '@/components/daily/DailyEditor.vue'
@@ -300,7 +326,7 @@ function handleUserMenu(key: string) {
     registerStep.value = 2
     bindError.value = ''
     bindForm.value = { member_id: null, uin: '' }
-    loadBindableMembers()
+    loadBindableMembers(true)
     return
   }
   if (key === 'change-password') {
@@ -458,7 +484,7 @@ async function handleRegister() {
     if (ok) {
       // 进入绑定步骤并加载可绑定成员
       registerStep.value = 2
-      await loadBindableMembers()
+      await loadBindableMembers(true)
       message.success('注册成功，请完成成员绑定')
     } else {
       registerError.value = '注册失败，请稍后再试'
@@ -483,19 +509,72 @@ const bindRules: FormRules = {
   ]
 }
 
-// 可绑定成员选项
+// 可绑定成员选项与分页加载
 const bindableMemberOptions = ref<Array<{ label: string; value: number }>>([])
+const bindablePage = ref(1)
+const bindablePageSize: number = 50
+const bindableLoading = ref(false)
+const bindableHasMore = ref(true)
+const bindableTotalPages = ref(1)
 
-async function loadBindableMembers() {
+async function loadBindableMembers(reset = false) {
   try {
-    const res = await apiClient.getBindableMembers(1, 50)
-    bindableMemberOptions.value = res.members.map(m => ({ label: m.display_name, value: m.id }))
+    if (bindableLoading.value) return
+    if (reset) {
+      bindablePage.value = 1
+      bindableHasMore.value = true
+      bindableTotalPages.value = 1
+      bindableMemberOptions.value = []
+    } else {
+      if (!bindableHasMore.value) return
+    }
+    bindableLoading.value = true
+    const res = await apiClient.getBindableMembers(bindablePage.value, bindablePageSize)
+    const existed = new Set(bindableMemberOptions.value.map(o => o.value))
+    const newOptions = res.members
+      .map(m => ({ label: m.display_name, value: m.id }))
+      .filter(o => !existed.has(o.value))
+    bindableMemberOptions.value = [...bindableMemberOptions.value, ...newOptions]
+    bindableTotalPages.value = res.total_pages || Math.ceil((res.total || 0) / (res.page_size || bindablePageSize))
+    const nowPage = res.page || bindablePage.value
+    const nextPage = nowPage + 1
+    bindablePage.value = nextPage
+    bindableHasMore.value = nextPage <= bindableTotalPages.value
   } catch (e: any) {
     console.error('Failed to load bindable members', e)
-    bindableMemberOptions.value = []
+    if (reset) bindableMemberOptions.value = []
     // 中文注释：若后端路由注册顺序不当，/members/bindable 可能被 /members/{member_id} 吞掉导致422
-    bindError.value = '加载可绑定成员失败：请确认后端已将 users_bind 路由在 members 之前注册（/api/router.py）'
+    bindError.value = '加载可绑定成员失败，请稍后重试'
     message.error('无法加载可绑定成员，请稍后重试')
+  } finally {
+    bindableLoading.value = false
+  }
+}
+
+function onBindableMenuScroll(_e: Event) { /* 按钮模式下不再使用滚动触发 */ }
+
+// 按钮模式：保留占位避免引用报错（无需 IO 与滚动容器查找）
+let bindableIo: IntersectionObserver | null = null
+const bindableActionRef = ref<HTMLElement | null>(null)
+function setupBindableObserver() {
+  if (bindableIo) { try { bindableIo.disconnect() } catch {} bindableIo = null }
+}
+const bindableSelectOpen = ref(false)
+function onBindableShowChange(show: boolean) {
+  bindableSelectOpen.value = show
+  if (show) {
+    // 按钮模式：展开时重置并拉取第一页
+    loadBindableMembers(true)
+  } else {
+    if (bindableIo) { try { bindableIo.disconnect() } catch {} bindableIo = null }
+  }
+}
+
+function handleLoadMoreBindable() {
+  if (!bindableLoading.value && bindableHasMore.value) {
+    loadBindableMembers(false)
+    // 保持下拉框不关闭
+    bindableSelectOpen.value = true
   }
 }
 

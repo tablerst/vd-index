@@ -68,8 +68,8 @@
           </n-button>
         </div>
         <div class="group">
-          <n-button quaternary size="small" :disabled="!editor" @click="insertImage" title="插入图片">
-            <template #icon>
+          <n-button quaternary size="small" :disabled="!editor || compressing" :loading="compressing" @click="insertImage" :title="compressing ? `正在处理图片 ${compressionProgress}%` : '插入图片'">
+            <template #icon v-if="!compressing">
               <n-icon size="16">
                 <ImageIcon />
               </n-icon>
@@ -105,6 +105,7 @@ import { dailyApi } from '@/services/daily'
 import { Bold, Italic, Strikethrough, Heading2, Heading3, List, ListOrdered, Image as ImageIcon } from 'lucide-vue-next'
 import { useThemeStore } from '@/stores/theme'
 import { storeToRefs } from 'pinia'
+import { compressImagesBatch, formatFileSize } from '@/utils/imageCompression'
 
 const props = defineProps<{ autosaveKey?: string; initialContent?: Record<string, any> | null }>()
 const emits = defineEmits<{ (e: 'save', json: Record<string, any>): void; (e: 'cancel'): void }>()
@@ -131,6 +132,8 @@ const editorClass = computed(() => [
 const message = useMessage()
 const saving = ref(false)
 const fileInputRef = ref<HTMLInputElement | null>(null)
+const compressing = ref(false)
+const compressionProgress = ref(0)
 let autosaveTimer: number | undefined
 
 // 初始化编辑器
@@ -175,14 +178,61 @@ async function onFilesSelected(e: Event) {
   const input = e.target as HTMLInputElement
   const files = input.files ? Array.from(input.files) : []
   if (!files.length) return
+
+  // Filter only image files
+  const imageFiles = files.filter(file => file.type.startsWith('image/'))
+  if (!imageFiles.length) {
+    message.warning('请选择图片文件')
+    if (input) input.value = ''
+    return
+  }
+
+  compressing.value = true
+  compressionProgress.value = 0
+
   try {
-    const res = await dailyApi.uploadImages(files)
+    // Compress images before upload
+    message.info('正在压缩图片...')
+    const compressionResults = await compressImagesBatch(imageFiles, {
+      maxSizeMB: 0.5,
+      maxWidthOrHeight: 2048,
+      useWebWorker: true
+    }, (_fileIndex, _fileProgress, totalProgress) => {
+      compressionProgress.value = Math.round(totalProgress)
+    })
+
+    // Show compression results
+    let totalOriginalSize = 0
+    let totalCompressedSize = 0
+    const compressedFiles = compressionResults.map(result => {
+      totalOriginalSize += result.originalSize
+      totalCompressedSize += result.compressedSize
+      return result.file
+    })
+
+    if (totalOriginalSize > totalCompressedSize) {
+      const savedSize = totalOriginalSize - totalCompressedSize
+      const savedPercent = Math.round((savedSize / totalOriginalSize) * 100)
+      message.success(
+        `图片压缩完成！节省空间 ${formatFileSize(savedSize)} (${savedPercent}%)`
+      )
+    }
+
+    // Upload compressed images
+    message.info('正在上传图片...')
+    const res = await dailyApi.uploadImages(compressedFiles)
     const urls = res.files.map(f => f.url).filter(Boolean)
+    
+    // Insert images to editor
     urls.forEach(url => editor?.value?.chain().focus().setImage({ src: url }).run())
-    message.success('图片已插入')
+    
+    message.success(`已插入 ${urls.length} 张图片`)
   } catch (err: any) {
-    message.error(err?.message || '图片上传失败')
+    console.error('Image upload failed:', err)
+    message.error(err?.message || '图片处理失败')
   } finally {
+    compressing.value = false
+    compressionProgress.value = 0
     if (input) input.value = ''
   }
 }
