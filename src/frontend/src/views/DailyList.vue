@@ -129,6 +129,7 @@
                           :loading="bindableLoading"
                           :disabled="!bindableHasMore || bindableLoading"
                           style="min-width: 120px;"
+                          @mousedown.prevent
                           @click.stop="handleLoadMoreBindable"
                         >
                           {{ bindableHasMore ? (bindableLoading ? '加载中...' : '加载更多') : (bindableMemberOptions.length === 0 ? '暂无可绑定成员' : '已全部加载') }}
@@ -183,7 +184,7 @@
 <script setup lang="ts">
 // 中文注释：重构为四层布局（标题栏/筛选栏/内容/分页），高度严格100vh，正文区域可滚动
 import { ref, onMounted, watch, nextTick, onUnmounted, computed } from 'vue'
-import type { ComponentPublicInstance } from 'vue'
+
 import { useRouter, useRoute } from 'vue-router'
 import DailyCard from '@/components/daily/DailyCard.vue'
 import DailyEditor from '@/components/daily/DailyEditor.vue'
@@ -551,29 +552,32 @@ async function loadBindableMembers(reset = false) {
   }
 }
 
-function onBindableMenuScroll(_e: Event) { /* 按钮模式下不再使用滚动触发 */ }
+
 
 // 按钮模式：保留占位避免引用报错（无需 IO 与滚动容器查找）
 let bindableIo: IntersectionObserver | null = null
-const bindableActionRef = ref<HTMLElement | null>(null)
-function setupBindableObserver() {
-  if (bindableIo) { try { bindableIo.disconnect() } catch {} bindableIo = null }
-}
+
 const bindableSelectOpen = ref(false)
 function onBindableShowChange(show: boolean) {
   bindableSelectOpen.value = show
   if (show) {
-    // 按钮模式：展开时重置并拉取第一页
-    loadBindableMembers(true)
+    // 仅在首次展开且无数据时拉取第一页，避免重复重置
+    if (bindableMemberOptions.value.length === 0) {
+      loadBindableMembers(true)
+    }
   } else {
+    // 保留：关闭时清理内部引用（尽管当前为按钮模式）
     if (bindableIo) { try { bindableIo.disconnect() } catch {} bindableIo = null }
   }
 }
 
-function handleLoadMoreBindable() {
+async function handleLoadMoreBindable(e?: MouseEvent) {
+  // 防止点击导致下拉框失焦关闭
+  try { e?.stopPropagation() } catch {}
   if (!bindableLoading.value && bindableHasMore.value) {
-    loadBindableMembers(false)
-    // 保持下拉框不关闭
+    await loadBindableMembers(false)
+    await nextTick()
+    // 强制保持下拉框展开（应对内部自动关闭）
     bindableSelectOpen.value = true
   }
 }
