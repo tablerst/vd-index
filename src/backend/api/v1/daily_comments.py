@@ -25,6 +25,37 @@ router = APIRouter(prefix="/daily", tags=["daily-comments"])  # 统一由 api.ro
 
 
 @router.get(
+    "/comments/recent",
+    response_model=list[DailyCommentItem],
+    summary="获取最近评论（跨帖子，默认20条）",
+)
+async def recent_comments(
+    request: Request,
+    limit: int = Query(20, ge=1, le=100),
+    include_deleted: bool = False,
+    session: AsyncSession = Depends(get_session),
+):
+    """返回最近的评论列表，包含头像等聚合信息。"""
+    comments = await DailyPostCommentCRUD.list_recent(session, limit=limit, include_deleted=include_deleted)
+
+    base_url = f"{request.url.scheme}://{request.url.netloc}"
+
+    items: list[DailyCommentItem] = []
+    for c in comments:
+        data = c.model_dump()
+        user = await UserCRUD.get_by_id(session, c.author_user_id)
+        if user and getattr(user, "member_id", None):
+            member = await MemberCRUD.get_by_id(session, user.member_id)
+            if member:
+                data["author_display_name"] = getattr(member, "display_name", None)
+                data["author_avatar_url"] = f"{base_url}/api/v1/avatar/{member.id}"
+        items.append(DailyCommentItem(**data))
+
+    return items
+
+
+
+@router.get(
     "/posts/{post_id}/comments",
     response_model=DailyCommentListResponse,
     summary="获取某帖子下的评论（顶层+子回复）",

@@ -201,6 +201,9 @@ export const dailyApi = {
   async getComments(postId: number, page: number = 1, pageSize: number = 20): Promise<DailyCommentListResponse> {
     return request<DailyCommentListResponse>(`/api/v1/daily/posts/${postId}/comments?page=${page}&page_size=${pageSize}`)
   },
+  async getRecentComments(limit: number = 20): Promise<DailyCommentItem[]> {
+    return request<DailyCommentItem[]>(`/api/v1/daily/comments/recent?limit=${limit}`)
+  },
   async createComment(postId: number, content: string, parentId?: number): Promise<DailyCommentItem> {
     return request<DailyCommentItem>(`/api/v1/daily/posts/${postId}/comments`, {
       method: 'POST',

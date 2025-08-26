@@ -139,3 +139,20 @@ class DailyPostCommentCRUD:
         await session.refresh(c)
         return c
 
+
+
+    @staticmethod
+    async def list_recent(
+        session: AsyncSession,
+        limit: int = 20,
+        include_deleted: bool = False,
+    ) -> List[DailyPostComment]:
+        """获取最近的评论列表（跨帖子）。
+        - 默认过滤已删除评论
+        - 按创建时间倒序
+        """
+        stmt = select(DailyPostComment).order_by(desc(DailyPostComment.created_at)).limit(limit)
+        if not include_deleted:
+            stmt = stmt.where(DailyPostComment.is_deleted == False)  # noqa: E712
+        res = await session.execute(stmt)
+        return list(res.scalars().all())

@@ -3,11 +3,21 @@
     <!-- 顶部居中标题：应用 title-accent 渐变文本样式 -->
 
 
-    <!-- 横向无缝循环滚动轨道（双轨道：上-右→左，下-左→右） -->
+    <!-- 横向无缝循环弹幕轨道（上：最新评论右→左；下：仍保留卡片左→右） -->
     <div class="loop-container" ref="loopContainer" @mouseenter="pauseLoop()" @mouseleave="resumeLoop()">
-      <div class="loop-track loop-track--top" ref="trackTop">
-        <DailyCard v-for="(p, i) in marqueePosts" :key="'top-' + p.id + '-' + i" :post="p" class="loop-item" />
+      <!-- 顶部：弹幕评论（多行） -->
+      <div class="loop-track loop-track--top danmaku-track" ref="trackTop">
+        <div class="dan-row" v-for="(row, rIdx) in danmakuRows" :key="'row-' + rIdx">
+          <DanmakuComment
+            v-for="(c, i) in row"
+            :key="`c-${rIdx}-${c.id}-${i}`"
+            :comment="c"
+            class="loop-item danmaku-item"
+            :style="padStyle(rIdx, i, row.length)"
+          />
+        </div>
       </div>
+      <!-- 底部：继续展示卡片（可后续也替换为弹幕） -->
       <div class="loop-track loop-track--bottom" ref="trackBottom">
         <DailyCard v-for="(p, i) in marqueePosts" :key="'bottom-' + p.id + '-' + i" :post="p" class="loop-item" />
       </div>
@@ -40,9 +50,10 @@
 
 <script setup lang="ts">
 // 中文注释：DailyWall - 顶部居中标题 + 底部按钮 + GSAP 无缝横向循环；采用 gsap.context 管理、onRepeat 重置、可见性暂停
-import { ref, onMounted, nextTick, onUnmounted, computed } from 'vue'
-import { dailyApi, type DailyPostItem } from '@/services/daily'
+import { ref, onMounted, nextTick, onUnmounted, computed, watch } from 'vue'
+import { dailyApi, type DailyPostItem, type DailyCommentItem } from '@/services/daily'
 import DailyCard from './DailyCard.vue'
+import DanmakuComment from './DanmakuComment.vue'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
@@ -50,6 +61,79 @@ gsap.registerPlugin(ScrollTrigger)
 
 // 全局平滑设置：大抖动时限制修正，避免卡顿传播
 try { gsap.ticker.lagSmoothing(1000, 16) } catch { }
+
+const recentComments = ref<DailyCommentItem[]>([])
+// 中文注释：弹幕也需要双份以实现无缝（与卡片一致策略）；若不足则循环补齐
+const marqueeComments = computed(() => {
+  const base = recentComments.value
+  if (!base.length) return []
+  const MIN = 10
+  const filled = base.length >= MIN ? base : Array.from({ length: MIN }, (_, i) => base[i % base.length])
+  return [...filled, ...filled]
+})
+
+// 行数：根据屏幕宽度自适应（桌面3行，平板/移动2行）
+const danmakuRowCount = ref(3)
+function calcRowCount() {
+  const w = typeof window !== 'undefined' ? window.innerWidth : 1280
+  if (w >= 1280) return 3
+  if (w >= 768) return 2
+  return 2
+}
+danmakuRowCount.value = calcRowCount()
+
+// Helpers for deterministic padding style used by template
+function hashStr(s: string): number { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h) + s.charCodeAt(i); return h >>> 0 }
+function mulberry32(a: number) { return function () { let t = a += 0x6D2B79F5; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296 } }
+function padStyle(rIdx: number, i: number, totalLen: number) {
+  const baseLen = Math.max(1, (totalLen / 2) | 0)
+  const baseIdx = i % baseLen
+  const rng = mulberry32(hashStr(`${rIdx}:${baseLen}:${baseIdx}`))
+  const pad = Math.round(8 + rng() * 28)
+  return { '--pad': `${pad}px` }
+}
+
+
+// 将弹幕内容按行均匀分配；每行不足则复用补齐，并做双份复制以实现无缝
+const danmakuRows = computed(() => {
+  // 使用洗牌后的数据，确保复用时不显重复模式
+  const shuffled = shuffle(marqueeComments.value)
+  const base = shuffled
+  const rows = danmakuRowCount.value
+  if (!base.length || rows <= 0) return []
+
+  // 每行至少需要的条数（估算值），不足复用
+  const PER_MIN = 8
+  const per = Math.max(PER_MIN, Math.ceil(base.length / rows))
+
+  // 轮询分配到多行
+  const tmp: DailyCommentItem[][] = Array.from({ length: rows }, () => [])
+  base.slice(0, per * rows).forEach((item, idx) => {
+    tmp[idx % rows].push(item)
+  })
+  // 补齐每行
+  for (let r = 0; r < rows; r++) {
+    const arr = tmp[r]
+    let i = 0
+    while (arr.length < per) {
+      arr.push(base[i % base.length])
+      i++
+    }
+
+  }
+  // 每行再复制一份用于无缝
+  return tmp.map(arr => [...arr, ...arr])
+})
+
+// 洗牌函数：Fisher-Yates，确保复用数据时打乱一次
+function shuffle<T>(arr: T[]): T[] {
+  const a = arr.slice()
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
 
 const posts = ref<DailyPostItem[]>([])
 const loopContainer = ref<HTMLElement | null>(null)
@@ -70,11 +154,46 @@ const marqueePosts = computed(() => {
   // 返回双份内容：上/下两条轨道动画按 scrollWidth/2 计算，要求内容成对
   return [...filled, ...filled]
 })
+
+// 针对单行弹幕的无缝跑马灯动画（ModifiersPlugin 包裹，实现真正无缝）
+function buildRowMarquee(row: HTMLElement, { speed = 120 }: { speed?: number }) {
+  const W = row.scrollWidth / 2 // 单份内容宽度（我们已对每行做了双份）
+  const start = -Math.random() * W // 随机起点，避免行间对齐
+  const dur = Math.max(W / (speed || 120), 6)
+  gsap.set(row, { x: start, force3D: true })
+  return gsap.to(row, {
+    x: start - W, // 每周期左移一个 W
+    duration: dur,
+    ease: 'none',
+    repeat: -1,
+    force3D: true,
+    onRepeat: () => { gsap.set(row, { x: start, force3D: true }) }
+  })
+}
+
 const trackTop = ref<HTMLElement | null>(null)
 const trackBottom = ref<HTMLElement | null>(null)
 
 let tlTop: gsap.core.Tween | null = null
 let tlBottom: gsap.core.Tween | null = null
+// 为顶部多行弹幕分别创建不同速度的无缝动画
+function rebuildDanmakuRows() {
+  if (!trackTop.value) return
+  // 清理旧动画
+  tlTop?.kill(); tlTop = null
+  // 为每一行分别构建动画
+  const rows = trackTop.value.querySelectorAll<HTMLElement>('.dan-row')
+  const tweens: gsap.core.Tween[] = []
+  rows.forEach((row, idx) => {
+    // 行间速度差异：基准 110 + idx*12，制造不对齐效果
+    const speed = 110 + (idx % 3) * 12
+    const t = buildRowMarquee(row, { speed })
+    tweens.push(t)
+  })
+  // 记录第一个 tween，后续统一暂停/恢复
+  tlTop = tweens[0] || null
+}
+
 let resizeTimer: number | null = null
 let ctx: gsap.Context | null = null
 
@@ -106,8 +225,9 @@ function rebuildMarquees() {
   // 先清理旧动画
   tlTop?.kill(); tlTop = null
   tlBottom?.kill(); tlBottom = null
-  // 重新计算并创建
-  if (trackTop.value) tlTop = buildMarquee(trackTop.value, { dir: 'left', speed: 120 })
+  // 顶部：为每一行分别创建无缝且不等速动画
+  rebuildDanmakuRows()
+  // 底部：卡片保留原跑马灯（也改为无缝modifiers以优化）
   if (trackBottom.value) tlBottom = buildMarquee(trackBottom.value, { dir: 'right', speed: 90 })
 }
 
@@ -124,6 +244,9 @@ function resumeLoop() {
 function handleResize() {
   if (resizeTimer) window.clearTimeout(resizeTimer)
   resizeTimer = window.setTimeout(() => {
+    // 自适应行数重算
+    danmakuRowCount.value = calcRowCount()
+    // 重建无缝动画
     rebuildMarquees()
   }, 150)
 }
@@ -361,7 +484,13 @@ function setupButtonAnimations() {
 
 onMounted(async () => {
   try {
-    posts.value = await dailyApi.getTrending(12)
+    // 同时加载首页卡片与最新评论（20条）
+    const [postsData, commentsData] = await Promise.all([
+      dailyApi.getTrending(12),
+      dailyApi.getRecentComments(20)
+    ])
+    posts.value = postsData
+    recentComments.value = commentsData
     await nextTick()
 
     // 使用 gsap.context 管理本组件内的所有动画/ScrollTrigger
@@ -379,7 +508,7 @@ onMounted(async () => {
     // 在卸载时通过 ctx.revert() 清理，附带额外清理器
     onUnmounted(() => { removeVisibility() })
   } catch (e) {
-    console.error('加载trending失败', e)
+    console.error('加载trending/最新评论失败', e)
   }
 })
 
@@ -434,6 +563,7 @@ onUnmounted(() => {
   will-change: transform;
 }
 
+/* 顶部弹幕轨道由多行组成：每行横向排列 */
 .loop-track {
   display: flex;
   gap: 16px;
@@ -441,6 +571,9 @@ onUnmounted(() => {
   padding: 0 8px;
   backface-visibility: hidden;
 }
+.danmaku-track { flex-direction: column; gap: 10px; }
+.danmaku-track .dan-row { display: flex; gap: 16px; align-items: center; }
+.danmaku-track .danmaku-item { padding-right: var(--pad, 0px); }
 
 .loop-item {
   flex: 0 0 auto;
@@ -448,6 +581,8 @@ onUnmounted(() => {
   width: min(260px, 22vw);
   margin-block: 8px;
 }
+/* 顶部弹幕项可以更宽 */
+.danmaku-track .danmaku-item { width: auto; }
 
 .more-bar {
   position: sticky;
