@@ -50,7 +50,7 @@
 
 <script setup lang="ts">
 // 中文注释：DailyWall - 顶部居中标题 + 底部按钮 + GSAP 无缝横向循环；采用 gsap.context 管理、onRepeat 重置、可见性暂停
-import { ref, onMounted, nextTick, onUnmounted, computed, watch } from 'vue'
+import { ref, onMounted, nextTick, onUnmounted, computed } from 'vue'
 import { dailyApi, type DailyPostItem, type DailyCommentItem } from '@/services/daily'
 import DailyCard from './DailyCard.vue'
 import DanmakuComment from './DanmakuComment.vue'
