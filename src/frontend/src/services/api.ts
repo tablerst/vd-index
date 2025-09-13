@@ -1073,6 +1073,9 @@ export interface ActThreadPost {
   content: string
   parent_id?: number | null
   created_at: string
+  // optional enriched fields from backend when non-anonymous
+  author_display_name?: string
+  author_avatar_url?: string
 }
 
 export interface ActThreadPostCreate {

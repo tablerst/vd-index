@@ -49,7 +49,7 @@
               <span>匿名展示</span>
             </label>
           </div>
-          <div class="right">
+          <div class="right buttons-gap">
             <span v-if="deleteMode" class="chip danger" title="按 ESC 可退出">删除模式</span>
             <button
               v-if="isAuthenticated"
@@ -263,6 +263,8 @@ function toggleDeleteMode() {
 .hint { color: var(--text-secondary); font-size: 12px; margin-left: 8px; }
 .chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--text-secondary); margin-right: 8px; }
 .chip.danger { background: color-mix(in srgb, var(--error-alert, #f7768e) 25%, transparent); color: #fff; box-shadow: 0 0 0 1px color-mix(in srgb, var(--error-alert, #f7768e) 50%, transparent) inset; }
+
+.buttons-gap { display: inline-flex; align-items: center; gap: 8px; }
 
 /* 排行 */
 .rank-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }

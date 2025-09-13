@@ -35,6 +35,8 @@ from services.database.models.activity_subsystem.crud import (
     ActVoteCRUD,
     ActThreadCRUD,
 )
+from services.database.models.user.crud import UserCRUD
+from services.database.models.member.crud import MemberCRUD
 from services.database.models.base import orjson_dumps_compact, to_naive_beijing
 from schema.activity2 import (
     ActivityCreate,
@@ -337,8 +339,9 @@ async def list_posts(activity_id: int, size: int = 20, session: AsyncSession = D
     if not a or a.type != "thread":
         raise HTTPException(status_code=404, detail="Thread activity not found")
     items = await ActThreadCRUD.list_posts(session, activity_id, size=size)
-    return {"items": [
-        {
+    enriched = []
+    for p in items:
+        data = {
             "id": p.id,
             "activity_id": p.activity_id,
             "author_id": p.author_id,
@@ -347,8 +350,22 @@ async def list_posts(activity_id: int, size: int = 20, session: AsyncSession = D
             "parent_id": p.parent_id,
             "created_at": p.created_at,
         }
-        for p in items
-    ]}
+        # 仅当非匿名且存在作者时返回昵称与头像
+        try:
+            if not p.display_anonymous and getattr(p, "author_id", 0):
+                user = await UserCRUD.get_by_id(session, p.author_id)
+                member_id = getattr(user, "member_id", None) if user else None
+                if member_id:
+                    member = await MemberCRUD.get_by_id(session, member_id)
+                    if member:
+                        data["author_display_name"] = getattr(member, "display_name", None)
+                        # 返回相对路径，前端与站点同域时可直接使用
+                        data["author_avatar_url"] = f"/api/v1/avatar/{member.id}"
+        except Exception:
+            # 静默失败：不影响主流程
+            pass
+        enriched.append(data)
+    return {"items": enriched}
 
 
 @router.post("/{activity_id}/posts")
@@ -387,7 +404,7 @@ async def create_post(
     session.add(ActAuditLog(activity_id=activity_id, actor_id=author_id, action="create_post", metadata_json=orjson_dumps_compact(meta)))
     await session.commit()
 
-    return {
+    payload = {
         "id": created.id,
         "activity_id": created.activity_id,
         "author_id": created.author_id,
@@ -396,6 +413,20 @@ async def create_post(
         "parent_id": created.parent_id,
         "created_at": created.created_at,
     }
+    try:
+        # 仅当非匿名且存在作者时补充昵称与头像
+        if not created.display_anonymous and getattr(created, "author_id", 0):
+            user = await UserCRUD.get_by_id(session, created.author_id)
+            member_id = getattr(user, "member_id", None) if user else None
+            if member_id:
+                member = await MemberCRUD.get_by_id(session, member_id)
+                if member:
+                    payload["author_display_name"] = getattr(member, "display_name", None)
+                    payload["author_avatar_url"] = f"/api/v1/avatar/{member.id}"
+    except Exception:
+        pass
+
+    return payload
 
 
 @router.post("/{activity_id}/close")

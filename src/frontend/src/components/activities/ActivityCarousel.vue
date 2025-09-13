@@ -1,8 +1,11 @@
 <template>
   <div class="activity-carousel" ref="rootRef">
     <div class="header">
-      <h2 class="title title-accent">活动</h2>
-      <span class="subtitle">左右滑动浏览不同活动</span>
+      <div class="title-wrap">
+        <h2 class="title title-accent">活动</h2>
+        <span v-if="activeActivity" class="badge">{{ (activeActivity as any).type === 'vote' ? '投票' : '讨论' }}</span>
+        <span v-if="activities.length" class="count">{{ activeIndex + 1 }}/{{ totalPages }}</span>
+      </div>
       <div class="spacer" />
       <div class="actions">
         <template v-if="isAuthenticated">
@@ -343,7 +346,9 @@ function animateSlideTransition(fromIndex: number, toIndex: number) {
 }
 .title { font-size: 20px; font-weight: 700; letter-spacing: .2px; }
 .title-accent { background: var(--mixed-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-shadow: var(--shadow-glow); }
-.subtitle { color: var(--text-secondary); font-size: 12px; }
+.title-wrap { display: inline-flex; align-items: baseline; gap: 8px; }
+.badge { padding: 2px 8px; font-size: 12px; border-radius: 999px; background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--text-secondary); }
+.count { color: var(--text-secondary); font-size: 12px; }
 .spacer { flex: 1; }
 .actions { display: flex; gap: 8px; }
 .btn { padding: 6px 10px; border: 1px solid var(--primary-6, var(--primary)); color: var(--primary-6, var(--primary)); background: color-mix(in srgb, var(--primary) 6%, transparent); border-radius: 8px; }
