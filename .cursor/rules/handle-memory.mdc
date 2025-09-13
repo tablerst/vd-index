@@ -1,0 +1,63 @@
+---
+alwaysApply: true
+---
+
+## 项目规则（提炼自 CLAUDE.md）
+
+- 前后端分离与启动
+  - Dev：后端 uv sync -> alembic upgrade -> run.py；前端 pnpm install -> pnpm dev（Vite 代理 /api 到 8000）。
+  - Prod：前端 build 到 src/backend/static；DEBUG=false 时 FastAPI 在根路径挂载静态前端。
+
+- 认证/鉴权
+  - 前端：RequestInterceptor 注入 Authorization；401 由 TokenRefreshManager 刷新并单次重试；login/register 端点不做全局跳转拦截。
+  - 路由守卫：/settings 下路由均 requiresAuth；/settings/configs 需 admin 角色。
+  - 后端：JWT（python-jose）；/api/v1/auth 提供 login/me/refresh/register/change-password/logout。
+
+- 时间规范
+  - SQLModel 统一北京时间 naive：now_naive()/to_naive_beijing()。
+  - Schema 输出 ISO 字符串（必要时补 UTC）。
+
+- 缓存策略
+  - 全局 CacheService（TTLCache，per-key TTL、get_many/set_many、统计）。
+  - 成员读写与统计接入缓存；成员 TTL：settings.cache_member_ttl；统计 TTL：settings.cache_stats_ttl。
+
+- 配置与密钥
+  - 配置来自 .env（pydantic-settings）；不要提交 .env 与 secret_key。
+  - 加密主密钥优先 UIN_AES_KEY，否则使用 secret_key 文件；PBKDF2 派生 AES-256-GCM。
+
+- 静态/CORS/Hosts
+  - 生产：src/backend/static 挂载到 /；开发可选挂载 /static。
+  - CORS：allowed_origins；生产启用 TrustedHostMiddleware(allowed_hosts)。
+
+- 日志
+  - 日志目录在项目根 logs/；输出 app.log、error.log。
+
+- API 约定
+  - 统一前缀 /api/v1；注册顺序避免 members/{id} 吞并 members/bindable（先 users_bind 再 members）。
+  - Daily 子域独立（帖子/评论/上传）；上传 URL 统一走 /api/v1/daily/pics/...
+
+- 前端 API 使用
+  - services/api.ts 提供领域 API 门面与 withRetry/cachedApiCall；
+  - services/daily.ts 独立维护日常流与评论，开发可启用 VITE_DAILY_USE_MOCK。
+
+- 头像与 QQ 抓取
+  - AvatarService 下载 QQ 头像到 avatar_root/{uin}.webp（原子替换）。
+  - QQ 抓取需合法 cookie/bkn，分页聚合 mems，必要时限速。
+
+- 安全
+  - 管理端仅通过 /settings 手动访问；除首页与认证端点外均需鉴权。
+  - 不在服务端持久化上传的 cookie 等敏感信息。
+
+- Git 忽略
+  - 不提交 backend .env、secret_key、头像文件与前端构建产物。
+
+- 其他
+  - 统一错误响应；slowapi 限流；/health 始终可用。
+
+---
+
+### 登录路由与交互规范（补充）
+- /login 路由仅供管理员使用：仅管理员可直接访问该路由并在登录后跳转到管理界面（/settings）。
+- 普通成员登录一律使用页面内的 Modal 弹窗完成，不允许跳转到 /login 路由；登录成功后停留在当前页面。
+- 首页与“活动子屏”等公共页面的“登录”行为，均应调用本页 Modal；若未登录发起操作（如投票/创建活动），先弹出登录 Modal。
+

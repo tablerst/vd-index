@@ -254,6 +254,11 @@ class ApiClient {
     }
   }
 
+  // 公共请求封装（仅限内部便捷API使用）
+  public async publicRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    return this.request<T>(endpoint, options)
+  }
+
   // 认证相关方法
   async login(credentials: { username: string; password: string }): Promise<any> {
     const formData = new FormData()
@@ -474,95 +479,54 @@ class ApiClient {
     })
   }
 
-  // 获取配置列表
-  async getConfigs(page: number = 1, pageSize: number = 10): Promise<ConfigListResponse> {
-    return this.request<ConfigListResponse>(
-      `/api/v1/configs?page=${page}&page_size=${pageSize}`
-    )
+  // Activities (new system)
+  async activitiesList(status: string = 'ongoing', page: number = 1, size: number = 10): Promise<any> {
+    return this.request(`/api/v1/activities?status=${encodeURIComponent(status)}&page=${page}&size=${size}`)
   }
 
-  // 获取单个配置
-  async getConfig(configId: number): Promise<Config> {
-    return this.request<Config>(`/api/v1/configs/${configId}`)
+  async activityDetail(activityId: number): Promise<any> {
+    return this.request(`/api/v1/activities/${activityId}`)
   }
 
-  // 根据键获取配置
-  async getConfigByKey(key: string): Promise<Config> {
-    return this.request<Config>(`/api/v1/configs/key/${key}`)
+  async activityRanking(activityId: number, top: number = 10, withSelf: boolean = true): Promise<any> {
+    return this.request(`/api/v1/activities/${activityId}/ranking?top=${top}&with_self=${withSelf}`)
   }
 
-  // 创建配置
-  async createConfig(configData: ConfigCreateRequest): Promise<Config> {
-    return this.request<Config>('/api/v1/configs', {
+  async activityOptions(activityId: number, query: string = '', cursor: string | null = null, size: number = 50): Promise<any> {
+    const q = query ? `&query=${encodeURIComponent(query)}` : ''
+    const c = cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''
+    return this.request(`/api/v1/activities/${activityId}/options?size=${size}${q}${c}`)
+  }
+
+  async activityVote(activityId: number, payload: { option_id: number; display_anonymous: boolean }): Promise<any> {
+    return this.request(`/api/v1/activities/${activityId}/vote`, {
       method: 'POST',
-      body: JSON.stringify(configData)
+      body: JSON.stringify(payload)
     })
   }
 
-  // 更新配置
-  async updateConfig(configId: number, configData: ConfigUpdateRequest): Promise<Config> {
-    return this.request<Config>(`/api/v1/configs/${configId}`, {
-      method: 'PUT',
-      body: JSON.stringify(configData)
-    })
+  async activityRevoke(activityId: number): Promise<any> {
+    return this.request(`/api/v1/activities/${activityId}/vote`, { method: 'DELETE' })
   }
 
-  // 删除配置
-  async deleteConfig(configId: number): Promise<{ success: boolean; message: string }> {
-    return this.request<{ success: boolean; message: string }>(`/api/v1/configs/${configId}`, {
-      method: 'DELETE'
-    })
-  }
-
-  // 健康检查
-  async healthCheck(): Promise<{ status: string; timestamp: number }> {
-    return this.request('/health')
-  }
-
-  // 评论相关方法
-  // 获取成员评论列表
-  async getMemberComments(
-    memberId: number,
-    page: number = 1,
-    pageSize: number = 20
-  ): Promise<CommentListResponse> {
-    return this.request<CommentListResponse>(
-      `/api/v1/comments/members/${memberId}/comments?page=${page}&page_size=${pageSize}`
-    )
-  }
-
-  // 创建评论
-  async createComment(memberId: number, data: CommentCreateRequest): Promise<Comment> {
-    return this.request<Comment>(`/api/v1/comments/members/${memberId}/comments`, {
+  async activityCreate(payload: { type?: string; title: string; description?: string; anonymous_allowed?: boolean; starts_at?: string; ends_at?: string }): Promise<any> {
+    return this.request('/api/v1/activities', {
       method: 'POST',
-      body: JSON.stringify(data)
+      body: JSON.stringify(payload)
     })
   }
 
-  // 点赞评论
-  async likeComment(commentId: number): Promise<CommentActionResponse> {
-    return this.request<CommentActionResponse>(`/api/v1/comments/${commentId}/like`, {
-      method: 'PUT'
+  async activityCreateOption(activityId: number, payload: { label: string; member_id?: number | null }): Promise<any> {
+    return this.request(`/api/v1/activities/${activityId}/options`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
     })
   }
 
-  // 点踩评论
-  async dislikeComment(commentId: number): Promise<CommentActionResponse> {
-    return this.request<CommentActionResponse>(`/api/v1/comments/${commentId}/dislike`, {
-      method: 'PUT'
+  async activityClose(activityId: number): Promise<any> {
+    return this.request(`/api/v1/activities/${activityId}/close`, {
+      method: 'POST'
     })
-  }
-
-  // 删除评论（管理员功能）
-  async deleteComment(commentId: number): Promise<CommentActionResponse> {
-    return this.request<CommentActionResponse>(`/api/v1/comments/${commentId}`, {
-      method: 'DELETE'
-    })
-  }
-
-  // 获取评论统计（管理员功能）
-  async getCommentStats(): Promise<CommentStats> {
-    return this.request<CommentStats>('/api/v1/comments/stats')
   }
 }
 
@@ -652,6 +616,7 @@ export const memberApi = {
   // 导入：直接传JSON（mems数组）
   async importMembersJson(mems: any[]): Promise<any> {
     return apiClient.adminImportJson(mems)
+
   },
 
   // 导入：通过QQ群参数获取
@@ -776,8 +741,8 @@ export const commentApi = {
   },
 
   // 创建评论
-  async createComment(memberId: number, content: string, isAnonymous: boolean = true): Promise<Comment> {
-    return apiClient.createComment(memberId, { content, is_anonymous: isAnonymous })
+  async createComment(memberId: number, data: CommentCreateRequest): Promise<Comment> {
+    return apiClient.createComment(memberId, { content: data.content, is_anonymous: data.is_anonymous })
   },
 
   // 点赞评论
@@ -813,6 +778,7 @@ export const commentApi = {
 
     if (minutes < 1) return '刚刚'
     if (minutes < 60) return `${minutes}分钟前`
+
     if (hours < 24) return `${hours}小时前`
     if (days < 7) return `${days}天前`
 
@@ -1051,4 +1017,90 @@ export async function cachedApiCall<T>(
   apiCache.set(key, result, ttl)
 
   return result
+}
+
+
+// 活动（新系统）类型定义
+export interface ActActivity {
+  id: number
+  type: 'vote' | 'thread'
+  title: string
+  description?: string
+  status: 'draft' | 'ongoing' | 'closed'
+}
+
+export interface ActVoteOption {
+  id: number
+  label: string
+  member_id?: number
+  votes?: number
+}
+
+export interface ActRankingEntry {
+  option_id: number
+  label: string
+  member_id?: number
+  votes: number
+}
+
+export interface ActVoteSubmit {
+  option_id: number
+  display_anonymous: boolean
+}
+
+export interface ActThreadPost {
+  id: number
+  activity_id: number
+  author_id: number
+  display_anonymous: boolean
+  content: string
+  parent_id?: number | null
+  created_at: string
+}
+
+export interface ActThreadPostCreate {
+  content: string
+  display_anonymous?: boolean
+  parent_id?: number | null
+}
+
+export const actApi = {
+  async list(status: 'ongoing' | 'closed' | 'draft' = 'ongoing', page = 1, size = 10): Promise<{ activities?: ActActivity[]; items?: ActActivity[] } | ActActivity[]> {
+    return apiClient.activitiesList(status, page, size)
+  },
+  async detail(activityId: number): Promise<ActActivity> {
+    return apiClient.activityDetail(activityId)
+  },
+  async ranking(activityId: number, top = 10, withSelf = true): Promise<{ entries?: ActRankingEntry[] } | ActRankingEntry[]> {
+    return apiClient.activityRanking(activityId, top, withSelf)
+  },
+  async options(activityId: number, query = '', cursor: string | null = null, size = 50): Promise<{ items?: ActVoteOption[]; options?: ActVoteOption[] } | ActVoteOption[]> {
+    return apiClient.activityOptions(activityId, query, cursor, size)
+  },
+  async vote(activityId: number, payload: ActVoteSubmit): Promise<any> {
+    return apiClient.activityVote(activityId, payload)
+  },
+  async revoke(activityId: number): Promise<any> {
+    return apiClient.activityRevoke(activityId)
+  },
+  async create(payload: { type: 'vote' | 'thread'; title: string; description?: string; anonymous_allowed?: boolean; starts_at?: string; ends_at?: string; allow_change?: boolean }): Promise<ActActivity> {
+    return apiClient.activityCreate(payload)
+  },
+  async createOption(activityId: number, payload: { label: string; member_id?: number | null }): Promise<any> {
+    return apiClient.activityCreateOption(activityId, payload)
+  },
+  async close(activityId: number): Promise<any> {
+    return apiClient.activityClose(activityId)
+  },
+  // thread posts
+  async posts(activityId: number, cursor: string | null = null, size = 20): Promise<{ items?: ActThreadPost[] } | ActThreadPost[]> {
+    const c = cursor ? `?cursor=${encodeURIComponent(cursor)}&size=${size}` : `?size=${size}`
+    return apiClient.publicRequest(`/api/v1/activities/${activityId}/posts${c}` as any)
+  },
+  async createPost(activityId: number, post: ActThreadPostCreate): Promise<ActThreadPost> {
+    return apiClient.publicRequest(`/api/v1/activities/${activityId}/posts`, {
+      method: 'POST',
+      body: JSON.stringify(post)
+    } as any)
+  }
 }

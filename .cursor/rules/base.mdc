@@ -1,0 +1,28 @@
+---
+alwaysApply: true
+---
+# Normal Instructions
+
+## Tool Use
+1. Always use **feedback** tool to provide feedback to user when you finish your step.
+2. Use **sequentialthinking** tool to break down complex tasks into smaller, manageable steps.
+3. MUST use taskList to plan and organize your tasks effectively.
+4. If the use of third-party libraries and functions is involved, please refer to the latest documentation of the corresponding third-party library via **Context7**.
+
+## Comments Generation Instructions
+
+### Commenting Language
+1. All comments should be in English, even if the code is in another language. Comments should be clear and concise, explaining the purpose of the code, not just what it does. Avoid obvious comments that do not add value.
+2. As you are writing markdown, just use Chinese for the comments, but use English for the code.
+
+
+## Trouble Shooting
+1. Follow the info from the error message, analyze the call chain and the stack trace with relevant context.
+2. If the error message is not clear, search for the error message online to find similar issues and solutions.
+
+## Code Generation
+1. Use the structure and style of the existing code as a guide.
+2. Ensure that the code is functional and adheres to the coding standards of the project.
+
+## Test
+1. **Do not try do test the code** that you are write, the project is very complex and requires a proper testing setup. The only thing you can do is to write tests based on the requirements and the code you see. Keep static check can be always passed.

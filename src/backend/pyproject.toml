@@ -30,6 +30,7 @@ dependencies = [
     "pillow>=11.2.1",
     "pillow-avif-plugin>=1.5.2",
     "requests>=2.25.0",
+    "tzdata>=2024.1",
 ]
 
 [dependency-groups]

@@ -5,7 +5,7 @@ API路由管理器
 from fastapi import APIRouter
 
 # 导入v1版本的路由
-from api.v1 import members, avatars, admin, activities, auth, setup, configs, cache, comments, daily, users_bind, daily_comments
+from api.v1 import members, avatars, admin, activities, activities_new, auth, setup, configs, cache, comments, daily, users_bind, daily_comments
 
 # 创建v1路由器
 v1_router = APIRouter(
@@ -21,6 +21,7 @@ v1_router.include_router(members.router)
 v1_router.include_router(avatars.router)
 v1_router.include_router(admin.router)
 v1_router.include_router(activities.router)
+v1_router.include_router(activities_new.router)
 v1_router.include_router(configs.router)
 v1_router.include_router(cache.router)
 v1_router.include_router(comments.router)

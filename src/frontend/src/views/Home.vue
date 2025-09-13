@@ -15,6 +15,11 @@
         <DailyWall />
       </section>
 
+      <!-- Activities 子屏幕：活动投票/讨论 -->
+      <section ref="activitiesSectionRef" class="snap-section">
+        <ActivityCarousel />
+      </section>
+
       <!-- Members Circle 成员圆形展示 -->
       <section ref="membersSectionRef" class="snap-section">
         <MembersCircle />
@@ -55,11 +60,13 @@ import StarCalendar from '@/components/StarCalendar.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import GlobalParticles from '@/components/GlobalParticles.vue'
 import ScrollIndicator from '@/components/ScrollIndicator.vue'
+import ActivityCarousel from '@/components/activities/ActivityCarousel.vue'
 import { useSnapScroll } from '@/composables/useSnapScroll'
 
 // Section refs
 const heroSectionRef = ref<HTMLElement | null>(null)
 const dailyWallSectionRef = ref<HTMLElement | null>(null)
+const activitiesSectionRef = ref<HTMLElement | null>(null)
 const membersSectionRef = ref<HTMLElement | null>(null)
 const calendarSectionRef = ref<HTMLElement | null>(null)
 
@@ -89,6 +96,7 @@ const {
 } = useSnapScroll([
   heroSectionRef,
   dailyWallSectionRef,
+  activitiesSectionRef,
   membersSectionRef,
   calendarSectionRef
 ], {
@@ -113,6 +121,7 @@ provide('setWheelListenerDisabled', setWheelListenerDisabled)
 .main-content {
   position: relative;
   z-index: 1;
+  padding-top: 64px; // shift UI down to avoid overlap with top title/navigation
 }
 
 .snap-section {

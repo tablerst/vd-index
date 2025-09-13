@@ -133,4 +133,6 @@ ehthumbs.db
 .augment
 demand
 daily.md
+1.md
+activity-system-design.md
 /src/backend/static/pics/
