@@ -4,10 +4,10 @@ CRUD utilities for the new Activities subsystem (vote/thread).
 from __future__ import annotations
 
 from typing import List, Optional, Tuple
-from sqlmodel import select, func
+from sqlmodel import select, func, delete
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from .base import ActActivity, ActVoteOption, ActVoteRecord, ActThreadPost
+from .base import ActActivity, ActVoteOption, ActVoteRecord, ActThreadPost, ActAuditLog
 
 
 class ActActivityCRUD:
@@ -36,6 +36,28 @@ class ActActivityCRUD:
     @staticmethod
     async def get(session: AsyncSession, activity_id: int) -> Optional[ActActivity]:
         return await session.get(ActActivity, activity_id)
+
+    @staticmethod
+    async def delete(session: AsyncSession, activity_id: int) -> bool:
+        """Physically delete an activity and all its related rows.
+
+        We don't rely on database-level ON DELETE CASCADE here to be explicit
+        and compatible with existing migrations.
+        """
+        obj = await session.get(ActActivity, activity_id)
+        if not obj:
+            return False
+
+        # Delete related records first to avoid FK issues
+        await session.exec(delete(ActVoteRecord).where(ActVoteRecord.activity_id == activity_id))
+        await session.exec(delete(ActVoteOption).where(ActVoteOption.activity_id == activity_id))
+        await session.exec(delete(ActThreadPost).where(ActThreadPost.activity_id == activity_id))
+        await session.exec(delete(ActAuditLog).where(ActAuditLog.activity_id == activity_id))
+
+        # Delete the activity itself
+        await session.exec(delete(ActActivity).where(ActActivity.id == activity_id))
+        await session.commit()
+        return True
 
 
 class ActVoteCRUD:

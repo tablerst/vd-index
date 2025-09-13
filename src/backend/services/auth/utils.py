@@ -75,6 +75,26 @@ async def get_current_active_user(
     return current_user
 
 
+# Optional auth helper: return None when no/invalid token
+async def get_current_user_optional(
+    token: Annotated[str | None, Security(oauth2_scheme)] = None,
+    session: Annotated[AsyncSession, Depends(get_session)] = None,
+    auth_service: Annotated[AuthService, Depends(get_auth_service)] = None,
+) -> User | None:
+    """Return current user if token is present and valid; otherwise None.
+
+    This should be used for endpoints that allow anonymous actions while still
+    supporting authenticated context when available.
+    """
+    if not token:
+        return None
+    try:
+        return await get_current_user_by_jwt(token, session, auth_service)
+    except HTTPException:
+        # Invalid token treated as unauthenticated
+        return None
+
+
 async def get_admin_user(
     current_user: Annotated[User, Depends(get_current_active_user)]
 ) -> User:

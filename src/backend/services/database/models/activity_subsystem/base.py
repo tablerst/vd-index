@@ -30,6 +30,7 @@ class ActActivity(SQLModel, table=True):
     starts_at: Optional[datetime] = Field(default=None)
     ends_at: Optional[datetime] = Field(default=None)
     status: str = Field(default="ongoing", max_length=16)  # draft/ongoing/closed
+    creator_id: int = Field(default=0, description="User.id of activity creator")
     created_at: datetime = Field(default_factory=now_naive)
 
 

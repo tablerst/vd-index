@@ -23,7 +23,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from services.deps import get_session, get_cache_service, get_config_service
-from services.auth.utils import get_current_active_user, require_admin
+from services.auth.utils import get_current_active_user, get_current_user_optional, require_admin
 from services.database.models.user import User
 from services.database.models.activity_subsystem.base import (
     ActActivity,
@@ -88,6 +88,7 @@ async def list_activities(
                 title=a.title,
                 description=a.description,
                 status=a.status,
+                creator_id=getattr(a, "creator_id", 0),
             )
             for a in items
         ],
@@ -114,6 +115,7 @@ async def get_activity(activity_id: int, session: AsyncSession = Depends(get_ses
         allow_change=a.allow_change,
         starts_at=a.starts_at.isoformat() if a.starts_at else None,
         ends_at=a.ends_at.isoformat() if a.ends_at else None,
+        creator_id=getattr(a, "creator_id", 0),
     )
 
 
@@ -149,6 +151,20 @@ async def get_ranking(
     return payload
 
 
+@router.get("/{activity_id}/my-vote")
+async def get_my_vote(
+    activity_id: int,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    session: AsyncSession = Depends(get_session),
+):
+    a = await ActActivityCRUD.get(session, activity_id)
+    if not a or a.type != "vote":
+        raise HTTPException(status_code=404, detail="Vote activity not found")
+    record = await ActVoteCRUD.get_vote_record(session, activity_id, current_user.id)
+    if not record:
+        return {"option_id": None}
+    return {"option_id": record.option_id}
+
 @router.get("/{activity_id}/options", response_model=dict)
 async def list_options(
     activity_id: int,
@@ -167,12 +183,16 @@ async def list_options(
 async def create_option(
     activity_id: int,
     option: VoteOptionCreate,
-    _: dict = Depends(require_admin),
+    current_user: Annotated[User, Depends(get_current_active_user)],
     session: AsyncSession = Depends(get_session),
 ):
     a = await ActActivityCRUD.get(session, activity_id)
     if not a or a.type != "vote":
         raise HTTPException(status_code=404, detail="Vote activity not found")
+
+    # 权限：管理员或活动发起者可新增选项
+    if not (getattr(current_user, "role", None) == "admin" or getattr(a, "creator_id", 0) == current_user.id):
+        raise HTTPException(status_code=403, detail="Not enough permissions to add options")
 
     # create option
     created = ActVoteOption(activity_id=activity_id, label=option.label, member_id=option.member_id)
@@ -182,10 +202,37 @@ async def create_option(
 
     # audit
     meta = {"activity_id": activity_id, "option_id": created.id, "label": option.label, "member_id": option.member_id}
-    session.add(ActAuditLog(activity_id=activity_id, actor_id=0, action="create_option", metadata_json=orjson_dumps_compact(meta)))
+    session.add(ActAuditLog(activity_id=activity_id, actor_id=current_user.id, action="create_option", metadata_json=orjson_dumps_compact(meta)))
     await session.commit()
 
     return VoteOptionOut(id=created.id, label=created.label, member_id=created.member_id)
+
+
+@router.delete("/{activity_id}/options/{option_id}")
+async def delete_option(
+    activity_id: int,
+    option_id: int,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    session: AsyncSession = Depends(get_session),
+):
+    a = await ActActivityCRUD.get(session, activity_id)
+    if not a or a.type != "vote":
+        raise HTTPException(status_code=404, detail="Vote activity not found")
+    if not (getattr(current_user, "role", None) == "admin" or getattr(a, "creator_id", 0) == current_user.id):
+        raise HTTPException(status_code=403, detail="Not enough permissions to delete options")
+
+    opt = await session.get(ActVoteOption, option_id)
+    if not opt or opt.activity_id != activity_id:
+        raise HTTPException(status_code=404, detail="Option not found")
+    await session.delete(opt)
+    await session.commit()
+
+    # audit
+    meta = {"activity_id": activity_id, "option_id": option_id}
+    session.add(ActAuditLog(activity_id=activity_id, actor_id=current_user.id, action="delete_option", metadata_json=orjson_dumps_compact(meta)))
+    await session.commit()
+
+    return {"success": True}
 
 
 @router.post("", response_model=ActivityOut)
@@ -206,6 +253,7 @@ async def create_activity(
         starts_at=starts_at,
         ends_at=ends_at,
         status="ongoing",
+        creator_id=current_user.id,
     )
     session.add(a)
     await session.commit()
@@ -226,6 +274,7 @@ async def create_activity(
         allow_change=a.allow_change,
         starts_at=a.starts_at.isoformat() if a.starts_at else None,
         ends_at=a.ends_at.isoformat() if a.ends_at else None,
+        creator_id=getattr(a, "creator_id", 0),
     )
 
 
@@ -306,27 +355,36 @@ async def list_posts(activity_id: int, size: int = 20, session: AsyncSession = D
 async def create_post(
     activity_id: int,
     post: ThreadPostCreate,
-    current_user: Annotated[User, Depends(get_current_active_user)],
+    current_user: Annotated[Optional[User], Depends(get_current_user_optional)],
     session: AsyncSession = Depends(get_session),
 ):
     a = await ActActivityCRUD.get(session, activity_id)
     if not a or a.type != "thread":
         raise HTTPException(status_code=404, detail="Thread activity not found")
+
     content = post.content.strip()
     if not content:
         raise HTTPException(status_code=400, detail="Empty content")
+
+    # Rule: allow anonymous posting without login only when the activity allows it AND client sets display_anonymous=true
+    # Otherwise, require authenticated user
+    if current_user is None and not (a.anonymous_allowed and post.display_anonymous):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    author_id = current_user.id if current_user is not None else 0
+
     created = await ActThreadCRUD.create_post(
         session,
         activity_id=activity_id,
-        author_id=current_user.id,
+        author_id=author_id,
         content=content,
         display_anonymous=post.display_anonymous,
         parent_id=post.parent_id,
     )
 
     # audit
-    meta = {"activity_id": activity_id, "post_id": created.id, "author_id": current_user.id, "anonymous": post.display_anonymous}
-    session.add(ActAuditLog(activity_id=activity_id, actor_id=current_user.id, action="create_post", metadata_json=orjson_dumps_compact(meta)))
+    meta = {"activity_id": activity_id, "post_id": created.id, "author_id": author_id, "anonymous": post.display_anonymous}
+    session.add(ActAuditLog(activity_id=activity_id, actor_id=author_id, action="create_post", metadata_json=orjson_dumps_compact(meta)))
     await session.commit()
 
     return {
@@ -354,6 +412,26 @@ async def close_activity(activity_id: int, _: dict = Depends(require_admin), ses
     session.add(ActAuditLog(activity_id=activity_id, actor_id=0, action="close_activity", metadata_json=orjson_dumps_compact(meta)))
     await session.commit()
 
+    return {"success": True}
+
+
+@router.delete("/{activity_id}")
+async def delete_activity(
+    activity_id: int,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    session: AsyncSession = Depends(get_session),
+):
+    a = await ActActivityCRUD.get(session, activity_id)
+    if not a:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    # 权限：管理员或活动创建者
+    if not (getattr(current_user, "role", None) == "admin" or getattr(a, "creator_id", 0) == current_user.id):
+        raise HTTPException(status_code=403, detail="Not enough permissions to delete activity")
+
+    ok = await ActActivityCRUD.delete(session, activity_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Activity not found")
     return {"success": True}
 
 

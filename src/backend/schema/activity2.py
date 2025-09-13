@@ -26,6 +26,7 @@ class ActivityOut(BaseModel):
     allow_change: bool
     starts_at: Optional[str] = None
     ends_at: Optional[str] = None
+    creator_id: int
 
 
 class VoteSubmit(BaseModel):
@@ -66,6 +67,7 @@ class ActivityListItem(BaseModel):
     title: str
     description: Optional[str] = None
     status: str
+    creator_id: int
 
 
 class ActivityListOut(BaseModel):

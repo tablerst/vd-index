@@ -15,16 +15,23 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 
 defineProps<{ activityId: number }>()
 const emit = defineEmits<{ (e: 'submit', payload: { content: string; display_anonymous: boolean }): void }>()
 
 const content = ref('')
 const anonymous = ref(true)
+const auth = useAuthStore()
 const canSubmit = computed(() => content.value.trim().length > 0 && content.value.length <= 500)
 
 function onSubmit() {
   if (!canSubmit.value) return
+  // 若未登录且未勾选匿名 -> 需要登录；若未登录但勾选匿名 -> 允许匿名提交
+  if (!auth.isAuthenticated && !anonymous.value) {
+    try { window.dispatchEvent(new CustomEvent('open-login-modal')) } catch {}
+    return
+  }
   emit('submit', { content: content.value.trim(), display_anonymous: anonymous.value })
   content.value = ''
 }

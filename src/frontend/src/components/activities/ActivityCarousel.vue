@@ -8,6 +8,12 @@
         <template v-if="isAuthenticated">
           <button class="btn" @click="openCreate('vote')">新建投票</button>
           <button class="btn" @click="openCreate('thread')">新建讨论</button>
+          <button
+            v-if="activeActivity && canManageActive"
+            class="btn warn outline"
+            @click="deleteActive"
+            title="删除当前活动（不可恢复）"
+          >删除活动</button>
         </template>
         <template v-else>
           <button class="btn ghost" @click="openLogin">登录后发起或投票</button>
@@ -15,14 +21,34 @@
       </div>
     </div>
 
-    <div class="carousel" ref="scrollRef">
-      <div v-for="act in activities" :key="act.id" class="slide">
-        <component :is="act.type === 'thread' ? ActivityPanelThread : ActivityPanelVote" :activity="act" />
-      </div>
-      <div v-if="!loading && activities.length === 0" class="empty">
-        暂无活动
-      </div>
+    <div class="carousel">
+      <swiper
+        :modules="[Navigation]"
+        :slides-per-view="1"
+        :space-between="0"
+        :keyboard="{ enabled: true }"
+        :speed="700"
+        :allow-touch-move="true"
+        @slide-change="onSlideChange"
+        @swiper="onSwiperInit"
+        class="activity-swiper"
+      >
+        <swiper-slide v-for="act in activities" :key="act.id" class="activity-slide">
+          <div class="slide-inner">
+            <component :is="act.type === 'thread' ? ActivityPanelThread : ActivityPanelVote" :activity="act" />
+          </div>
+        </swiper-slide>
+      </swiper>
+      <div v-if="!loading && activities.length === 0" class="empty">暂无活动</div>
     </div>
+
+    <PaginationArrows
+      v-if="activities.length > 0"
+      :current-page="activeIndex + 1"
+      :total-pages="totalPages"
+      @prev-page="goToPrevPage"
+      @next-page="goToNextPage"
+    />
 
     <!-- 创建活动 Modal -->
     <div v-if="showCreate" class="modal" ref="backdropRef" @click.self="closeWithAnim">
@@ -83,13 +109,17 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, computed, nextTick } from 'vue'
+import { onMounted, onUnmounted, ref, computed, nextTick, watch } from 'vue'
 import { useActivitiesStore } from '@/stores/activities'
 import { useAuthStore } from '@/stores/auth'
-import ActivityPanelVote from './ActivityPanelVote_back.vue'
+import ActivityPanelVote from './ActivityPanelVote.vue'
 import ActivityPanelThread from './ActivityPanelThread.vue'
 import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import { gsap } from 'gsap'
+import { Swiper, SwiperSlide } from 'swiper/vue'
+import { Navigation } from 'swiper/modules'
+import PaginationArrows from '@/components/PaginationArrows.vue'
 
 const store = useActivitiesStore()
 const auth = useAuthStore()
@@ -97,9 +127,19 @@ const router = useRouter()
 
 const activities = computed(() => store.activities)
 const loading = computed(() => store.loading.activities)
-const isAuthenticated = computed(() => auth.isAuthenticated)
-const scrollRef = ref<HTMLDivElement | null>(null)
+// 通过 storeToRefs 获取 Ref，确保响应式正确
+const { user, isAuthenticated } = storeToRefs(auth)
 const rootRef = ref<HTMLDivElement | null>(null)
+const activeIndex = computed(() => store.currentIndex)
+const totalPages = computed(() => activities.value.length)
+const swiperRef = ref<any>(null)
+const activeActivity = computed(() => activities.value[activeIndex.value] || null)
+const isAdmin = computed(() => user.value?.role === 'admin')
+const canManageActive = computed(() => {
+  const uid = Number(user.value?.id ?? 0)
+  const creator = Number((activeActivity.value as any)?.creator_id ?? 0)
+  return !!uid && (isAdmin.value || creator === uid)
+})
 
 const showCreate = ref(false)
 const createType = ref<'vote' | 'thread'>('vote')
@@ -208,6 +248,33 @@ function reduced() {
   try { return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches } catch { return false }
 }
 
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n))
+}
+
+function onSwiperInit(swiper: any) { swiperRef.value = swiper }
+function onSlideChange(swiper: any) {
+  const previous = store.currentIndex
+  store.setCurrentIndex(swiper.activeIndex)
+  animateSlideTransition(previous, swiper.activeIndex)
+}
+
+function goTo(index: number) {
+  const target = clamp(index, 0, Math.max(0, activities.value.length - 1))
+  if (swiperRef.value) swiperRef.value.slideTo(target)
+}
+
+function goToPrevPage() { if (swiperRef.value) swiperRef.value.slidePrev() }
+function goToNextPage() { if (swiperRef.value) swiperRef.value.slideNext() }
+
+async function deleteActive() {
+  if (!activeActivity.value) return
+  if (!confirm('确定删除该活动吗？此操作会移除相关数据且不可恢复。')) return
+  await store.deleteActivity(activeActivity.value.id)
+}
+
+// 根据反馈：移除滚轮/触摸/键盘切换，仅保留箭头按钮触发
+
 onMounted(() => {
   // 初始化加载活动列表
   store.fetchActivities().catch(() => {/* 静默失败，UI优雅降级 */})
@@ -221,13 +288,44 @@ onMounted(() => {
     const slides = rootRef.value.querySelectorAll('.slide')
     if (slides?.length) gsap.from(slides, { opacity: 0, y: 12, duration: 0.5, ease: 'power2.out', stagger: 0.06 })
   }
+  // 供帖子编辑器触发登录弹窗
+  window.addEventListener('open-login-modal', openLogin as any)
 })
 
 onUnmounted(() => {
   store.stopRankingPolling()
   if (escHandler) window.removeEventListener('keydown', escHandler)
   if (escLoginHandler) window.removeEventListener('keydown', escLoginHandler)
+  window.removeEventListener('open-login-modal', openLogin as any)
 })
+
+watch(() => activities.value.length, (len) => {
+  if (len === 0) { store.setCurrentIndex(0); return }
+  const idx = clamp(store.currentIndex, 0, Math.max(0, len - 1))
+  if (idx !== store.currentIndex) store.setCurrentIndex(idx)
+  nextTick(() => goTo(idx))
+})
+
+watch(() => store.currentIndex, (idx) => {
+  nextTick(() => goTo(idx))
+})
+
+// Slide transition animation with GSAP (simplified, mirrors MembersCircle style)
+function animateSlideTransition(fromIndex: number, toIndex: number) {
+  if (fromIndex === toIndex) return
+  const slides = document.querySelectorAll('.activity-slide .slide-inner') as NodeListOf<HTMLElement>
+  const current = slides[toIndex]
+  const previous = slides[fromIndex]
+
+  const tl = gsap.timeline({ defaults: { ease: 'power2.out' } })
+  if (previous) {
+    tl.to(previous, { opacity: 0, scale: 0.98, duration: 0.2 }, 0)
+  }
+  if (current) {
+    gsap.set(current, { opacity: 0, y: 16, scale: 0.98 })
+    tl.to(current, { opacity: 1, y: 0, scale: 1, duration: 0.35 }, 0.05)
+  }
+}
 </script>
 
 <style scoped lang="scss">
@@ -252,18 +350,12 @@ onUnmounted(() => {
 .btn:hover { background: color-mix(in srgb, var(--primary) 12%, transparent); }
 .btn.ghost { border-color: var(--divider-color, #444); color: var(--text-secondary); background: transparent; }
 .btn.primary { border-color: var(--primary); color: white; background: var(--primary); }
+.btn.warn { border-color: var(--accent-red, #f7768e); color: var(--accent-red, #f7768e); }
+.btn.warn.outline { background: transparent; }
 
-.carousel {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 100%;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-}
-.slide {
-  scroll-snap-align: start;
-  padding: 0 8px;
-}
+.activity-swiper { width: 100%; }
+.activity-slide { width: 100%; }
+.slide-inner { padding: 0 8px; }
 .empty {
   width: 100%;
   height: 50vh;
@@ -273,8 +365,8 @@ onUnmounted(() => {
   color: var(--text-secondary);
 }
 
-.modal { position: fixed; inset: 0; background: color-mix(in srgb, var(--base-dark) 60%, rgba(0,0,0,0.5)); backdrop-filter: blur(4px); display: grid; place-items: center; }
-.modal-body { background: var(--panel-bg, var(--base-dark)); border: 1px solid var(--divider-color, #444); border-radius: 14px; padding: 16px; width: min(520px, 92vw); box-shadow: 0 10px 35px rgba(0,0,0,.45); }
+.modal { position: fixed; inset: 0; background: color-mix(in srgb, var(--base-dark) 60%, rgba(0,0,0,0.5)); backdrop-filter: blur(4px); display: grid; place-items: center; z-index: 1000; }
+.modal-body { background: var(--panel-bg, var(--base-dark)); border: 1px solid var(--divider-color, #444); border-radius: 14px; padding: 16px; width: min(520px, 92vw); box-shadow: 0 10px 35px rgba(0,0,0,.45); z-index: 1001; }
 .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
 
 .form-grid { display: grid; gap: 10px; }
@@ -287,5 +379,10 @@ onUnmounted(() => {
 
 .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
 .error { color: #ff6b6b; font-size: 12px; }
+
+.nav { position: relative; display: flex; justify-content: center; align-items: center; gap: 8px; padding: 8px 0 0; }
+.arrow { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 999px; border: 1px solid var(--divider-color, #444); background: color-mix(in srgb, var(--base-dark) 75%, rgba(0,0,0,0.2)); color: var(--text-primary); box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+.arrow:hover { background: color-mix(in srgb, var(--primary) 14%, transparent); border-color: var(--primary); }
+.arrow:disabled { opacity: .5; cursor: not-allowed; }
 </style>
 

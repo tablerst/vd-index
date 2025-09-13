@@ -509,6 +509,10 @@ class ApiClient {
     return this.request(`/api/v1/activities/${activityId}/vote`, { method: 'DELETE' })
   }
 
+  async activityMyVote(activityId: number): Promise<{ option_id: number | null }> {
+    return this.request(`/api/v1/activities/${activityId}/my-vote`)
+  }
+
   async activityCreate(payload: { type?: string; title: string; description?: string; anonymous_allowed?: boolean; starts_at?: string; ends_at?: string }): Promise<any> {
     return this.request('/api/v1/activities', {
       method: 'POST',
@@ -523,9 +527,21 @@ class ApiClient {
     })
   }
 
+  async activityDeleteOption(activityId: number, optionId: number): Promise<{ success: boolean }> {
+    return this.request(`/api/v1/activities/${activityId}/options/${optionId}`, {
+      method: 'DELETE'
+    })
+  }
+
   async activityClose(activityId: number): Promise<any> {
     return this.request(`/api/v1/activities/${activityId}/close`, {
       method: 'POST'
+    })
+  }
+
+  async activityDelete(activityId: number): Promise<{ success: boolean }> {
+    return this.request(`/api/v1/activities/${activityId}`, {
+      method: 'DELETE'
     })
   }
 }
@@ -1027,6 +1043,7 @@ export interface ActActivity {
   title: string
   description?: string
   status: 'draft' | 'ongoing' | 'closed'
+  creator_id: number
 }
 
 export interface ActVoteOption {
@@ -1083,14 +1100,23 @@ export const actApi = {
   async revoke(activityId: number): Promise<any> {
     return apiClient.activityRevoke(activityId)
   },
+  async myVote(activityId: number): Promise<{ option_id: number | null }> {
+    return apiClient.activityMyVote(activityId)
+  },
   async create(payload: { type: 'vote' | 'thread'; title: string; description?: string; anonymous_allowed?: boolean; starts_at?: string; ends_at?: string; allow_change?: boolean }): Promise<ActActivity> {
     return apiClient.activityCreate(payload)
   },
   async createOption(activityId: number, payload: { label: string; member_id?: number | null }): Promise<any> {
     return apiClient.activityCreateOption(activityId, payload)
   },
+  async deleteOption(activityId: number, optionId: number): Promise<{ success: boolean }> {
+    return apiClient.activityDeleteOption(activityId, optionId)
+  },
   async close(activityId: number): Promise<any> {
     return apiClient.activityClose(activityId)
+  },
+  async deleteActivity(activityId: number): Promise<{ success: boolean }> {
+    return apiClient.activityDelete(activityId)
   },
   // thread posts
   async posts(activityId: number, cursor: string | null = null, size = 20): Promise<{ items?: ActThreadPost[] } | ActThreadPost[]> {
