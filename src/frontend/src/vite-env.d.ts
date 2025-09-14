@@ -17,3 +17,7 @@ declare module '*.vue' {
   const component: DefineComponent<{}, {}, any>
   export default component
 }
+
+// Swiper CSS 模块声明（供 vue-tsc 使用）
+declare module 'swiper/css'
+declare module 'swiper/css/navigation'

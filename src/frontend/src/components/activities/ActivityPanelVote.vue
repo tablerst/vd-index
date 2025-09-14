@@ -41,7 +41,7 @@
           <span class="loading-text">加载中…</span>
         </div>
 
-        <ul v-else class="vote-list" role="list">
+        <ul v-else class="vote-list" role="list" ref="voteListRef">
           <li v-for="opt in merged" :key="opt.id" class="vote-row" :class="{ selected: selectedOptionId === opt.id, locked: canManage && hasVotes(opt.id as number) }">
             <label class="row-main">
               <span class="radio">
@@ -52,7 +52,7 @@
                 <span class="name">{{ opt.label }}</span>
                 <span class="counts">{{ opt.votes }}<span class="pct">（{{ opt.pct }}%）</span></span>
               </div>
-              <div class="bar"><div class="bar-fill" :style="{ transform: `scaleX(${opt.ratio})` }"></div></div>
+              <div class="bar"><div class="bar-fill" :style="{ width: `${opt.pct}%` }"></div></div>
               <span class="badge" v-if="voteOfMe === opt.id">已投</span>
               <span v-if="canManage && opt.id && typeof opt.id === 'number' && voteOfMe !== opt.id"
                 class="delete-right"
@@ -81,7 +81,7 @@
         </div>
         <div class="comments-body">
           <PostComposer :activity-id="activity.id" @submit="onCreatePost" />
-          <div class="list-wrap">
+          <div class="list-wrap" ref="commentsWrapRef">
             <PostList :activity-id="activity.id" :active="!!active" :sort="commentSort" />
           </div>
         </div>
@@ -92,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch, inject } from 'vue'
 import { useActivitiesStore } from '@/stores/activities'
 import { useAuthStore } from '@/stores/auth'
 import { storeToRefs } from 'pinia'
@@ -128,6 +128,9 @@ const canManage = computed(() => isAdmin.value || isCreator.value)
 
 const newOption = ref('')
 const rootRef = ref<HTMLElement | null>(null)
+// 内部可滚动容器引用：投票列表与评论列表
+const voteListRef = ref<HTMLElement | null>(null)
+const commentsWrapRef = ref<HTMLElement | null>(null)
 // 删除模式已移除，改为每个选项独立删除按钮
 const refreshingOptions = computed(() => options.value.length > 0 && optionsLoading.value)
 
@@ -159,12 +162,18 @@ onMounted(async () => {
     const rank = rootRef.value.querySelectorAll('.rank-item')
     if (rank?.length) gsap.from(rank, { opacity: 0, y: 8, duration: 0.4, ease: 'power2.out', stagger: 0.04 })
   }
+  // 绑定内部滚动守卫
+  attachScrollableGuards(voteListRef.value)
+  attachScrollableGuards(commentsWrapRef.value)
 })
 
 watch(() => props.active, (v) => { if (v) ensureInit() })
 
 onUnmounted(() => {
-  // noop
+  // 卸载时移除事件并恢复全局滚轮
+  detachScrollableGuards(voteListRef.value)
+  detachScrollableGuards(commentsWrapRef.value)
+  setWheelListenerDisabled?.(false)
 })
 
 // 百分比在图表构建中计算，此处函数已不再使用
@@ -250,10 +259,60 @@ const commentSort = ref<'latest' | 'hot'>('latest')
 const selectedOptionId = ref<number | null>(null)
 const radioName = `act-radio-${Math.random().toString(36).slice(2)}`
 const canVote = computed(() => isAuthenticated.value && selectedOptionId.value !== null && selectedOptionId.value !== voteOfMe.value)
+
+// ---- 分屏滚动干扰处理：在内部滚动区域禁用全局 wheel 监听 ----
+const setWheelListenerDisabled = inject<((disabled: boolean) => void) | undefined>('setWheelListenerDisabled', undefined)
+
+// 保留逻辑可用于后续精准判断滚动方向（当前不使用，避免误触发子屏幕）
+// function canScrollInDirection(el: HTMLElement, deltaY: number): boolean {
+//   const tolerance = 1
+//   const scrollTop = el.scrollTop
+//   const maxScrollTop = el.scrollHeight - el.clientHeight
+//   if (el.scrollHeight <= el.clientHeight + tolerance) return false
+//   if (deltaY > 0) {
+//     // 向下滚动
+//     return scrollTop < maxScrollTop - tolerance
+//   } else if (deltaY < 0) {
+//     // 向上滚动
+//     return scrollTop > tolerance
+//   }
+//   return false
+// }
+
+function onScrollableWheel(e: WheelEvent) {
+  const el = e.currentTarget as HTMLElement | null
+  if (!el) return
+  // 始终在进入滚动容器后禁用全局分屏滚动
+  setWheelListenerDisabled?.(true)
+  // 当容器无法继续滚动时，保持禁用以允许继续点击/交互，例如“加载更多”按钮
+  // 仅阻止冒泡，避免触发父级 snap 的 wheel 监听
+  e.stopPropagation()
+}
+
+function onScrollableEnter() { setWheelListenerDisabled?.(true) }
+function onScrollableLeave() { setWheelListenerDisabled?.(false) }
+
+function attachScrollableGuards(el: HTMLElement | null) {
+  if (!el) return
+  el.addEventListener('mouseenter', onScrollableEnter)
+  el.addEventListener('mouseleave', onScrollableLeave)
+  el.addEventListener('wheel', onScrollableWheel, { passive: true })
+}
+
+function detachScrollableGuards(el: HTMLElement | null) {
+  if (!el) return
+  el.removeEventListener('mouseenter', onScrollableEnter)
+  el.removeEventListener('mouseleave', onScrollableLeave)
+  el.removeEventListener('wheel', onScrollableWheel as EventListener)
+}
+
+// 监听 ref 变化（例如数据加载后渲染出的列表），动态绑定/解绑
+watch(voteListRef, (el, prev) => { if (prev) detachScrollableGuards(prev); attachScrollableGuards(el) })
+watch(commentsWrapRef, (el, prev) => { if (prev) detachScrollableGuards(prev); attachScrollableGuards(el) })
 </script>
 
 <style scoped lang="scss">
-.act-vote { display: grid; gap: 16px; padding: 14px 18px 22px; color: var(--text-primary); height: 100%; }
+.act-vote { display: grid; gap: 16px; padding: 14px 18px 22px; color: var(--text-primary); height: 100%; min-height: 0; grid-template-rows: auto 1fr; /* 子屏高度与左右列表占比可调整 */ --vote-panel-max-h: clamp(460px, 68vh, 760px); --vote-list-max-pct: 70%; --comment-list-max-pct: 100%; }
 .head { display: flex; align-items: center; gap: 10px; }
 .titles { display: grid; gap: 4px; }
 .title { font-size: 18px; font-weight: 700; }
@@ -266,10 +325,10 @@ const canVote = computed(() => isAuthenticated.value && selectedOptionId.value !
 .btn.small.warn.outline { background: transparent; }
 .btn.small.warn.outline[aria-pressed="true"] { background: color-mix(in srgb, var(--accent-red, #f7768e) 22%, transparent); color: #fff; box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-red, #f7768e) 35%, transparent) inset; }
 
-.grid { display: grid; gap: 12px; grid-template-columns: 1fr; align-items: stretch; }
+.grid { display: grid; gap: 12px; grid-template-columns: 1fr; align-items: stretch; height: 100%; min-height: 0; grid-template-rows: 1fr; }
 @media (min-width: 960px) { .grid { grid-template-columns: 1.4fr 1fr; align-items: stretch; } }
 
-.panel { background: color-mix(in srgb, var(--base-dark) 85%, rgba(0,0,0,0.2)); border: 1px solid color-mix(in srgb, var(--divider-color, #3a3a3a) 60%, rgba(255,255,255,0.08)); border-radius: 14px; padding: 12px; box-shadow: 0 6px 24px rgba(0,0,0,.35); height: 100%; }
+.panel { background: color-mix(in srgb, var(--base-dark) 85%, rgba(0,0,0,0.2)); border: 1px solid color-mix(in srgb, var(--divider-color, #3a3a3a) 60%, rgba(255,255,255,0.08)); border-radius: 14px; padding: 12px; box-shadow: 0 6px 24px rgba(0,0,0,.35); height: 100%; max-height: var(--vote-panel-max-h); overflow: hidden; }
 .panel.options.managing { border-color: var(--error-alert, #f7768e); box-shadow: 0 0 0 2px color-mix(in srgb, var(--error-alert, #f7768e) 30%, transparent) inset, 0 6px 24px rgba(0,0,0,.35); }
 .panel-title { display: flex; align-items: center; justify-content: space-between; color: var(--text-secondary); font-size: 12px; margin-bottom: 8px; }
 .anon { display: inline-flex; align-items: center; gap: 6px; }
@@ -280,7 +339,7 @@ const canVote = computed(() => isAuthenticated.value && selectedOptionId.value !
 .buttons-gap { display: inline-flex; align-items: center; gap: 8px; }
 
 /* 左侧合并面板 */
-.vote-combined { display: flex; flex-direction: column; min-height: 0; }
+.vote-combined { display: grid; grid-template-rows: auto 1fr auto; min-height: 0; }
 .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; color: var(--text-secondary); font-size: 12px; }
 .chips { display: inline-flex; align-items: center; gap: 8px; }
 .switch { position: relative; display: inline-flex; align-items: center; gap: 6px; }
@@ -291,7 +350,7 @@ const canVote = computed(() => isAuthenticated.value && selectedOptionId.value !
 .switch input:checked + .slider::after { left: 18px; }
 .switch .label { white-space: nowrap; }
 
-.vote-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; overflow: auto; flex: 1 1 80%; min-height: 0; align-content: flex-start; }
+.vote-list { list-style: none; padding: 6px 0 0; margin: 0; display: flex; flex-direction: column; gap: 6px; overflow: auto; min-height: 0; align-content: flex-start; max-height: var(--vote-list-max-pct); }
 .vote-row { position: relative; }
 .row-main { width: 100%; text-align: left; background: color-mix(in srgb, var(--base-dark) 82%, rgba(0,0,0,0.15)); border: 1px solid var(--divider-color, #3a3a3a); border-radius: 12px; padding: 10px 48px 10px 10px; color: var(--text-primary); transition: transform .15s ease, background .2s ease, border-color .2s ease; display: grid; grid-template-columns: auto 1fr; column-gap: 8px; position: relative; }
 .row-main:hover { transform: translateY(-1px); background: color-mix(in srgb, var(--primary) 8%, transparent); border-color: var(--primary); }
@@ -307,8 +366,8 @@ const canVote = computed(() => isAuthenticated.value && selectedOptionId.value !
 .row-top .name { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .row-top .counts { color: var(--text-secondary); }
 .row-top .pct { margin-left: 2px; font-size: 12px; }
-.bar { position: relative; margin-top: 6px; height: 10px; background: color-mix(in srgb, var(--panel-bg, #0f0f14) 80%, transparent); border: 1px solid var(--divider-color, #333); border-radius: 8px; overflow: hidden; }
-.bar-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; transform-origin: 0 50%; transform: scaleX(0); background: linear-gradient(90deg, var(--primary) 0%, #a77bff 100%); transition: transform .3s ease; }
+.bar { position: relative; margin-top: 6px; height: 12px; background: color-mix(in srgb, var(--secondary-light) 55%, rgba(0,0,0,0.25)); border: 1px solid color-mix(in srgb, var(--secondary) 25%, rgba(255,255,255,0.1)); border-radius: 999px; overflow: hidden; grid-column: 1 / -1; }
+.bar-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: linear-gradient(90deg, var(--secondary) 0%, var(--primary) 100%); box-shadow: 0 0 8px color-mix(in srgb, var(--primary) 45%, transparent); transition: width .35s var(--ease-hover); }
 .vote-row .badge { position: absolute; top: 8px; right: 8px; padding: 2px 6px; font-size: 12px; border-radius: 999px; background: var(--primary); color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.3); }
 .vote-row .delete-right { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; display: grid; place-items: center; border-radius: 6px; background: color-mix(in srgb, var(--error-alert, #f7768e) 30%, transparent); color: #fff; font-weight: 700; cursor: pointer; opacity: .9; transition: background .2s ease; }
 .vote-row .delete-right:hover { background: var(--error-alert, #f7768e); }
@@ -322,13 +381,14 @@ const canVote = computed(() => isAuthenticated.value && selectedOptionId.value !
 .chip-closed { background: color-mix(in srgb, var(--error-alert, #f7768e) 25%, transparent); color: #fff; }
 
 /* 评论区布局：占满剩余高度并内部滚动 */
-.panel.comments { display: flex; flex-direction: column; min-height: 0; }
+.panel.comments { display: grid; grid-template-rows: auto 1fr; min-height: 0; }
 .panel.comments .panel-title { margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
 .comments-body { display: grid; gap: 8px; grid-template-rows: auto 1fr; min-height: 0; }
-.list-wrap { overflow: auto; min-height: 0; }
+.list-wrap { overflow: auto; min-height: 0; max-height: var(--comment-list-max-pct); }
 .seg { display: inline-flex; background: color-mix(in srgb, var(--base-dark) 82%, rgba(0,0,0,0.15)); border: 1px solid var(--divider-color, #3a3a3a); border-radius: 8px; overflow: hidden; }
-.seg-btn { padding: 4px 10px; font-size: 12px; color: var(--text-secondary); background: transparent; border: none; cursor: pointer; }
-.seg-btn.active { color: #fff; background: color-mix(in srgb, var(--primary) 20%, transparent); }
+.seg-btn { padding: 4px 10px; font-size: 12px; color: var(--text-secondary); background: transparent; border: none; cursor: pointer; transition: background .2s ease, color .2s ease; }
+.seg-btn:hover { background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--text-primary); }
+.seg-btn.active { color: #fff; background: var(--primary); box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 35%, transparent) inset; }
 
 /* 独立加载样式，避免文字跟着旋转 */
 .loading-wrap { display: inline-flex; align-items: center; gap: 8px; color: var(--text-secondary); }

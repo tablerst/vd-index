@@ -327,7 +327,7 @@ onUnmounted(() => { stopActivePolling() })
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 0 24px 12px;
+  padding: 64px 24px 12px;
 }
 .title { font-size: 20px; font-weight: 700; letter-spacing: .2px; }
 .title-accent { background: var(--mixed-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-shadow: var(--shadow-glow); }
