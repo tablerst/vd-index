@@ -17,7 +17,7 @@
         <!-- 未登录：圆形灰底头像占位，点击打开登录模态 -->
         <n-avatar v-else round :size="avatarSize" class="user-avatar avatar-placeholder"
           :style="{ background: 'var(--glass-bg-strong, rgba(255,255,255,0.12))', color: 'var(--text-primary, #111)', fontSize: '12px', fontWeight: '600' }"
-          title="未登录，点击登录" @click="showLoginModal = true">未登录</n-avatar>
+          title="未登录，点击登录" @click="() => { showAuth = true; authTab = 'login'; forceBindStepOnOpen = false }">未登录</n-avatar>
       </div>
     </header>
 
@@ -68,87 +68,13 @@
         :page-slot="7" size="small" :show-size-picker="true" :show-quick-jumper="true" />
     </footer>
 
-    <!-- 登录/注册模态（内置表单，不跳转页面） -->
-    <n-modal v-model:show="showLoginModal" preset="dialog" title="账号" :mask-closable="registerStep !== 2"
-      :close-on-esc="registerStep !== 2" :closable="registerStep !== 2">
-      <div class="login-modal-body">
-        <n-tabs v-model:value="authTab" type="line">
-          <n-tab-pane name="login" tab="登录">
-            <div class="login-modal-body">
-              <n-form ref="loginFormRef" :model="loginForm" :rules="loginRules" label-placement="left"
-                :show-require-mark="false">
-                <n-form-item path="username" label="用户名">
-                  <n-input v-model:value="loginForm.username" placeholder="请输入用户名" />
-                </n-form-item>
-                <n-form-item path="password" label="密码">
-                  <n-input v-model:value="loginForm.password" type="password" placeholder="请输入密码" />
-                </n-form-item>
-              </n-form>
-              <div v-if="loginError" class="error">{{ loginError }}</div>
-              <n-button type="primary" block :loading="loginLoading" @click="handleLogin">登录</n-button>
-            </div>
-          </n-tab-pane>
-          <n-tab-pane name="register" tab="注册">
-            <div v-if="registerStep === 1" class="login-modal-body">
-              <n-form ref="registerFormRef" :model="registerForm" :rules="registerRules" label-placement="left"
-                :show-require-mark="false">
-                <n-form-item path="username" label="用户名">
-                  <n-input v-model:value="registerForm.username" placeholder="设置用户名" />
-                </n-form-item>
-                <n-form-item path="password" label="密码">
-                  <n-input v-model:value="registerForm.password" type="password" placeholder="设置密码(≥6位)" />
-                </n-form-item>
-                <n-form-item path="confirm" label="确认密码">
-                  <n-input v-model:value="registerForm.confirm" type="password" placeholder="再次输入密码" />
-                </n-form-item>
-              </n-form>
-              <div v-if="registerError" class="error">{{ registerError }}</div>
-              <n-button type="primary" block :loading="registerLoading" @click="handleRegister">下一步</n-button>
-            </div>
-            <div v-else class="login-modal-body">
-              <n-form ref="bindFormRef" :model="bindForm" :rules="bindRules" label-placement="left"
-                :show-require-mark="false">
-                <n-form-item path="member_id" label="选择成员">
-                  <n-select
-                    v-model:value="bindForm.member_id"
-                    v-model:show="bindableSelectOpen"
-                    :options="bindableMemberOptions"
-                    placeholder="选择要绑定的成员"
-                    filterable
-                    :virtual-scroll="true"
-                    :loading="bindableLoading"
-                    :reset-menu-on-options-change="false"
-                    @update:show="onBindableShowChange"
-                  >
-                    <template #action>
-                      <div style="padding: 8px 12px; text-align: center;">
-                        <n-button
-                          type="primary"
-                          round
-                          size="small"
-                          :loading="bindableLoading"
-                          :disabled="!bindableHasMore || bindableLoading"
-                          style="min-width: 120px;"
-                          @mousedown.prevent
-                          @click.stop="handleLoadMoreBindable"
-                        >
-                          {{ bindableHasMore ? (bindableLoading ? '加载中...' : '加载更多') : (bindableMemberOptions.length === 0 ? '暂无可绑定成员' : '已全部加载') }}
-                        </n-button>
-                      </div>
-                    </template>
-                  </n-select>
-                </n-form-item>
-                <n-form-item path="uin" label="成员UIN">
-                  <n-input v-model:value="bindForm.uin" placeholder="请输入该成员的QQ号用于验证" />
-                </n-form-item>
-              </n-form>
-              <div v-if="bindError" class="error">{{ bindError }}</div>
-              <n-button type="primary" block :loading="bindLoading" @click="handleBind">完成绑定</n-button>
-            </div>
-          </n-tab-pane>
-        </n-tabs>
-      </div>
-    </n-modal>
+    <!-- 统一认证弹窗组件 -->
+    <AuthDialog
+      v-model="showAuth"
+      :initial-tab="authTab"
+      :force-bind-step-on-open="forceBindStepOnOpen"
+      @member-bound="onMemberBound"
+    />
 
     <!-- 修改密码模态 -->
     <n-modal v-model:show="showChangePassword" preset="dialog" title="修改密码" :mask-closable="true">
@@ -185,18 +111,19 @@
 // 中文注释：重构为四层布局（标题栏/筛选栏/内容/分页），高度严格100vh，正文区域可滚动
 import { ref, onMounted, watch, nextTick, onUnmounted, computed } from 'vue'
 
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import DailyCard from '@/components/daily/DailyCard.vue'
 import DailyEditor from '@/components/daily/DailyEditor.vue'
 
 import { dailyApi, type DailyPostItem } from '@/services/daily'
 import { useAuthStore } from '@/stores/auth'
 
-import { NPagination, NDropdown, NAvatar, NButton, NDatePicker, NSelect, NSpace, NModal, NForm, NFormItem, NInput, NSpin, NTabs, NTabPane, useMessage } from 'naive-ui'
+import { NPagination, NDropdown, NAvatar, NButton, NDatePicker, NSelect, NSpace, NModal, NForm, NFormItem, NInput, NSpin, useMessage } from 'naive-ui'
 import type { FormInst, FormRules } from 'naive-ui'
 import { gsap } from 'gsap'
 import { ArrowLeft, Plus } from 'lucide-vue-next'
 import { apiClient } from '@/services/api'
+import AuthDialog from '@/components/auth/AuthDialog.vue'
 
 // 列表与分页
 const posts = ref<DailyPostItem[]>([])
@@ -322,12 +249,9 @@ async function submitChangePassword() {
 function handleUserMenu(key: string) {
   if (key === 'bind-member') {
     // 中文注释：未绑定时从菜单进入绑定步骤
-    showLoginModal.value = true
+    showAuth.value = true
     authTab.value = 'register'
-    registerStep.value = 2
-    bindError.value = ''
-    bindForm.value = { member_id: null, uin: '' }
-    loadBindableMembers(true)
+    forceBindStepOnOpen.value = true
     return
   }
   if (key === 'change-password') {
@@ -414,173 +338,13 @@ function goHome() {
 }
 
 const router = useRouter()
-const route = useRoute()
-
-// 登录模态显隐与表单
-const showLoginModal = ref(false)
-const loginFormRef = ref<FormInst | null>(null)
-const loginForm = ref({ username: '', password: '' })
-const loginLoading = ref(false)
-const loginError = ref('')
+// const route = useRoute()
 const message = useMessage()
-const loginRules: FormRules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
-}
 
-async function handleLogin() {
-  if (!loginFormRef.value) return
-  try {
-    await loginFormRef.value.validate()
-    loginLoading.value = true
-    loginError.value = ''
-    // 设置redirect到当前页，避免跳转到/settings
-    const redirect = route.fullPath || '/daily'
-    if (route.query.redirect !== redirect) {
-      await router.replace({ path: route.path, query: { ...route.query, redirect } })
-    }
-    const ok = await authStore.login({ username: loginForm.value.username, password: loginForm.value.password })
-    if (ok) {
-      showLoginModal.value = false
-      message.success('登录成功')
-      // 留在当前页（authStore.login 会读取上面设置的 redirect）
-    } else {
-      loginError.value = '登录失败，请检查用户名和密码'
-    }
-  } catch (e: any) {
-    loginError.value = e?.message || '登录失败'
-  } finally {
-    loginLoading.value = false
-  }
-}
-
-// 登录/注册切换与注册-绑定流程状态
+// 统一认证弹窗控制
+const showAuth = ref(false)
 const authTab = ref<'login' | 'register'>('login')
-const registerStep = ref<1 | 2>(1)
-
-// 注册表单
-const registerFormRef = ref<FormInst | null>(null)
-const registerForm = ref({ username: '', password: '', confirm: '' })
-const registerLoading = ref(false)
-const registerError = ref('')
-const registerRules: FormRules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { validator: (_r, v) => (v && String(v).length >= 6), message: '密码至少6位', trigger: ['blur', 'input'] }
-  ],
-  confirm: [
-    { required: true, message: '请再次输入密码', trigger: 'blur' },
-    { validator: (_r, v) => v === registerForm.value.password, message: '两次输入的密码不一致', trigger: ['blur', 'input'] }
-  ]
-}
-
-async function handleRegister() {
-  if (!registerFormRef.value) return
-  try {
-    await registerFormRef.value.validate()
-    registerLoading.value = true
-    registerError.value = ''
-    const ok = await authStore.register({ username: registerForm.value.username, password: registerForm.value.password })
-    if (ok) {
-      // 进入绑定步骤并加载可绑定成员
-      registerStep.value = 2
-      await loadBindableMembers(true)
-      message.success('注册成功，请完成成员绑定')
-    } else {
-      registerError.value = '注册失败，请稍后再试'
-    }
-  } catch (e: any) {
-    registerError.value = e?.message || '注册失败'
-  } finally {
-    registerLoading.value = false
-  }
-}
-
-// 绑定成员表单
-const bindFormRef = ref<FormInst | null>(null)
-const bindForm = ref<{ member_id: number | null; uin: string }>({ member_id: null, uin: '' })
-const bindLoading = ref(false)
-const bindError = ref('')
-const bindRules: FormRules = {
-  member_id: [{ required: true, type: 'number', message: '请选择成员', trigger: 'change' }],
-  uin: [
-    { required: true, message: '请输入成员UIN', trigger: 'blur' },
-    { validator: (_r, v) => /^\d{5,}$/.test(String(v || '')), message: 'UIN格式不正确', trigger: ['blur', 'input'] }
-  ]
-}
-
-// 可绑定成员选项与分页加载
-const bindableMemberOptions = ref<Array<{ label: string; value: number }>>([])
-const bindablePage = ref(1)
-const bindablePageSize: number = 50
-const bindableLoading = ref(false)
-const bindableHasMore = ref(true)
-const bindableTotalPages = ref(1)
-
-async function loadBindableMembers(reset = false) {
-  try {
-    if (bindableLoading.value) return
-    if (reset) {
-      bindablePage.value = 1
-      bindableHasMore.value = true
-      bindableTotalPages.value = 1
-      bindableMemberOptions.value = []
-    } else {
-      if (!bindableHasMore.value) return
-    }
-    bindableLoading.value = true
-    const res = await apiClient.getBindableMembers(bindablePage.value, bindablePageSize)
-    const existed = new Set(bindableMemberOptions.value.map(o => o.value))
-    const newOptions = res.members
-      .map(m => ({ label: m.display_name, value: m.id }))
-      .filter(o => !existed.has(o.value))
-    bindableMemberOptions.value = [...bindableMemberOptions.value, ...newOptions]
-    bindableTotalPages.value = res.total_pages || Math.ceil((res.total || 0) / (res.page_size || bindablePageSize))
-    const nowPage = res.page || bindablePage.value
-    const nextPage = nowPage + 1
-    bindablePage.value = nextPage
-    bindableHasMore.value = nextPage <= bindableTotalPages.value
-  } catch (e: any) {
-    console.error('Failed to load bindable members', e)
-    if (reset) bindableMemberOptions.value = []
-    // 中文注释：若后端路由注册顺序不当，/members/bindable 可能被 /members/{member_id} 吞掉导致422
-    bindError.value = '加载可绑定成员失败，请稍后重试'
-    message.error('无法加载可绑定成员，请稍后重试')
-  } finally {
-    bindableLoading.value = false
-  }
-}
-
-
-
-// 按钮模式：保留占位避免引用报错（无需 IO 与滚动容器查找）
-let bindableIo: IntersectionObserver | null = null
-
-const bindableSelectOpen = ref(false)
-function onBindableShowChange(show: boolean) {
-  bindableSelectOpen.value = show
-  if (show) {
-    // 仅在首次展开且无数据时拉取第一页，避免重复重置
-    if (bindableMemberOptions.value.length === 0) {
-      loadBindableMembers(true)
-    }
-  } else {
-    // 保留：关闭时清理内部引用（尽管当前为按钮模式）
-    if (bindableIo) { try { bindableIo.disconnect() } catch {} bindableIo = null }
-  }
-}
-
-async function handleLoadMoreBindable(e?: MouseEvent) {
-  // 防止点击导致下拉框失焦关闭
-  try { e?.stopPropagation() } catch {}
-  if (!bindableLoading.value && bindableHasMore.value) {
-    await loadBindableMembers(false)
-    await nextTick()
-    // 强制保持下拉框展开（应对内部自动关闭）
-    bindableSelectOpen.value = true
-  }
-}
+const forceBindStepOnOpen = ref(false)
 
 async function waitForAvatarReady(memberId: number, retries = 5, delayMs = 800): Promise<boolean> {
   // 中文注释：轮询头像是否可用（HEAD 200），用于绑定后后端生成头像存在延迟的情况
@@ -597,40 +361,11 @@ async function waitForAvatarReady(memberId: number, retries = 5, delayMs = 800):
   return false
 }
 
-async function handleBind() {
-  if (!bindFormRef.value) return
-  try {
-    await bindFormRef.value.validate()
-    bindLoading.value = true
-    bindError.value = ''
-    const payload = { member_id: Number(bindForm.value.member_id), uin: Number(bindForm.value.uin) }
-    const res = await apiClient.bindMember(payload)
-    if (res?.success) {
-      message.success('绑定成功')
-      // 绑定成功后刷新用户信息，确保拿到最新 member_id
-      try {
-        await authStore.validateToken()
-      } catch (e) {
-        console.warn('刷新用户信息失败，但继续后续流程', e)
-      }
-      // 若后端异步生成头像文件，等待头像可用（HEAD 200）再强制刷新
-      if (memberId.value) {
-        await waitForAvatarReady(memberId.value, 6, 800)
-        avatarVersion.value++
-      }
-      showLoginModal.value = false
-      // 重置注册流程，方便下次打开
-      authTab.value = 'login'
-      registerStep.value = 1
-      registerForm.value = { username: '', password: '', confirm: '' }
-      bindForm.value = { member_id: null, uin: '' }
-    } else {
-      bindError.value = '绑定失败，请检查UIN是否正确'
-    }
-  } catch (e: any) {
-    bindError.value = e?.message || '绑定失败'
-  } finally {
-    bindLoading.value = false
+async function onMemberBound(mid?: number) {
+  const m = Number(mid || memberId.value || 0)
+  if (m) {
+    await waitForAvatarReady(m, 6, 800)
+    avatarVersion.value++
   }
 }
 
@@ -645,7 +380,9 @@ onMounted(fetchList)
 function openEditor() {
   if (!isAuthenticated.value) {
     message.info('请先登录')
-    showLoginModal.value = true
+    showAuth.value = true
+    authTab.value = 'login'
+    forceBindStepOnOpen.value = false
     return
   }
   showEditor.value = true

@@ -87,27 +87,8 @@
       </div>
     </div>
 
-    <!-- 登录 Modal（非管理员场景使用） -->
-    <div v-if="showLogin" class="modal" ref="loginBackdropRef" @click.self="closeLoginWithAnim">
-      <div class="modal-body" ref="loginModalRef" role="dialog" aria-modal="true" aria-label="登录">
-        <h3 class="modal-title">登录</h3>
-        <div class="form-grid">
-          <label class="field">
-            <span class="label">用户名</span>
-            <input v-model="loginForm.username" class="input" placeholder="请输入用户名" autocomplete="username" />
-          </label>
-          <label class="field">
-            <span class="label">密码</span>
-            <input v-model="loginForm.password" class="input" placeholder="请输入密码" type="password" autocomplete="current-password" />
-          </label>
-          <div v-if="loginError" class="error">{{ loginError }}</div>
-        </div>
-        <div class="modal-actions">
-          <button class="btn primary" :disabled="loginLoading" @click="handleLogin">{{ loginLoading ? '登录中…' : '登录' }}</button>
-          <button class="btn ghost" :disabled="loginLoading" @click="closeLoginWithAnim">取消</button>
-        </div>
-      </div>
-    </div>
+    <!-- 统一认证弹窗组件 -->
+    <AuthDialog v-model="showLogin" :initial-tab="'login'" @success="onAuthSuccess" />
   </div>
 </template>
 
@@ -117,16 +98,17 @@ import { useActivitiesStore } from '@/stores/activities'
 import { useAuthStore } from '@/stores/auth'
 import ActivityPanelVote from './ActivityPanelVote.vue'
 import ActivityPanelThread from './ActivityPanelThread.vue'
-import { useRouter } from 'vue-router'
+// import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { gsap } from 'gsap'
 import { Swiper, SwiperSlide } from 'swiper/vue'
 import { Navigation } from 'swiper/modules'
 import PaginationArrows from '@/components/PaginationArrows.vue'
+import AuthDialog from '@/components/auth/AuthDialog.vue'
 
 const store = useActivitiesStore()
 const auth = useAuthStore()
-const router = useRouter()
+// const router = useRouter()
 
 const activities = computed(() => store.activities)
 const loading = computed(() => store.loading.activities)
@@ -153,14 +135,8 @@ const modalRef = ref<HTMLElement | null>(null)
 const titleInputRef = ref<HTMLInputElement | null>(null)
 let escHandler: ((e: KeyboardEvent) => void) | null = null
 
-// Login modal state
+// Login modal state (unified)
 const showLogin = ref(false)
-const loginBackdropRef = ref<HTMLElement | null>(null)
-const loginModalRef = ref<HTMLElement | null>(null)
-const loginForm = ref({ username: '', password: '' })
-const loginLoading = ref(false)
-const loginError = ref('')
-let escLoginHandler: ((e: KeyboardEvent) => void) | null = null
 
 function openCreate(type: 'vote' | 'thread') {
   createType.value = type
@@ -210,42 +186,8 @@ async function submitCreate() {
   closeWithAnim()
 }
 
-function openLogin() {
-  showLogin.value = true
-  nextTick(() => {
-    animateOpen(loginBackdropRef.value, loginModalRef.value)
-    escLoginHandler = (e: KeyboardEvent) => { if (e.key === 'Escape') closeLoginWithAnim() }
-    window.addEventListener('keydown', escLoginHandler)
-  })
-}
-
-function closeLoginWithAnim() {
-  const finish = () => { showLogin.value = false; window.removeEventListener('keydown', escLoginHandler as any); }
-  animateClose(loginBackdropRef.value, loginModalRef.value, finish)
-}
-
-async function handleLogin() {
-  if (!loginForm.value.username || !loginForm.value.password) { loginError.value = '请输入用户名和密码'; return }
-  loginLoading.value = true
-  loginError.value = ''
-  try {
-    // 设置 redirect 到当前页面，避免登录后跳到 /settings
-    const current = router.currentRoute.value.fullPath || '/'
-    if (router.currentRoute.value.query.redirect !== current) {
-      await router.replace({ path: router.currentRoute.value.path, query: { ...router.currentRoute.value.query, redirect: current } })
-    }
-    const ok = await auth.login({ username: loginForm.value.username, password: loginForm.value.password })
-    if (ok) {
-      closeLoginWithAnim()
-    } else {
-      loginError.value = '登录失败，请检查用户名与密码'
-    }
-  } catch (e: any) {
-    loginError.value = e?.message || '登录失败'
-  } finally {
-    loginLoading.value = false
-  }
-}
+function openLogin() { showLogin.value = true }
+function onAuthSuccess() { /* stay on current page */ }
 
 function reduced() {
   try { return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches } catch { return false }
@@ -298,7 +240,6 @@ onMounted(() => {
 onUnmounted(() => {
   store.stopRankingPolling()
   if (escHandler) window.removeEventListener('keydown', escHandler)
-  if (escLoginHandler) window.removeEventListener('keydown', escLoginHandler)
   window.removeEventListener('open-login-modal', openLogin as any)
 })
 
