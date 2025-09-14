@@ -26,19 +26,10 @@
           <span class="spinner" aria-hidden="true" />
           <span class="loading-text">加载中…</span>
         </div>
-        <ul v-else class="rank-list" :class="{ syncing: rankingLoading }">
-          <li v-for="(r, i) in entries" :key="r.option_id" class="rank-item" :class="{ first: i===0, second: i===1, third: i===2 }">
-            <span class="order">{{ i + 1 }}</span>
-            <div class="bar">
-              <div class="bar-fill" :style="{ width: percent(r.votes) }" />
-              <div class="bar-label">
-                <span class="name" :title="r.label">{{ r.label }}</span>
-                <span class="votes">{{ r.votes }}<span class="pct">（{{ percent(r.votes) }}）</span></span>
-              </div>
-            </div>
-          </li>
-          <li v-if="entries.length === 0" class="empty">暂无排行</li>
-        </ul>
+        <div v-else-if="entries.length > 0" class="rank-chart-wrap" :class="{ syncing: rankingLoading }">
+          <div ref="rankChartRef" class="rank-chart"></div>
+        </div>
+        <div v-else class="empty">暂无排行</div>
       </div>
 
       <div class="panel options" :class="{ managing: deleteMode }">
@@ -104,6 +95,14 @@ import { useAuthStore } from '@/stores/auth'
 import { storeToRefs } from 'pinia'
 import type { ActActivity, ActRankingEntry, ActVoteOption } from '@/services/api'
 import { gsap } from 'gsap'
+import { useThemeStore } from '@/stores/theme'
+import * as echarts from 'echarts/core'
+import type { ECharts } from 'echarts/core'
+import { BarChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent } from 'echarts/components'
+import { CanvasRenderer } from 'echarts/renderers'
+
+echarts.use([BarChart, GridComponent, TooltipComponent, CanvasRenderer])
 
 const props = defineProps<{ activity: ActActivity }>()
 const store = useActivitiesStore()
@@ -131,7 +130,11 @@ const canManage = computed(() => isAdmin.value || isCreator.value)
 
 const newOption = ref('')
 const rootRef = ref<HTMLElement | null>(null)
+const rankChartRef = ref<HTMLDivElement | null>(null)
 const deleteMode = ref(false)
+
+let chart: ECharts | null = null
+let resizeObserver: ResizeObserver | null = null
 
 // Map option_id -> votes for quick lookup in delete mode
 const votesByOption = computed<Map<number, number>>(() => {
@@ -168,6 +171,9 @@ onMounted(() => {
   window.addEventListener('keydown', onKey)
   ;(onKey as any)._attached = true
   ;(rootRef as any)._onKey = onKey
+
+  // 初始化图表（等容器挂载后）
+  initOrUpdateChart()
 })
 
 onUnmounted(() => {
@@ -175,6 +181,16 @@ onUnmounted(() => {
   if (onKey && (onKey as any)._attached) {
     window.removeEventListener('keydown', onKey)
   }
+
+  // 释放 ECharts 实例与观察器
+  if (resizeObserver && rankChartRef.value) {
+    try { resizeObserver.unobserve(rankChartRef.value) } catch {}
+  }
+  resizeObserver = null
+  if (chart) {
+    try { chart.dispose() } catch {}
+  }
+  chart = null
 })
 
 function percent(votes: number): string {
@@ -237,6 +253,113 @@ function toggleDeleteMode() {
     store.fetchRankingTop(props.activity.id, 1000).catch(() => {})
   }
 }
+
+// ---------------- ECharts 排行榜 ----------------
+const themeStore = useThemeStore()
+
+function getCssVar(name: string, fallback: string): string {
+  try {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+    return v || fallback
+  } catch {
+    return fallback
+  }
+}
+
+function buildChartOption(sorted: ActRankingEntry[]) {
+  const primary = getCssVar('--primary', '#3F7DFB')
+  const textPrimary = getCssVar('--text-primary', '#E6E6E6')
+  const textSecondary = getCssVar('--text-secondary', '#A0A0A0')
+  const divider = getCssVar('--divider', 'rgba(255,255,255,0.12)')
+  const total = sorted.reduce((s, e) => s + (e.votes || 0), 0)
+
+  return {
+    grid: { left: 8, right: 12, top: 8, bottom: 8, containLabel: true },
+    tooltip: {
+      trigger: 'item',
+      formatter: (p: any) => {
+        const votes = p.value ?? 0
+        const pct = total > 0 ? Math.round((votes / total) * 100) : 0
+        return `${p.name}<br/>票数：${votes}（${pct}%）`
+      }
+    },
+    xAxis: {
+      type: 'value',
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { color: textSecondary },
+      splitLine: { show: true, lineStyle: { color: divider } }
+    },
+    yAxis: {
+      type: 'category',
+      data: sorted.map(e => e.label),
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { color: textPrimary }
+    },
+    series: [
+      {
+        type: 'bar',
+        data: sorted.map(e => e.votes || 0),
+        barWidth: '60%',
+        itemStyle: { color: primary },
+        emphasis: { focus: 'series' },
+        label: {
+          show: true,
+          position: 'right',
+          color: textPrimary,
+          formatter: (p: any) => {
+            const votes = p.value ?? 0
+            const pct = total > 0 ? Math.round((votes / total) * 100) : 0
+            return `${votes}（${pct}%）`
+          }
+        },
+        animationDurationUpdate: 300
+      }
+    ]
+  } as any
+}
+
+function initOrUpdateChart() {
+  if (!rankChartRef.value) return
+  const container = rankChartRef.value
+
+  // 动态高度：每项 36px，最小 220 最大 520
+  const itemCount = entries.value.length
+  const targetHeight = Math.max(220, Math.min(520, 36 * itemCount + 60))
+  if (container.style.height !== `${targetHeight}px`) {
+    container.style.height = `${targetHeight}px`
+  }
+
+  // 排序（票数降序）
+  const sorted = [...entries.value].sort((a, b) => (b.votes || 0) - (a.votes || 0))
+
+  if (!chart) {
+    chart = echarts.init(container)
+    // 监听容器尺寸变化
+    try {
+      resizeObserver = new ResizeObserver(() => { try { chart && chart.resize() } catch {} })
+      resizeObserver.observe(container)
+    } catch {
+      window.addEventListener('resize', () => { try { chart && chart.resize() } catch {} }, { passive: true })
+    }
+  }
+
+  const option = buildChartOption(sorted)
+  try { chart.setOption(option, true) } catch {}
+}
+
+// 数据与主题变化时更新
+import { watch, nextTick } from 'vue'
+watch(entries, async () => {
+  // 等 DOM 根据 v-if/v-else-if 切换出图表容器后再初始化
+  await nextTick()
+  initOrUpdateChart()
+}, { deep: true, flush: 'post' })
+watch(() => themeStore.currentTheme, () => {
+  // 主题切换时重建配置
+  initOrUpdateChart()
+})
 </script>
 
 <style scoped lang="scss">
@@ -286,6 +409,10 @@ function toggleDeleteMode() {
   .bar-label { grid-template-columns: 1fr; row-gap: 4px; }
   .bar-label .votes { justify-self: start; }
 }
+
+/* ECharts 容器样式 */
+.rank-chart-wrap { width: 100%; }
+.rank-chart { width: 100%; height: 260px; }
 
 /* 选项 */
 .option-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
