@@ -1111,7 +1111,7 @@ export async function cachedApiCall<T>(
 // 活动（新系统）类型定义
 export interface ActActivity {
   id: number
-  type: 'vote' | 'thread'
+  type: 'vote'
   title: string
   description?: string
   status: 'draft' | 'ongoing' | 'closed'
@@ -1178,7 +1178,7 @@ export const actApi = {
   async myVote(activityId: number): Promise<{ option_id: number | null }> {
     return apiClient.activityMyVote(activityId)
   },
-  async create(payload: { type: 'vote' | 'thread'; title: string; description?: string; anonymous_allowed?: boolean; starts_at?: string; ends_at?: string; allow_change?: boolean }): Promise<ActActivity> {
+  async create(payload: { type?: 'vote'; title: string; description?: string; anonymous_allowed?: boolean; starts_at?: string; ends_at?: string; allow_change?: boolean }): Promise<ActActivity> {
     return apiClient.activityCreate(payload)
   },
   async createOption(activityId: number, payload: { label: string; member_id?: number | null }): Promise<any> {

@@ -5,6 +5,9 @@ import router from './router'
 import './styles/main.scss'
 import './styles/fluent-theme.scss'
 import './styles/tailwind.css'
+// Swiper global styles: ensure layout rules (wrapper flex, slides sizing) are present
+import 'swiper/css'
+import 'swiper/css/navigation'
 
 
 

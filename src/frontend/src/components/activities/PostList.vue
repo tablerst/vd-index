@@ -10,7 +10,7 @@
       </div>
     </div>
     <ul v-else class="list">
-      <li v-for="p in topPosts" :key="p.id" class="row list-item">
+      <li v-for="p in topPostsSorted" :key="p.id" class="row list-item">
         <div class="meta">
           <div class="author-info">
             <img :src="avatarUrl(p)" class="avatar" alt="avatar" />
@@ -57,6 +57,7 @@
     </div>
   </div>
   
+
 </template>
 
 <script setup lang="ts">
@@ -66,7 +67,7 @@ import { gsap } from 'gsap'
 import CommentInput from '@/components/Comment/CommentInput.vue'
 import type { ActThreadPost } from '@/services/api'
 
-const props = defineProps<{ activityId: number; active?: boolean }>()
+const props = defineProps<{ activityId: number; active?: boolean; sort?: 'latest' | 'hot' }>()
 const store = useActivitiesStore()
 
 const entry = computed(() => store.threadPosts[props.activityId] || { items: [], loading: false, hasMore: true, refreshing: false })
@@ -77,6 +78,16 @@ const refreshing = computed(() => !!entry.value.refreshing)
 
 // 顶层评论（parent_id 为空）
 const topPosts = computed(() => items.value.filter(p => !p.parent_id))
+
+// 排序：最新/最热（最热按回复数降序）
+const topPostsSorted = computed<ActThreadPost[]>(() => {
+  const base = [...topPosts.value]
+  if (props.sort === 'hot') {
+    const countReplies = (pid: number) => items.value.filter(p => p.parent_id === pid).length
+    return base.sort((a, b) => countReplies(b.id) - countReplies(a.id))
+  }
+  return base.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+})
 
 const replyParentId = ref<number | null>(null)
 const submitting = ref(false)

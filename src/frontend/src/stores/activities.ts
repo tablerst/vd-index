@@ -134,7 +134,7 @@ export const useActivitiesStore = defineStore('activities', {
     },
 
     // Admin / management actions
-    async createActivity(payload: { type: 'vote' | 'thread'; title: string; description?: string; anonymous_allowed?: boolean; starts_at?: string; ends_at?: string; allow_change?: boolean }) {
+    async createActivity(payload: { type?: 'vote'; title: string; description?: string; anonymous_allowed?: boolean; starts_at?: string; ends_at?: string; allow_change?: boolean }) {
       const created = await actApi.create(payload)
       // 刷新活动列表
       await this.fetchActivities('ongoing')

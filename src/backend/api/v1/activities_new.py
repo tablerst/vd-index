@@ -336,8 +336,8 @@ async def revoke_vote(
 @router.get("/{activity_id}/posts")
 async def list_posts(activity_id: int, size: int = 20, session: AsyncSession = Depends(get_session)):
     a = await ActActivityCRUD.get(session, activity_id)
-    if not a or a.type != "thread":
-        raise HTTPException(status_code=404, detail="Thread activity not found")
+    if not a:
+        raise HTTPException(status_code=404, detail="Activity not found")
     items = await ActThreadCRUD.list_posts(session, activity_id, size=size)
     enriched = []
     for p in items:
@@ -376,19 +376,18 @@ async def create_post(
     session: AsyncSession = Depends(get_session),
 ):
     a = await ActActivityCRUD.get(session, activity_id)
-    if not a or a.type != "thread":
-        raise HTTPException(status_code=404, detail="Thread activity not found")
+    if not a:
+        raise HTTPException(status_code=404, detail="Activity not found")
 
     content = post.content.strip()
     if not content:
         raise HTTPException(status_code=400, detail="Empty content")
 
-    # Rule: allow anonymous posting without login only when the activity allows it AND client sets display_anonymous=true
-    # Otherwise, require authenticated user
-    if current_user is None and not (a.anonymous_allowed and post.display_anonymous):
+    # v2: 评论需要登录（匿名仅影响展示）
+    if current_user is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    author_id = current_user.id if current_user is not None else 0
+    author_id = current_user.id
 
     created = await ActThreadCRUD.create_post(
         session,
@@ -477,17 +476,14 @@ async def seed_demo(_: dict = Depends(require_admin), session: AsyncSession = De
         return {"message": "already seeded"}
 
     vote = ActActivity(type="vote", title="最受欢迎的成员", description="投票示例", status="ongoing")
-    thread = ActActivity(type="thread", title="话题讨论区", description="讨论示例", status="ongoing")
     session.add(vote)
-    session.add(thread)
     await session.commit()
     await session.refresh(vote)
-    await session.refresh(thread)
 
     for label in ["Alice", "Bob", "Carol", "Dave"]:
         session.add(ActVoteOption(activity_id=vote.id, label=label))
     await session.commit()
 
-    return {"success": True, "vote_activity_id": vote.id, "thread_activity_id": thread.id}
+    return {"success": True, "vote_activity_id": vote.id}
 
 

@@ -9,8 +9,7 @@
       <div class="spacer" />
       <div class="actions">
         <template v-if="isAuthenticated">
-          <button class="btn" @click="openCreate('vote')">新建投票</button>
-          <button class="btn" @click="openCreate('thread')">新建讨论</button>
+          <button class="btn" @click="openCreate()">新建投票</button>
           <button
             v-if="activeActivity && canManageActive"
             class="btn warn outline"
@@ -32,14 +31,15 @@
         :keyboard="{ enabled: true }"
         :speed="700"
         :allow-touch-move="true"
+        :observer="true"
+        :observe-parents="true"
         @slide-change="onSlideChange"
         @swiper="onSwiperInit"
         class="activity-swiper"
       >
         <swiper-slide v-for="act in activities" :key="act.id" class="activity-slide">
           <div class="slide-inner">
-            <component
-              :is="act.type === 'thread' ? ActivityPanelThread : ActivityPanelVote"
+            <ActivityPanelVote
               :activity="act"
               :active="activeActivity && (act.id === (activeActivity as any).id)"
             />
@@ -59,13 +59,13 @@
 
     <!-- 创建活动 Modal -->
     <div v-if="showCreate" class="modal" ref="backdropRef" @click.self="closeWithAnim">
-      <div class="modal-body" ref="modalRef" role="dialog" aria-modal="true" :aria-label="createType === 'vote' ? '创建投票' : '创建讨论'">
-        <h3 class="modal-title">创建{{ createType === 'vote' ? '投票' : '讨论' }}</h3>
+      <div class="modal-body" ref="modalRef" role="dialog" aria-modal="true" aria-label="创建投票">
+        <h3 class="modal-title">创建投票</h3>
 
         <div class="form-grid">
           <label class="field">
             <span class="label">标题</span>
-            <input v-model="form.title" ref="titleInputRef" class="input" :placeholder="`给你的${createType === 'vote' ? '投票' : '讨论'}起个标题`" />
+            <input v-model="form.title" ref="titleInputRef" class="input" placeholder="给你的投票起个标题" />
           </label>
 
           <label class="field">
@@ -73,12 +73,12 @@
             <textarea v-model="form.description" class="textarea" rows="3" placeholder="可选：补充背景、规则等"></textarea>
           </label>
 
-          <div class="field" v-if="createType === 'vote'">
+          <div class="field">
             <span class="label">选项</span>
             <div class="hints">创建后可在面板中继续添加投票选项</div>
           </div>
 
-          <div class="field two-col" v-if="createType === 'vote'">
+          <div class="field two-col">
             <label class="checkbox"><input type="checkbox" v-model="form.allow_change" /><span>允许改票/撤销</span></label>
             <label class="checkbox"><input type="checkbox" v-model="form.anonymous_allowed" /><span>允许匿名展示</span></label>
           </div>
@@ -101,7 +101,6 @@ import { onMounted, onUnmounted, ref, computed, nextTick, watch } from 'vue'
 import { useActivitiesStore } from '@/stores/activities'
 import { useAuthStore } from '@/stores/auth'
 import ActivityPanelVote from './ActivityPanelVote.vue'
-import ActivityPanelThread from './ActivityPanelThread.vue'
 // import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { gsap } from 'gsap'
@@ -131,7 +130,7 @@ const canManageActive = computed(() => {
 })
 
 const showCreate = ref(false)
-const createType = ref<'vote' | 'thread'>('vote')
+// v2: only vote
 const form = ref<{ title: string; description?: string; allow_change?: boolean; anonymous_allowed?: boolean }>({ title: '', description: '', allow_change: true, anonymous_allowed: true })
 
 const backdropRef = ref<HTMLElement | null>(null)
@@ -142,8 +141,7 @@ let escHandler: ((e: KeyboardEvent) => void) | null = null
 // Login modal state (unified)
 const showLogin = ref(false)
 
-function openCreate(type: 'vote' | 'thread') {
-  createType.value = type
+function openCreate() {
   showCreate.value = true
   nextTick(() => {
     animateOpen(backdropRef.value, modalRef.value)
@@ -179,7 +177,7 @@ function closeWithAnim() {
 async function submitCreate() {
   if (!form.value.title.trim()) return
   await store.createActivity({
-    type: createType.value,
+    type: 'vote',
     title: form.value.title.trim(),
     description: form.value.description?.trim() || undefined,
     allow_change: form.value.allow_change,
@@ -205,7 +203,10 @@ function onSwiperInit(swiper: any) { swiperRef.value = swiper }
 function onSlideChange(swiper: any) {
   const previous = store.currentIndex
   store.setCurrentIndex(swiper.activeIndex)
-  animateSlideTransition(previous, swiper.activeIndex)
+  // 避免切换时目标 slide 尚未渲染导致内容闪退
+  nextTick(() => {
+    try { animateSlideTransition(previous, swiper.activeIndex) } catch {}
+  })
 }
 
 function goTo(index: number) {
@@ -249,6 +250,7 @@ watch(() => activities.value.length, (len) => {
   if (len === 0) { store.setCurrentIndex(0); return }
   const idx = clamp(store.currentIndex, 0, Math.max(0, len - 1))
   if (idx !== store.currentIndex) store.setCurrentIndex(idx)
+  // 确保 Swiper 已完成挂载后再导航，避免位置错乱 -> 空白
   nextTick(() => goTo(idx))
 })
 
@@ -262,15 +264,17 @@ function animateSlideTransition(fromIndex: number, toIndex: number) {
   const slides = document.querySelectorAll('.activity-slide .slide-inner') as NodeListOf<HTMLElement>
   const current = slides[toIndex]
   const previous = slides[fromIndex]
+  // 容错：DOM 可能尚未更新（比如活动数量变化后立刻触发 slide-change）
+  // 若找不到目标 slide，直接恢复 previous 的可见性，避免“闪一下后消失”。
+  if (!current) {
+    if (previous) gsap.to(previous, { opacity: 1, scale: 1, duration: 0.12 })
+    return
+  }
 
   const tl = gsap.timeline({ defaults: { ease: 'power2.out' } })
-  if (previous) {
-    tl.to(previous, { opacity: 0, scale: 0.98, duration: 0.2 }, 0)
-  }
-  if (current) {
-    gsap.set(current, { opacity: 0, y: 16, scale: 0.98 })
-    tl.to(current, { opacity: 1, y: 0, scale: 1, duration: 0.35 }, 0.05)
-  }
+  if (previous) tl.to(previous, { opacity: 0, scale: 0.98, duration: 0.2 }, 0)
+  gsap.set(current, { opacity: 0, y: 16, scale: 0.98 })
+  tl.to(current, { opacity: 1, y: 0, scale: 1, duration: 0.35 }, 0.05)
 }
 
 // -------- 仅对当前可见面板进行轮询刷新（投票/讨论） --------
@@ -287,14 +291,11 @@ function tickActive() {
   const act = activeActivity.value as any
   if (!act) return
   if (document.visibilityState === 'hidden') return
-  if (act.type === 'vote') {
-    store.fetchRankingTop(act.id).catch(() => {})
-    // 选项变化频率较低，仍按无感刷新，避免首次后出现加载条
-    store.fetchOptions(act.id).catch(() => {})
-  } else if (act.type === 'thread') {
-    // 静默刷新：不触发骨架屏
-    store.fetchThreadPosts(act.id, null, 20, { silent: true }).catch(() => {})
-  }
+  store.fetchRankingTop(act.id).catch(() => {})
+  // 选项变化频率较低，仍按无感刷新，避免首次后出现加载条
+  store.fetchOptions(act.id).catch(() => {})
+  // 评论静默刷新
+  store.fetchThreadPosts(act.id, null, 20, { silent: true }).catch(() => {})
 }
 
 function startActivePolling() {
@@ -313,10 +314,14 @@ onUnmounted(() => { stopActivePolling() })
 
 <style scoped lang="scss">
 .activity-carousel {
-  /* 参考 DailyWall：为顶部标题/导航留出安全距离 */
-  padding-top: calc(24px + var(--top-safe-offset, 56px));
-  padding-bottom: 24px;
+  /* 顶部安全距离由 Home.vue 的 main-content 提供，这里仅保留组件内间距 */
+  padding: 12px 0 24px;
   color: var(--text-primary);
+  /* 占满父级 section 高度，避免与全局 padding 叠加造成底部空白 */
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
 }
 .header {
   display: flex;
@@ -338,16 +343,17 @@ onUnmounted(() => { stopActivePolling() })
 .btn.warn { border-color: var(--accent-red, #f7768e); color: var(--accent-red, #f7768e); }
 .btn.warn.outline { background: transparent; }
 
-.activity-swiper { width: 100%; }
-.activity-slide { width: 100%; }
-.slide-inner { padding: 0 8px; }
+.carousel { height: 100%; min-height: 0; }
+.activity-swiper { width: 100%; height: 100%; }
+.activity-slide { width: 100%; height: 100%; }
+.slide-inner { padding: 0 8px; height: 100%; display: grid; grid-auto-rows: 1fr; }
 @media (min-width: 1024px) {
   /* 中文注释：仅为左右分页箭头预留安全边距（按钮60px+少量间距），避免覆盖主内容 */
   .slide-inner { padding-left: clamp(60px, 4vw, 84px); padding-right: clamp(60px, 4vw, 84px); }
 }
 .empty {
   width: 100%;
-  height: 50vh;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -373,5 +379,11 @@ onUnmounted(() => { stopActivePolling() })
 .arrow { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 999px; border: 1px solid var(--divider-color, #444); background: color-mix(in srgb, var(--base-dark) 75%, rgba(0,0,0,0.2)); color: var(--text-primary); box-shadow: 0 4px 14px rgba(0,0,0,.25); }
 .arrow:hover { background: color-mix(in srgb, var(--primary) 14%, transparent); border-color: var(--primary); }
 .arrow:disabled { opacity: .5; cursor: not-allowed; }
+
+/* 兜底覆盖：防止某些情况下 Swiper wrapper 未应用 flex 导致 slide 堆叠、内容不可见 */
+:deep(.activity-swiper) {
+  .swiper-wrapper { display: flex !important; align-items: stretch; }
+  .swiper-slide { width: 100% !important; height: 100% !important; display: block; }
+}
 </style>
 

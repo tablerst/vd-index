@@ -20,57 +20,70 @@
     </header>
 
     <section class="grid">
-      <div class="panel ranking">
-        <div class="panel-title">排行榜</div>
-        <div v-if="entries.length === 0 && rankingLoading" class="loading-wrap">
-          <span class="spinner" aria-hidden="true" />
-          <span class="loading-text">加载中…</span>
-        </div>
-        <div v-else-if="entries.length > 0" class="rank-chart-wrap" :class="{ syncing: rankingLoading }">
-          <div ref="rankChartRef" class="rank-chart"></div>
-        </div>
-        <div v-else class="empty">暂无排行</div>
-      </div>
-
-      <div class="panel options" :data-refreshing="refreshingOptions ? 'true' : null">
-        <div class="panel-title">
-          <div class="left">
-            <label class="anon">
+      <!-- 左侧：合并的选项 + 排行列表 -->
+      <div class="panel vote-combined" :data-refreshing="refreshingOptions ? 'true' : null">
+        <div class="panel-header">
+          <div class="chips">
+            <span class="chip" :class="statusClass">{{ statusText }}</span>
+            <label class="switch">
               <input type="checkbox" v-model="anonymousPreference" />
-              <span>匿名展示</span>
+              <span class="slider" aria-hidden="true"></span>
+              <span class="label">匿名展示</span>
             </label>
           </div>
           <div class="right buttons-gap">
-            <button class="btn ghost small" @click="onRevoke" :disabled="revokeLoading">{{ revokeLoading ? '撤销中…' : '撤销投票' }}</button>
             <span v-if="!isAuthenticated" class="hint">登录后可投票</span>
           </div>
         </div>
 
-        <div v-if="optionsLoading && options.length === 0" class="loading-wrap">
+        <div v-if="(optionsLoading || rankingLoading) && merged.length === 0" class="loading-wrap">
           <span class="spinner" aria-hidden="true" />
-          <span class="loading-text">加载选项…</span>
+          <span class="loading-text">加载中…</span>
         </div>
 
-        <div v-else class="option-grid">
-          <button
-            v-for="opt in options"
-            :key="opt.id"
-            class="vote-card"
-            :class="{ locked: canManage && hasVotes(opt.id as number) }"
-            @click="onVote(opt.id)"
-            :disabled="!isAuthenticated"
-          >
-            <span
-              v-if="canManage && opt.id && typeof opt.id === 'number' && voteOfMe !== opt.id"
-              class="delete-right"
-              :class="{ disabled: hasVotes(opt.id as number) }"
-              :title="hasVotes(opt.id as number) ? '该选项已有投票，无法删除' : '删除选项'"
-              @click.stop="confirmDelete(opt.id)"
-            >×</span>
-            <span class="label">{{ opt.label }}</span>
-            <span class="badge" v-if="voteOfMe === opt.id">已投</span>
-          </button>
-          <div v-if="options.length === 0" class="empty">暂无可投项</div>
+        <ul v-else class="vote-list" role="list">
+          <li v-for="opt in merged" :key="opt.id" class="vote-row" :class="{ selected: selectedOptionId === opt.id, locked: canManage && hasVotes(opt.id as number) }">
+            <label class="row-main">
+              <span class="radio">
+                <input type="radio" :name="radioName" :value="opt.id" v-model="selectedOptionId" :disabled="!isAuthenticated" />
+                <span class="dot" aria-hidden="true" />
+              </span>
+              <div class="row-top">
+                <span class="name">{{ opt.label }}</span>
+                <span class="counts">{{ opt.votes }}<span class="pct">（{{ opt.pct }}%）</span></span>
+              </div>
+              <div class="bar"><div class="bar-fill" :style="{ transform: `scaleX(${opt.ratio})` }"></div></div>
+              <span class="badge" v-if="voteOfMe === opt.id">已投</span>
+              <span v-if="canManage && opt.id && typeof opt.id === 'number' && voteOfMe !== opt.id"
+                class="delete-right"
+                :class="{ disabled: hasVotes(opt.id as number) }"
+                :title="hasVotes(opt.id as number) ? '该选项已有投票，无法删除' : '删除选项'"
+                @click.stop="confirmDelete(opt.id)">×</span>
+            </label>
+          </li>
+          <li v-if="merged.length === 0" class="empty">暂无可投项</li>
+        </ul>
+
+        <div class="actions-bottom">
+          <button class="btn small primary" @click="onVote(selectedOptionId as number)" :disabled="!canVote">投票</button>
+          <button class="btn small ghost" @click="onRevoke" :disabled="revokeLoading || voteOfMe === null">{{ revokeLoading ? '撤销中…' : '撤销投票' }}</button>
+        </div>
+      </div>
+
+      <!-- 右侧：评论区（支持排序） -->
+      <div class="panel comments">
+        <div class="panel-title">
+          <span>讨论区</span>
+          <div class="seg">
+            <button class="seg-btn" :class="{ active: commentSort === 'latest' }" @click="commentSort = 'latest'">最新</button>
+            <button class="seg-btn" :class="{ active: commentSort === 'hot' }" @click="commentSort = 'hot'">最热</button>
+          </div>
+        </div>
+        <div class="comments-body">
+          <PostComposer :activity-id="activity.id" @submit="onCreatePost" />
+          <div class="list-wrap">
+            <PostList :activity-id="activity.id" :active="!!active" :sort="commentSort" />
+          </div>
         </div>
       </div>
     </section>
@@ -84,15 +97,10 @@ import { useActivitiesStore } from '@/stores/activities'
 import { useAuthStore } from '@/stores/auth'
 import { storeToRefs } from 'pinia'
 import type { ActActivity, ActRankingEntry, ActVoteOption } from '@/services/api'
+import PostComposer from './PostComposer.vue'
+import PostList from './PostList.vue'
 import { gsap } from 'gsap'
-import { useThemeStore } from '@/stores/theme'
-import * as echarts from 'echarts/core'
-import type { ECharts } from 'echarts/core'
-import { BarChart } from 'echarts/charts'
-import { GridComponent, TooltipComponent } from 'echarts/components'
-import { CanvasRenderer } from 'echarts/renderers'
-
-echarts.use([BarChart, GridComponent, TooltipComponent, CanvasRenderer])
+// no theme dependency now
 
 const props = defineProps<{ activity: ActActivity; active?: boolean }>()
 const store = useActivitiesStore()
@@ -120,12 +128,8 @@ const canManage = computed(() => isAdmin.value || isCreator.value)
 
 const newOption = ref('')
 const rootRef = ref<HTMLElement | null>(null)
-const rankChartRef = ref<HTMLDivElement | null>(null)
 // 删除模式已移除，改为每个选项独立删除按钮
 const refreshingOptions = computed(() => options.value.length > 0 && optionsLoading.value)
-
-let chart: ECharts | null = null
-let resizeObserver: ResizeObserver | null = null
 
 // Map option_id -> votes for quick lookup in delete mode
 const votesByOption = computed<Map<number, number>>(() => {
@@ -155,33 +159,27 @@ onMounted(async () => {
     const rank = rootRef.value.querySelectorAll('.rank-item')
     if (rank?.length) gsap.from(rank, { opacity: 0, y: 8, duration: 0.4, ease: 'power2.out', stagger: 0.04 })
   }
-
-  await nextTick()
-  initOrUpdateChart()
 })
 
 watch(() => props.active, (v) => { if (v) ensureInit() })
 
 onUnmounted(() => {
-  // 释放 ECharts 实例与观察器
-  if (resizeObserver && rankChartRef.value) {
-    try { resizeObserver.unobserve(rankChartRef.value) } catch {}
-  }
-  resizeObserver = null
-  if (chart) {
-    try { chart.dispose() } catch {}
-  }
-  chart = null
+  // noop
 })
 
 // 百分比在图表构建中计算，此处函数已不再使用
 
 function onVote(optionId: number) {
+  if (!optionId) return
   store.submitVote(props.activity.id, optionId, store.anonymousPreference).catch(() => {})
 }
 
 function onRevoke() {
   store.revokeVote(props.activity.id).catch(() => {})
+}
+
+function onCreatePost(payload: { content: string; display_anonymous: boolean }) {
+  store.createThreadPost(props.activity.id, payload)
 }
 
 async function addOption() {
@@ -219,116 +217,43 @@ function confirmDelete(optionId: number) {
 
 // 删除模式已移除
 
-// ---------------- ECharts 排行榜 ----------------
-const themeStore = useThemeStore()
+// -------- 合并选项与排行的数据视图 --------
+const totalVotes = computed(() => entries.value.reduce((s, e) => s + (e.votes || 0), 0))
 
-function getCssVar(name: string, fallback: string): string {
-  try {
-    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-    return v || fallback
-  } catch {
-    return fallback
-  }
-}
-
-function buildChartOption(sorted: ActRankingEntry[]) {
-  const primary = getCssVar('--primary', '#3F7DFB')
-  const textPrimary = getCssVar('--text-primary', '#E6E6E6')
-  const textSecondary = getCssVar('--text-secondary', '#A0A0A0')
-  const divider = getCssVar('--divider', 'rgba(255,255,255,0.12)')
-  const total = sorted.reduce((s, e) => s + (e.votes || 0), 0)
-
-  return {
-    grid: { left: 8, right: 12, top: 8, bottom: 8, containLabel: true },
-    tooltip: {
-      trigger: 'item',
-      formatter: (p: any) => {
-        const votes = p.value ?? 0
-        const pct = total > 0 ? Math.round((votes / total) * 100) : 0
-        return `${p.name}<br/>票数：${votes}（${pct}%）`
-      }
-    },
-    xAxis: {
-      type: 'value',
-      axisLine: { show: false },
-      axisTick: { show: false },
-      axisLabel: { color: textSecondary },
-      splitLine: { show: true, lineStyle: { color: divider } }
-    },
-    yAxis: {
-      type: 'category',
-      data: sorted.map(e => e.label),
-      axisLine: { show: false },
-      axisTick: { show: false },
-      axisLabel: { color: textPrimary }
-    },
-    series: [
-      {
-        type: 'bar',
-        data: sorted.map(e => e.votes || 0),
-        barWidth: '60%',
-        itemStyle: { color: primary },
-        emphasis: { focus: 'series' },
-        label: {
-          show: true,
-          position: 'right',
-          color: textPrimary,
-          formatter: (p: any) => {
-            const votes = p.value ?? 0
-            const pct = total > 0 ? Math.round((votes / total) * 100) : 0
-            return `${votes}（${pct}%）`
-          }
-        },
-        animationDurationUpdate: 300
-      }
-    ]
-  } as any
-}
-
-function initOrUpdateChart() {
-  if (!props.active) return
-  if (!rankChartRef.value) return
-  const container = rankChartRef.value
-
-  // 动态高度：每项 36px，最小 220 最大 520
-  const itemCount = entries.value.length
-  const targetHeight = Math.max(220, Math.min(520, 36 * itemCount + 60))
-  if (container.style.height !== `${targetHeight}px`) {
-    container.style.height = `${targetHeight}px`
-  }
-
-  // 排序（票数降序）
-  const sorted = [...entries.value].sort((a, b) => (b.votes || 0) - (a.votes || 0))
-
-  if (!chart) {
-    chart = echarts.init(container)
-    // 监听容器尺寸变化
-    try {
-      resizeObserver = new ResizeObserver(() => { try { chart && chart.resize() } catch {} })
-      resizeObserver.observe(container)
-    } catch {
-      window.addEventListener('resize', () => { try { chart && chart.resize() } catch {} }, { passive: true })
-    }
-  }
-
-  const option = buildChartOption(sorted)
-  try { chart.setOption(option, true) } catch {}
-}
-
-// 数据与主题变化时更新
-watch(entries, async () => {
-  // 等 DOM 根据 v-if/v-else-if 切换出图表容器后再初始化
-  await nextTick()
-  initOrUpdateChart()
-}, { deep: true, flush: 'post' })
-watch(() => themeStore.currentTheme, () => {
-  // 主题切换时重建配置
-  initOrUpdateChart()
+const merged = computed(() => {
+  const list = (options.value || []).map(o => {
+    const votes = votesByOption.value.get(o.id as number) || 0
+    const ratio = totalVotes.value > 0 ? votes / totalVotes.value : 0
+    const pct = Math.round(ratio * 100)
+    return { id: o.id as number, label: o.label, votes, pct, ratio }
+  })
+  // 保持与排行一致的降序
+  return list.sort((a, b) => b.votes - a.votes)
 })
+
+// 活动状态展示
+const statusText = computed(() => {
+  const s = (props.activity as any).status as string
+  if (s === 'draft') return '未开始'
+  if (s === 'closed') return '已结束'
+  return '进行中'
+})
+const statusClass = computed(() => {
+  const s = (props.activity as any).status as string
+  return s === 'draft' ? 'chip-draft' : (s === 'closed' ? 'chip-closed' : 'chip-ongoing')
+})
+
+// 评论排序
+const commentSort = ref<'latest' | 'hot'>('latest')
+
+// 交互：单选 + 底部按钮
+const selectedOptionId = ref<number | null>(null)
+const radioName = `act-radio-${Math.random().toString(36).slice(2)}`
+const canVote = computed(() => isAuthenticated.value && selectedOptionId.value !== null && selectedOptionId.value !== voteOfMe.value)
 </script>
 
 <style scoped lang="scss">
-.act-vote { display: grid; gap: 16px; padding: 14px 18px 22px; color: var(--text-primary); }
+.act-vote { display: grid; gap: 16px; padding: 14px 18px 22px; color: var(--text-primary); height: 100%; }
 .head { display: flex; align-items: center; gap: 10px; }
 .titles { display: grid; gap: 4px; }
 .title { font-size: 18px; font-weight: 700; }
@@ -341,10 +266,10 @@ watch(() => themeStore.currentTheme, () => {
 .btn.small.warn.outline { background: transparent; }
 .btn.small.warn.outline[aria-pressed="true"] { background: color-mix(in srgb, var(--accent-red, #f7768e) 22%, transparent); color: #fff; box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-red, #f7768e) 35%, transparent) inset; }
 
-.grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
-@media (min-width: 960px) { .grid { grid-template-columns: 3fr 1fr; align-items: start; } }
+.grid { display: grid; gap: 12px; grid-template-columns: 1fr; align-items: stretch; }
+@media (min-width: 960px) { .grid { grid-template-columns: 1.4fr 1fr; align-items: stretch; } }
 
-.panel { background: color-mix(in srgb, var(--base-dark) 85%, rgba(0,0,0,0.2)); border: 1px solid color-mix(in srgb, var(--divider-color, #3a3a3a) 60%, rgba(255,255,255,0.08)); border-radius: 14px; padding: 12px; box-shadow: 0 6px 24px rgba(0,0,0,.35); }
+.panel { background: color-mix(in srgb, var(--base-dark) 85%, rgba(0,0,0,0.2)); border: 1px solid color-mix(in srgb, var(--divider-color, #3a3a3a) 60%, rgba(255,255,255,0.08)); border-radius: 14px; padding: 12px; box-shadow: 0 6px 24px rgba(0,0,0,.35); height: 100%; }
 .panel.options.managing { border-color: var(--error-alert, #f7768e); box-shadow: 0 0 0 2px color-mix(in srgb, var(--error-alert, #f7768e) 30%, transparent) inset, 0 6px 24px rgba(0,0,0,.35); }
 .panel-title { display: flex; align-items: center; justify-content: space-between; color: var(--text-secondary); font-size: 12px; margin-bottom: 8px; }
 .anon { display: inline-flex; align-items: center; gap: 6px; }
@@ -354,45 +279,56 @@ watch(() => themeStore.currentTheme, () => {
 
 .buttons-gap { display: inline-flex; align-items: center; gap: 8px; }
 
-/* 排行 */
-.rank-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.rank-list.syncing .bar-fill { transition: width .25s ease; }
-/* 中文注释：PC 端采用 3:1 区域（标签:票数），移动端上下布局 */
-.rank-item { display: grid; grid-template-columns: 28px 1fr; gap: 8px; align-items: center; }
-.rank-item.first .bar-fill { background: linear-gradient(90deg, var(--primary) 0%, #a77bff 100%); }
-.rank-item.second .bar-fill { background: linear-gradient(90deg, #6aa9ff, #7cc3ff); }
-.rank-item.third .bar-fill { background: linear-gradient(90deg, #6fe3b5, #7ff1c2); }
-.order { color: var(--text-secondary); font-weight: 700; }
-.bar { position: relative; background: color-mix(in srgb, var(--panel-bg, #0f0f14) 80%, transparent); border: 1px solid var(--divider-color, #333); border-radius: 10px; overflow: hidden; }
-.bar-fill { position: absolute; inset: 0; width: 0%; background: color-mix(in srgb, var(--primary) 26%, transparent); transition: width .35s ease; }
-.bar-label { position: relative; display: grid; grid-template-columns: 3fr 1fr; align-items: center; padding: 6px 10px; column-gap: 8px; }
-.bar-label .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-.bar-label .votes { justify-self: end; }
-.bar-label .pct { color: var(--text-secondary); margin-left: 2px; font-size: 12px; }
-@media (max-width: 768px) {
-  .rank-item { grid-template-columns: 22px 1fr; align-items: stretch; }
-  .bar-label { grid-template-columns: 1fr; row-gap: 4px; }
-  .bar-label .votes { justify-self: start; }
-}
+/* 左侧合并面板 */
+.vote-combined { display: flex; flex-direction: column; min-height: 0; }
+.panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; color: var(--text-secondary); font-size: 12px; }
+.chips { display: inline-flex; align-items: center; gap: 8px; }
+.switch { position: relative; display: inline-flex; align-items: center; gap: 6px; }
+.switch input { width: 0; height: 0; opacity: 0; position: absolute; }
+.switch .slider { width: 34px; height: 18px; background: color-mix(in srgb, var(--base-dark) 70%, rgba(0,0,0,0.2)); border-radius: 999px; border: 1px solid var(--divider-color, #444); position: relative; transition: background .2s ease, border-color .2s ease; }
+.switch .slider::after { content: ''; position: absolute; top: 50%; left: 2px; transform: translateY(-50%); width: 14px; height: 14px; background: #fff; border-radius: 50%; transition: left .2s ease; }
+.switch input:checked + .slider { background: var(--primary); border-color: var(--primary); }
+.switch input:checked + .slider::after { left: 18px; }
+.switch .label { white-space: nowrap; }
 
-/* ECharts 容器样式 */
-.rank-chart-wrap { width: 100%; }
-.rank-chart { width: 100%; height: 260px; }
-
-/* 选项 */
-.option-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
-.vote-card { position: relative; padding: 12px 40px 12px 12px; border: 1px solid var(--divider-color, #3a3a3a); border-radius: 12px; background: color-mix(in srgb, var(--base-dark) 82%, rgba(0,0,0,0.15)); color: var(--text-primary); text-align: left; transition: transform .15s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease; }
-.vote-card:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--primary) 8%, transparent); border-color: var(--primary); }
-.vote-card:disabled { opacity: 0.55; }
-.vote-card.disabled { cursor: not-allowed; }
-.vote-card[disabled] { cursor: not-allowed; }
-.vote-card .badge { position: absolute; top: 8px; right: 8px; padding: 2px 6px; font-size: 12px; border-radius: 999px; background: var(--primary); color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.3); }
-.vote-card .label { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.vote-card .delete-right { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; display: grid; place-items: center; border-radius: 6px; background: color-mix(in srgb, var(--error-alert, #f7768e) 30%, transparent); color: #fff; font-weight: 700; cursor: pointer; opacity: .9; transition: background .2s ease; }
-.vote-card .delete-right:hover { background: var(--error-alert, #f7768e); }
-.vote-card .delete-right.disabled { opacity: .45; cursor: not-allowed; filter: grayscale(0.35); }
-.vote-card.locked { border-color: color-mix(in srgb, var(--divider-color, #3a3a3a) 80%, rgba(255,255,255,0.08)); background: color-mix(in srgb, #444 12%, transparent); }
+.vote-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; overflow: auto; flex: 1 1 80%; min-height: 0; align-content: flex-start; }
+.vote-row { position: relative; }
+.row-main { width: 100%; text-align: left; background: color-mix(in srgb, var(--base-dark) 82%, rgba(0,0,0,0.15)); border: 1px solid var(--divider-color, #3a3a3a); border-radius: 12px; padding: 10px 48px 10px 10px; color: var(--text-primary); transition: transform .15s ease, background .2s ease, border-color .2s ease; display: grid; grid-template-columns: auto 1fr; column-gap: 8px; position: relative; }
+.row-main:hover { transform: translateY(-1px); background: color-mix(in srgb, var(--primary) 8%, transparent); border-color: var(--primary); }
+.row-main:disabled { opacity: .55; cursor: not-allowed; }
+.row-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.radio { display: inline-grid; width: 18px; height: 18px; place-items: center; }
+.radio input { appearance: none; width: 0; height: 0; opacity: 0; position: absolute; }
+.radio .dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--divider-color, #555); background: transparent; transition: all .2s ease; }
+.vote-row.selected .radio .dot, .radio input:checked + .dot { border-color: var(--primary); background: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent) inset; }
+.vote-row.selected .row-main { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 22%, transparent); }
+.actions-bottom { display: flex; gap: 8px; justify-content: flex-end; padding-top: 8px; }
+.btn.primary { border-color: var(--primary); background: var(--primary); color: #fff; }
+.row-top .name { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.row-top .counts { color: var(--text-secondary); }
+.row-top .pct { margin-left: 2px; font-size: 12px; }
+.bar { position: relative; margin-top: 6px; height: 10px; background: color-mix(in srgb, var(--panel-bg, #0f0f14) 80%, transparent); border: 1px solid var(--divider-color, #333); border-radius: 8px; overflow: hidden; }
+.bar-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; transform-origin: 0 50%; transform: scaleX(0); background: linear-gradient(90deg, var(--primary) 0%, #a77bff 100%); transition: transform .3s ease; }
+.vote-row .badge { position: absolute; top: 8px; right: 8px; padding: 2px 6px; font-size: 12px; border-radius: 999px; background: var(--primary); color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.3); }
+.vote-row .delete-right { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; display: grid; place-items: center; border-radius: 6px; background: color-mix(in srgb, var(--error-alert, #f7768e) 30%, transparent); color: #fff; font-weight: 700; cursor: pointer; opacity: .9; transition: background .2s ease; }
+.vote-row .delete-right:hover { background: var(--error-alert, #f7768e); }
+.vote-row .delete-right.disabled { opacity: .45; cursor: not-allowed; filter: grayscale(0.35); }
+.vote-row.locked .row-main { border-color: color-mix(in srgb, var(--divider-color, #3a3a3a) 80%, rgba(255,255,255,0.08)); background: color-mix(in srgb, #444 12%, transparent); }
 .empty { color: var(--text-secondary); padding: 6px 0; }
+
+/* 状态 Chip */
+.chip-ongoing { background: color-mix(in srgb, var(--primary) 18%, transparent); color: var(--text-secondary); }
+.chip-draft { background: color-mix(in srgb, #ffd166 30%, transparent); color: #111; }
+.chip-closed { background: color-mix(in srgb, var(--error-alert, #f7768e) 25%, transparent); color: #fff; }
+
+/* 评论区布局：占满剩余高度并内部滚动 */
+.panel.comments { display: flex; flex-direction: column; min-height: 0; }
+.panel.comments .panel-title { margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+.comments-body { display: grid; gap: 8px; grid-template-rows: auto 1fr; min-height: 0; }
+.list-wrap { overflow: auto; min-height: 0; }
+.seg { display: inline-flex; background: color-mix(in srgb, var(--base-dark) 82%, rgba(0,0,0,0.15)); border: 1px solid var(--divider-color, #3a3a3a); border-radius: 8px; overflow: hidden; }
+.seg-btn { padding: 4px 10px; font-size: 12px; color: var(--text-secondary); background: transparent; border: none; cursor: pointer; }
+.seg-btn.active { color: #fff; background: color-mix(in srgb, var(--primary) 20%, transparent); }
 
 /* 独立加载样式，避免文字跟着旋转 */
 .loading-wrap { display: inline-flex; align-items: center; gap: 8px; color: var(--text-secondary); }
@@ -400,13 +336,17 @@ watch(() => themeStore.currentTheme, () => {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* 选项面板无感刷新：右上角小圆圈，不遮挡内容 */
-.panel.options { position: relative; }
-.panel.options[data-refreshing="true"]::before {
+.vote-combined { position: relative; }
+.vote-combined[data-refreshing="true"]::before {
   content: '';
   position: absolute; top: 10px; right: 10px; width: 14px; height: 14px;
   border: 2px solid rgba(255,255,255,.25); border-top-color: var(--primary); border-radius: 50%;
   animation: spin 1s linear infinite;
 }
+
+/* 评论区布局微调 */
+.panel.comments { padding-top: 10px; }
+.panel.comments .panel-title { margin-bottom: 8px; }
 </style>
 
 

@@ -68,9 +68,9 @@ class ActVoteRecord(SQLModel, table=True):
 
 
 class ActThreadPost(SQLModel, table=True):
-    """Posts for thread-type activities (simple flat list with optional parent_id)."""
+    """Posts for vote activities (merged from former thread type)."""
 
-    __tablename__ = "act_activity_thread_post"
+    __tablename__ = "act_activity_vote_post"
 
     id: Optional[int] = Field(default=None, primary_key=True)
     activity_id: int = Field(foreign_key="act_activity.id")

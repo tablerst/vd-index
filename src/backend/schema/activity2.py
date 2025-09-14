@@ -5,9 +5,9 @@ from pydantic import BaseModel, Field
 
 
 class ActivityCreate(BaseModel):
-    """Request model to create a new activity (vote or thread)."""
+    """Request model to create a new activity (vote-only in v2)."""
 
-    type: str = Field(pattern="^(vote|thread)$")
+    type: str = Field(pattern="^(vote)$", default="vote")
     title: str = Field(min_length=1, max_length=200)
     description: Optional[str] = None
     anonymous_allowed: bool = True

@@ -27,8 +27,8 @@ const canSubmit = computed(() => content.value.trim().length > 0 && content.valu
 
 function onSubmit() {
   if (!canSubmit.value) return
-  // 若未登录且未勾选匿名 -> 需要登录；若未登录但勾选匿名 -> 允许匿名提交
-  if (!auth.isAuthenticated && !anonymous.value) {
+  // v2：必须登录才能发表评论（匿名仅影响展示）
+  if (!auth.isAuthenticated) {
     try { window.dispatchEvent(new CustomEvent('open-login-modal')) } catch {}
     return
   }
