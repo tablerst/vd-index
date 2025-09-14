@@ -106,7 +106,7 @@ const handleSubmitComment = async (content: string) => {
   try {
     submitting.value = true
     
-    const newComment = await commentApi.createComment(props.memberId, content, true)
+    const newComment = await commentApi.createComment(props.memberId, { content, is_anonymous: true })
     
     // 将新评论添加到列表顶部
     comments.value.unshift(newComment)

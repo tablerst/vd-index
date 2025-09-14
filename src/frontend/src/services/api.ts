@@ -544,6 +544,78 @@ class ApiClient {
       method: 'DELETE'
     })
   }
+
+  // 评论相关方法
+  async getMemberComments(memberId: number, page: number = 1, pageSize: number = 20): Promise<CommentListResponse> {
+    return this.request<CommentListResponse>(
+      `/api/v1/comments/members/${memberId}/comments?page=${page}&page_size=${pageSize}`
+    )
+  }
+
+  async createComment(memberId: number, data: CommentCreateRequest): Promise<Comment> {
+    return this.request<Comment>(`/api/v1/comments/members/${memberId}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+  }
+
+  async likeComment(commentId: number): Promise<CommentActionResponse> {
+    return this.request<CommentActionResponse>(`/api/v1/comments/${commentId}/like`, {
+      method: 'PUT'
+    })
+  }
+
+  async dislikeComment(commentId: number): Promise<CommentActionResponse> {
+    return this.request<CommentActionResponse>(`/api/v1/comments/${commentId}/dislike`, {
+      method: 'PUT'
+    })
+  }
+
+  async deleteComment(commentId: number): Promise<CommentActionResponse> {
+    return this.request<CommentActionResponse>(`/api/v1/comments/${commentId}`, {
+      method: 'DELETE'
+    })
+  }
+
+  async getCommentStats(): Promise<CommentStats> {
+    return this.request<CommentStats>(`/api/v1/comments/stats`)
+  }
+
+  // 配置管理相关方法（管理员）
+  async getConfigs(page: number = 1, pageSize: number = 10): Promise<ConfigListResponse> {
+    return this.request<ConfigListResponse>(`/api/v1/configs?page=${page}&page_size=${pageSize}`)
+  }
+
+  async getConfig(configId: number): Promise<Config> {
+    return this.request<Config>(`/api/v1/configs/${configId}`)
+  }
+
+  async getConfigByKey(key: string): Promise<Config> {
+    return this.request<Config>(`/api/v1/configs/key/${encodeURIComponent(key)}`)
+  }
+
+  async createConfig(configData: ConfigCreateRequest): Promise<Config> {
+    return this.request<Config>(`/api/v1/configs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(configData)
+    })
+  }
+
+  async updateConfig(configId: number, configData: ConfigUpdateRequest): Promise<Config> {
+    return this.request<Config>(`/api/v1/configs/${configId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(configData)
+    })
+  }
+
+  async deleteConfig(configId: number): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>(`/api/v1/configs/${configId}`, {
+      method: 'DELETE'
+    })
+  }
 }
 
 // 创建全局API客户端实例
@@ -834,7 +906,7 @@ export const configApi = {
       }
 
       const additionalPages = await Promise.all(promises)
-      additionalPages.forEach(pageData => {
+      additionalPages.forEach((pageData: ConfigListResponse) => {
         allConfigs.push(...pageData.configs)
       })
     }
