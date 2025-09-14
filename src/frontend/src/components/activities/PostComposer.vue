@@ -43,7 +43,7 @@ function onSubmit() {
 .toolbar { display: flex; align-items: center; justify-content: space-between; }
 .anon { display: inline-flex; align-items: center; gap: 6px; }
 .anon input { margin: 0; }
-.anon-text { line-height: 1; transform: translateY(0.5px); }
+.anon-text { line-height: 1; transform: translateY(0.5px); white-space: nowrap; }
 .btn { padding: 6px 12px; border: 1px solid var(--primary-6, var(--primary)); color: var(--primary-6, var(--primary)); background: color-mix(in srgb, var(--primary) 6%, transparent); border-radius: 8px; }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
 .btn:not(:disabled):hover { background: color-mix(in srgb, var(--primary) 12%, transparent); }

@@ -8,12 +8,12 @@
     </header>
 
     <PostComposer :activity-id="activity.id" @submit="handleSubmit" />
-    <PostList :activity-id="activity.id" />
+    <PostList :activity-id="activity.id" :active="!!active" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useActivitiesStore } from '@/stores/activities'
 import type { ActActivity } from '@/services/api'
 import PostList from './PostList.vue'
@@ -22,7 +22,7 @@ import { gsap } from 'gsap'
 import { useAuthStore } from '@/stores/auth'
 import { storeToRefs } from 'pinia'
 
-const props = defineProps<{ activity: ActActivity }>()
+const props = defineProps<{ activity: ActActivity; active?: boolean }>()
 const store = useActivitiesStore()
 const auth = useAuthStore()
 const { isAuthenticated } = storeToRefs(auth)
@@ -37,10 +37,25 @@ function handleSubmit(payload: { content: string; display_anonymous: boolean }) 
 
 // 删除操作统一在 ActivityCarousel 顶部进行
 
-onMounted(() => {
+let hasAnimated = false
+
+function animateIn() {
+  if (hasAnimated) return
+  hasAnimated = true
   try { if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return } catch {}
-  if (rootRef.value) gsap.from(rootRef.value, { opacity: 0, y: 10, duration: 0.45, ease: 'power2.out' })
+  if (!rootRef.value) return
+  const header = rootRef.value.querySelector('.panel-header')
+  const composer = rootRef.value.querySelector('.composer')
+  const tl = gsap.timeline({ defaults: { ease: 'power2.out' } })
+  if (header) tl.fromTo(header, { opacity: 0 }, { opacity: 1, duration: 0.26 }, 0)
+  if (composer) tl.fromTo(composer, { opacity: 0 }, { opacity: 1, duration: 0.26 }, 0.05)
+}
+
+onMounted(() => {
+  if (props.active) animateIn()
 })
+
+watch(() => props.active, (v) => { if (v) animateIn() })
 </script>
 
 <style scoped lang="scss">

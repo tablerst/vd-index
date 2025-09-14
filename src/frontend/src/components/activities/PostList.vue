@@ -1,6 +1,14 @@
 <template>
-  <div class="post-list" ref="rootRef">
-    <div v-if="loading" class="loading">加载中…</div>
+  <div class="post-list" ref="rootRef" :data-refreshing="refreshing ? 'true' : null">
+    <div v-if="loading && items.length === 0" class="loading-skeleton" aria-live="polite" aria-busy="true">
+      <div class="sk-row" v-for="i in 3" :key="i">
+        <div class="sk-avatar" />
+        <div class="sk-lines">
+          <div class="sk-line short" />
+          <div class="sk-line" />
+        </div>
+      </div>
+    </div>
     <ul v-else class="list">
       <li v-for="p in topPosts" :key="p.id" class="row list-item">
         <div class="meta">
@@ -52,19 +60,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useActivitiesStore } from '@/stores/activities'
 import { gsap } from 'gsap'
 import CommentInput from '@/components/Comment/CommentInput.vue'
 import type { ActThreadPost } from '@/services/api'
 
-const props = defineProps<{ activityId: number }>()
+const props = defineProps<{ activityId: number; active?: boolean }>()
 const store = useActivitiesStore()
 
-const entry = computed(() => store.threadPosts[props.activityId] || { items: [], loading: false, hasMore: true })
+const entry = computed(() => store.threadPosts[props.activityId] || { items: [], loading: false, hasMore: true, refreshing: false })
 const items = computed(() => entry.value.items)
 const loading = computed(() => !!entry.value.loading)
 const hasMore = computed(() => !!entry.value.hasMore)
+const refreshing = computed(() => !!entry.value.refreshing)
 
 // 顶层评论（parent_id 为空）
 const topPosts = computed(() => items.value.filter(p => !p.parent_id))
@@ -74,14 +83,20 @@ const submitting = ref(false)
 
 const rootRef = ref<HTMLElement | null>(null)
 
-onMounted(() => {
+function ensureInit() {
   if (!items.value.length) store.fetchThreadPosts(props.activityId).catch(() => {})
+}
+
+onMounted(() => {
+  if (props.active) ensureInit()
   try { if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return } catch {}
   if (rootRef.value) {
     const listItems = rootRef.value.querySelectorAll('.list-item')
     if (listItems?.length) gsap.from(listItems, { opacity: 0, y: 8, duration: 0.4, ease: 'power2.out', stagger: 0.03 })
   }
 })
+
+watch(() => props.active, (v) => { if (v) ensureInit() })
 
 function loadMore() {
   store.fetchThreadPosts(props.activityId, entry.value.cursor || null).catch(() => {})
@@ -129,6 +144,13 @@ function avatarUrl(p: ActThreadPost) {
 </script>
 
 <style scoped lang="scss">
+.loading-skeleton { display: grid; gap: 10px; }
+.sk-row { display: grid; grid-template-columns: 32px 1fr; gap: 10px; align-items: center; }
+.sk-avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.12), rgba(255,255,255,0.06)); animation: shimmer 1.2s infinite; background-size: 200% 100%; }
+.sk-lines { display: grid; gap: 6px; }
+.sk-line { height: 12px; border-radius: 6px; background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.12), rgba(255,255,255,0.06)); animation: shimmer 1.2s infinite; background-size: 200% 100%; }
+.sk-line.short { width: 30%; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 .list { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
 .row { background: color-mix(in srgb, var(--base-dark) 82%, rgba(0,0,0,0.15)); border: 1px solid var(--divider-color, #444); border-radius: 10px; padding: 10px; transition: transform .15s ease, background .2s ease; }
 .row:hover { transform: translateY(-1px); background: color-mix(in srgb, var(--primary) 8%, transparent); border-color: var(--primary); }
@@ -145,6 +167,16 @@ function avatarUrl(p: ActThreadPost) {
 .loading, .empty { color: var(--text-secondary); }
 .more { margin-top: 10px; display: flex; justify-content: center; }
 .load { padding: 6px 12px; border: 1px solid var(--primary-6, var(--primary)); color: var(--primary-6, var(--primary)); background: transparent; border-radius: 8px; }
+
+/* 顶部右上角无感刷新提示（不遮挡内容） */
+.post-list { position: relative; }
+.post-list[data-refreshing="true"]::before {
+  content: '';
+  position: absolute; top: 8px; right: 8px; width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,.25); border-top-color: var(--primary); border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 
 

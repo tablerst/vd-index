@@ -22,7 +22,7 @@ export const useActivitiesStore = defineStore('activities', {
     ranking: {} as Record<number, ActRankingEntry[]>,
     options: {} as Record<number, OptionsState>,
     myVotes: {} as Record<number, number | null>,
-    threadPosts: {} as Record<number, { items: ActThreadPost[]; cursor?: string | null; loading?: boolean; hasMore?: boolean }>,
+    threadPosts: {} as Record<number, { items: ActThreadPost[]; cursor?: string | null; loading?: boolean; hasMore?: boolean; refreshing?: boolean }>,
     anonymousPreference: true,
     loading: { activities: false, ranking: {}, options: {}, revoke: {} } as LoadingState,
     pollingIntervalMs: 5000,
@@ -98,10 +98,16 @@ export const useActivitiesStore = defineStore('activities', {
     },
 
     // Thread posts
-    async fetchThreadPosts(activityId: number, cursor: string | null = null, size = 20) {
-      const entry = this.threadPosts[activityId] || { items: [], cursor: null, loading: false, hasMore: true }
-      if (entry.loading) return
-      entry.loading = true
+    async fetchThreadPosts(activityId: number, cursor: string | null = null, size = 20, opts?: { silent?: boolean }) {
+      const entry = this.threadPosts[activityId] || { items: [], cursor: null, loading: false, hasMore: true, refreshing: false }
+      const silent = !!opts?.silent
+      // 避免并发：正在加载或静默刷新时直接跳过
+      if (entry.loading || entry.refreshing) return
+      if (silent) {
+        entry.refreshing = true
+      } else {
+        entry.loading = true
+      }
       this.threadPosts[activityId] = entry
       try {
         const res = await actApi.posts(activityId, cursor, size)
@@ -111,7 +117,11 @@ export const useActivitiesStore = defineStore('activities', {
         entry.cursor = null
         entry.hasMore = items.length >= size
       } finally {
-        entry.loading = false
+        if (silent) {
+          entry.refreshing = false
+        } else {
+          entry.loading = false
+        }
         this.threadPosts[activityId] = entry
       }
     },

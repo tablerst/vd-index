@@ -32,7 +32,7 @@
         <div v-else class="empty">暂无排行</div>
       </div>
 
-      <div class="panel options" :class="{ managing: deleteMode }">
+      <div class="panel options" :class="{ managing: deleteMode }" :data-refreshing="refreshingOptions ? 'true' : null">
         <div class="panel-title">
           <div class="left">
             <label class="anon">
@@ -55,7 +55,7 @@
           </div>
         </div>
 
-        <div v-if="optionsLoading" class="loading-wrap">
+        <div v-if="optionsLoading && options.length === 0" class="loading-wrap">
           <span class="spinner" aria-hidden="true" />
           <span class="loading-text">加载选项…</span>
         </div>
@@ -89,7 +89,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
 import { useActivitiesStore } from '@/stores/activities'
 import { useAuthStore } from '@/stores/auth'
 import { storeToRefs } from 'pinia'
@@ -104,7 +104,7 @@ import { CanvasRenderer } from 'echarts/renderers'
 
 echarts.use([BarChart, GridComponent, TooltipComponent, CanvasRenderer])
 
-const props = defineProps<{ activity: ActActivity }>()
+const props = defineProps<{ activity: ActActivity; active?: boolean }>()
 const store = useActivitiesStore()
 const auth = useAuthStore()
 const { user, isAuthenticated } = storeToRefs(auth)
@@ -132,6 +132,7 @@ const newOption = ref('')
 const rootRef = ref<HTMLElement | null>(null)
 const rankChartRef = ref<HTMLDivElement | null>(null)
 const deleteMode = ref(false)
+const refreshingOptions = computed(() => options.value.length > 0 && optionsLoading.value)
 
 let chart: ECharts | null = null
 let resizeObserver: ResizeObserver | null = null
@@ -150,11 +151,14 @@ function hasVotes(optionId: number): boolean {
   return (votesByOption.value.get(optionId) || 0) > 0
 }
 
-onMounted(() => {
+function ensureInit() {
   store.fetchRankingTop(props.activity.id).catch(() => {})
   store.fetchOptions(props.activity.id).catch(() => {})
-  // 独立查询当前用户已投选项
   store.fetchMyVote(props.activity.id).catch(() => {})
+}
+
+onMounted(async () => {
+  if (props.active) ensureInit()
 
   try { if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return } catch {}
   if (rootRef.value) {
@@ -172,9 +176,11 @@ onMounted(() => {
   ;(onKey as any)._attached = true
   ;(rootRef as any)._onKey = onKey
 
-  // 初始化图表（等容器挂载后）
+  await nextTick()
   initOrUpdateChart()
 })
+
+watch(() => props.active, (v) => { if (v) ensureInit() })
 
 onUnmounted(() => {
   const onKey = (rootRef as any)?._onKey as ((e: KeyboardEvent) => void) | undefined
@@ -193,11 +199,7 @@ onUnmounted(() => {
   chart = null
 })
 
-function percent(votes: number): string {
-  const total = entries.value.reduce((s, e) => s + (e.votes || 0), 0)
-  if (total <= 0) return '0%'
-  return Math.min(100, Math.round((votes / total) * 100)) + '%'
-}
+// 百分比在图表构建中计算，此处函数已不再使用
 
 function onVote(optionId: number) {
   store.submitVote(props.activity.id, optionId, store.anonymousPreference).catch(() => {})
@@ -321,6 +323,7 @@ function buildChartOption(sorted: ActRankingEntry[]) {
 }
 
 function initOrUpdateChart() {
+  if (!props.active) return
   if (!rankChartRef.value) return
   const container = rankChartRef.value
 
@@ -350,7 +353,6 @@ function initOrUpdateChart() {
 }
 
 // 数据与主题变化时更新
-import { watch, nextTick } from 'vue'
 watch(entries, async () => {
   // 等 DOM 根据 v-if/v-else-if 切换出图表容器后再初始化
   await nextTick()
@@ -436,6 +438,15 @@ watch(() => themeStore.currentTheme, () => {
 .loading-wrap { display: inline-flex; align-items: center; gap: 8px; color: var(--text-secondary); }
 .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.25); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* 选项面板无感刷新：右上角小圆圈，不遮挡内容 */
+.panel.options { position: relative; }
+.panel.options[data-refreshing="true"]::before {
+  content: '';
+  position: absolute; top: 10px; right: 10px; width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,.25); border-top-color: var(--primary); border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
 </style>
 
 

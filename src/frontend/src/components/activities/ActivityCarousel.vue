@@ -38,7 +38,11 @@
       >
         <swiper-slide v-for="act in activities" :key="act.id" class="activity-slide">
           <div class="slide-inner">
-            <component :is="act.type === 'thread' ? ActivityPanelThread : ActivityPanelVote" :activity="act" />
+            <component
+              :is="act.type === 'thread' ? ActivityPanelThread : ActivityPanelVote"
+              :activity="act"
+              :active="activeActivity && (act.id === (activeActivity as any).id)"
+            />
           </div>
         </swiper-slide>
       </swiper>
@@ -223,7 +227,6 @@ async function deleteActive() {
 onMounted(() => {
   // 初始化加载活动列表
   store.fetchActivities().catch(() => {/* 静默失败，UI优雅降级 */})
-  store.startRankingPolling()
 
   if (reduced()) return
   // Header & slides entrance
@@ -238,7 +241,6 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  store.stopRankingPolling()
   if (escHandler) window.removeEventListener('keydown', escHandler)
   window.removeEventListener('open-login-modal', openLogin as any)
 })
@@ -270,6 +272,43 @@ function animateSlideTransition(fromIndex: number, toIndex: number) {
     tl.to(current, { opacity: 1, y: 0, scale: 1, duration: 0.35 }, 0.05)
   }
 }
+
+// -------- 仅对当前可见面板进行轮询刷新（投票/讨论） --------
+const activePollingHandle = ref<number | null>(null)
+
+function stopActivePolling() {
+  if (activePollingHandle.value) {
+    clearInterval(activePollingHandle.value)
+    activePollingHandle.value = null
+  }
+}
+
+function tickActive() {
+  const act = activeActivity.value as any
+  if (!act) return
+  if (document.visibilityState === 'hidden') return
+  if (act.type === 'vote') {
+    store.fetchRankingTop(act.id).catch(() => {})
+    // 选项变化频率较低，仍按无感刷新，避免首次后出现加载条
+    store.fetchOptions(act.id).catch(() => {})
+  } else if (act.type === 'thread') {
+    // 静默刷新：不触发骨架屏
+    store.fetchThreadPosts(act.id, null, 20, { silent: true }).catch(() => {})
+  }
+}
+
+function startActivePolling() {
+  stopActivePolling()
+  tickActive()
+  activePollingHandle.value = window.setInterval(() => {
+    tickActive()
+  }, store.pollingIntervalMs)
+}
+
+watch(activeActivity, (val) => { if (val) startActivePolling(); else stopActivePolling() }, { immediate: true })
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') tickActive() })
+
+onUnmounted(() => { stopActivePolling() })
 </script>
 
 <style scoped lang="scss">
