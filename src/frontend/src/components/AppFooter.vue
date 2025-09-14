@@ -59,8 +59,11 @@
             <h4 class="nav-title">探索</h4>
             <ul class="nav-list">
               <li><a href="#hero" class="nav-link">首页</a></li>
-              <li><a href="#members" class="nav-link">成员星云</a></li>
-              <li><a href="#activities" class="nav-link">星历活动</a></li>
+              <li><a href="#daily" class="nav-link">日常</a></li>
+              <li><a href="#activities" class="nav-link">活动</a></li>
+              <li><a href="#members" class="nav-link">成员</a></li>
+              <li><a href="#calendar" class="nav-link">日历板</a></li>
+              <li><a href="/badge-preview" target="_blank" rel="noopener noreferrer" class="nav-link">徽章预览</a></li>
               <li><a href="#about" class="nav-link">关于我们</a></li>
             </ul>
           </div>

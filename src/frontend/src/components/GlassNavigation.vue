@@ -21,8 +21,8 @@
               </a>
             </li>
             <li class="nav-item">
-              <a href="#members" class="nav-link" @click="scrollToSection('members')">
-                成员
+              <a href="#daily" class="nav-link" @click="scrollToSection('daily')">
+                日常
               </a>
             </li>
             <li class="nav-item">
@@ -31,8 +31,13 @@
               </a>
             </li>
             <li class="nav-item">
-              <a href="/badge-preview" target="_blank" class="nav-link" rel="noopener noreferrer">
-                徽章预览
+              <a href="#members" class="nav-link" @click="scrollToSection('members')">
+                成员
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#calendar" class="nav-link" @click="scrollToSection('calendar')">
+                日历板
               </a>
             </li>
             <li class="nav-item">

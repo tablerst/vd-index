@@ -6,27 +6,27 @@
     <!-- 主要内容区域 -->
     <main class="main-content">
       <!-- Hero 首屏 -->
-      <section ref="heroSectionRef" class="snap-section">
+      <section id="hero" ref="heroSectionRef" class="snap-section">
         <HeroSection />
       </section>
 
       <!-- Daily Wall 子屏幕：位于 Hero 与 Members 之间 -->
-      <section ref="dailyWallSectionRef" class="snap-section">
+      <section id="daily" ref="dailyWallSectionRef" class="snap-section">
         <DailyWall />
       </section>
 
       <!-- Activities 子屏幕：活动投票/讨论 -->
-      <section ref="activitiesSectionRef" class="snap-section">
+      <section id="activities" ref="activitiesSectionRef" class="snap-section">
         <ActivityCarousel />
       </section>
 
       <!-- Members Circle 成员圆形展示 -->
-      <section ref="membersSectionRef" class="snap-section">
+      <section id="members" ref="membersSectionRef" class="snap-section">
         <MembersCircle />
       </section>
 
       <!-- 星历活动板 -->
-      <section ref="calendarSectionRef" class="snap-section">
+      <section id="calendar" ref="calendarSectionRef" class="snap-section">
         <StarCalendar />
       </section>
     </main>
