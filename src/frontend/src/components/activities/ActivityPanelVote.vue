@@ -32,7 +32,7 @@
         <div v-else class="empty">暂无排行</div>
       </div>
 
-      <div class="panel options" :class="{ managing: deleteMode }" :data-refreshing="refreshingOptions ? 'true' : null">
+      <div class="panel options" :data-refreshing="refreshingOptions ? 'true' : null">
         <div class="panel-title">
           <div class="left">
             <label class="anon">
@@ -41,15 +41,6 @@
             </label>
           </div>
           <div class="right buttons-gap">
-            <span v-if="deleteMode" class="chip danger" title="按 ESC 可退出">删除模式</span>
-            <button
-              v-if="isAuthenticated"
-              class="btn small warn outline"
-              :aria-pressed="deleteMode"
-              :disabled="!isAuthenticated"
-              :title="deleteMode ? '删除模式已开启：点击下方选项以删除（ESC 退出）' : '进入删除模式：点击下方选项可删除'"
-              @click="toggleDeleteMode"
-            >{{ deleteMode ? '退出删除' : '删除模式' }}</button>
             <button class="btn ghost small" @click="onRevoke" :disabled="revokeLoading">{{ revokeLoading ? '撤销中…' : '撤销投票' }}</button>
             <span v-if="!isAuthenticated" class="hint">登录后可投票</span>
           </div>
@@ -65,20 +56,19 @@
             v-for="opt in options"
             :key="opt.id"
             class="vote-card"
-            :class="{ managing: deleteMode, disabled: deleteMode && (voteOfMe === opt.id || hasVotes(opt.id as number)), locked: deleteMode && hasVotes(opt.id as number) }"
-            @click="deleteMode ? confirmDelete(opt.id as number) : onVote(opt.id)"
-            :disabled="!isAuthenticated || (deleteMode && (voteOfMe === opt.id || hasVotes(opt.id as number)))"
-            :title="deleteMode ? (hasVotes(opt.id as number) ? '该选项已有投票，无法删除' : '点击删除该选项') : ''"
+            :class="{ locked: canManage && hasVotes(opt.id as number) }"
+            @click="onVote(opt.id)"
+            :disabled="!isAuthenticated"
           >
-            <span class="label">{{ opt.label }}</span>
-            <span class="badge" v-if="voteOfMe === opt.id">已投</span>
-            <span v-if="deleteMode" class="mode-flag">删除</span>
             <span
-              v-if="canManage && opt.id && typeof opt.id === 'number'"
-              class="delete"
-              title="删除选项"
+              v-if="canManage && opt.id && typeof opt.id === 'number' && voteOfMe !== opt.id"
+              class="delete-right"
+              :class="{ disabled: hasVotes(opt.id as number) }"
+              :title="hasVotes(opt.id as number) ? '该选项已有投票，无法删除' : '删除选项'"
               @click.stop="confirmDelete(opt.id)"
             >×</span>
+            <span class="label">{{ opt.label }}</span>
+            <span class="badge" v-if="voteOfMe === opt.id">已投</span>
           </button>
           <div v-if="options.length === 0" class="empty">暂无可投项</div>
         </div>
@@ -131,7 +121,7 @@ const canManage = computed(() => isAdmin.value || isCreator.value)
 const newOption = ref('')
 const rootRef = ref<HTMLElement | null>(null)
 const rankChartRef = ref<HTMLDivElement | null>(null)
-const deleteMode = ref(false)
+// 删除模式已移除，改为每个选项独立删除按钮
 const refreshingOptions = computed(() => options.value.length > 0 && optionsLoading.value)
 
 let chart: ECharts | null = null
@@ -166,16 +156,6 @@ onMounted(async () => {
     if (rank?.length) gsap.from(rank, { opacity: 0, y: 8, duration: 0.4, ease: 'power2.out', stagger: 0.04 })
   }
 
-  const onKey = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && deleteMode.value) {
-      deleteMode.value = false
-      e.stopPropagation()
-    }
-  }
-  window.addEventListener('keydown', onKey)
-  ;(onKey as any)._attached = true
-  ;(rootRef as any)._onKey = onKey
-
   await nextTick()
   initOrUpdateChart()
 })
@@ -183,11 +163,6 @@ onMounted(async () => {
 watch(() => props.active, (v) => { if (v) ensureInit() })
 
 onUnmounted(() => {
-  const onKey = (rootRef as any)?._onKey as ((e: KeyboardEvent) => void) | undefined
-  if (onKey && (onKey as any)._attached) {
-    window.removeEventListener('keydown', onKey)
-  }
-
   // 释放 ECharts 实例与观察器
   if (resizeObserver && rankChartRef.value) {
     try { resizeObserver.unobserve(rankChartRef.value) } catch {}
@@ -233,14 +208,8 @@ async function closeAct() {
 // 删除操作统一在 ActivityCarousel 顶部进行
 
 function confirmDelete(optionId: number) {
-  if (voteOfMe.value === optionId) {
-    alert('你已投该选项，不能删除该选项')
-    return
-  }
-  if (hasVotes(optionId)) {
-    alert('该选项已有投票，无法删除')
-    return
-  }
+  if (voteOfMe.value === optionId) { alert('你已投该选项，不能删除该选项'); return }
+  if (hasVotes(optionId)) { alert('该选项已有投票，无法删除'); return }
   if (!confirm('确定删除该选项吗？此操作不可恢复')) return
   store.deleteOption(props.activity.id, optionId).catch((e: any) => {
     const msg = e?.message || e?.detail || '删除失败'
@@ -248,13 +217,7 @@ function confirmDelete(optionId: number) {
   })
 }
 
-function toggleDeleteMode() {
-  deleteMode.value = !deleteMode.value
-  if (deleteMode.value) {
-    // 进入删除模式时，拉取更大全量的排行，确保 votesByOption 数据完备
-    store.fetchRankingTop(props.activity.id, 1000).catch(() => {})
-  }
-}
+// 删除模式已移除
 
 // ---------------- ECharts 排行榜 ----------------
 const themeStore = useThemeStore()
@@ -418,20 +381,17 @@ watch(() => themeStore.currentTheme, () => {
 
 /* 选项 */
 .option-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
-.vote-card { position: relative; padding: 12px 12px; border: 1px solid var(--divider-color, #3a3a3a); border-radius: 12px; background: color-mix(in srgb, var(--base-dark) 82%, rgba(0,0,0,0.15)); color: var(--text-primary); text-align: left; transition: transform .15s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.vote-card { position: relative; padding: 12px 40px 12px 12px; border: 1px solid var(--divider-color, #3a3a3a); border-radius: 12px; background: color-mix(in srgb, var(--base-dark) 82%, rgba(0,0,0,0.15)); color: var(--text-primary); text-align: left; transition: transform .15s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease; }
 .vote-card:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--primary) 8%, transparent); border-color: var(--primary); }
-.vote-card.managing { outline: 2px dashed var(--accent-red, #f7768e); outline-offset: -2px; border-color: var(--error-alert, #f7768e); background: color-mix(in srgb, var(--error-alert, #f7768e) 10%, transparent); }
 .vote-card:disabled { opacity: 0.55; }
 .vote-card.disabled { cursor: not-allowed; }
 .vote-card[disabled] { cursor: not-allowed; }
 .vote-card .badge { position: absolute; top: 8px; right: 8px; padding: 2px 6px; font-size: 12px; border-radius: 999px; background: var(--primary); color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.3); }
 .vote-card .label { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.vote-card .mode-flag { position: absolute; top: 6px; left: 6px; padding: 2px 6px; font-size: 11px; border-radius: 6px; background: color-mix(in srgb, var(--error-alert, #f7768e) 35%, transparent); color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
-.vote-card .delete { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--error-alert, #f7768e) 30%, transparent); color: #fff; font-weight: 700; cursor: pointer; opacity: .0; transition: opacity .15s ease, background .2s ease; }
-.vote-card:hover .delete { opacity: .9; }
-.vote-card.managing .delete { opacity: .95; }
+.vote-card .delete-right { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; display: grid; place-items: center; border-radius: 6px; background: color-mix(in srgb, var(--error-alert, #f7768e) 30%, transparent); color: #fff; font-weight: 700; cursor: pointer; opacity: .9; transition: background .2s ease; }
+.vote-card .delete-right:hover { background: var(--error-alert, #f7768e); }
+.vote-card .delete-right.disabled { opacity: .45; cursor: not-allowed; filter: grayscale(0.35); }
 .vote-card.locked { border-color: color-mix(in srgb, var(--divider-color, #3a3a3a) 80%, rgba(255,255,255,0.08)); background: color-mix(in srgb, #444 12%, transparent); }
-.vote-card .delete:hover { background: var(--error-alert, #f7768e); }
 .empty { color: var(--text-secondary); padding: 6px 0; }
 
 /* 独立加载样式，避免文字跟着旋转 */
