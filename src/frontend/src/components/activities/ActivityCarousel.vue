@@ -302,6 +302,10 @@ function animateSlideTransition(fromIndex: number, toIndex: number) {
 .activity-swiper { width: 100%; }
 .activity-slide { width: 100%; }
 .slide-inner { padding: 0 8px; }
+@media (min-width: 1024px) {
+  /* 中文注释：仅为左右分页箭头预留安全边距（按钮60px+少量间距），避免覆盖主内容 */
+  .slide-inner { padding-left: clamp(60px, 4vw, 84px); padding-right: clamp(60px, 4vw, 84px); }
+}
 .empty {
   width: 100%;
   height: 50vh;

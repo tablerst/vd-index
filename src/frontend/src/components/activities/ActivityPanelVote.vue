@@ -254,7 +254,7 @@ function toggleDeleteMode() {
 .btn.small.warn.outline[aria-pressed="true"] { background: color-mix(in srgb, var(--accent-red, #f7768e) 22%, transparent); color: #fff; box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-red, #f7768e) 35%, transparent) inset; }
 
 .grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
-@media (min-width: 960px) { .grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 960px) { .grid { grid-template-columns: 3fr 1fr; align-items: start; } }
 
 .panel { background: color-mix(in srgb, var(--base-dark) 85%, rgba(0,0,0,0.2)); border: 1px solid color-mix(in srgb, var(--divider-color, #3a3a3a) 60%, rgba(255,255,255,0.08)); border-radius: 14px; padding: 12px; box-shadow: 0 6px 24px rgba(0,0,0,.35); }
 .panel.options.managing { border-color: var(--error-alert, #f7768e); box-shadow: 0 0 0 2px color-mix(in srgb, var(--error-alert, #f7768e) 30%, transparent) inset, 0 6px 24px rgba(0,0,0,.35); }
@@ -269,6 +269,7 @@ function toggleDeleteMode() {
 /* 排行 */
 .rank-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .rank-list.syncing .bar-fill { transition: width .25s ease; }
+/* 中文注释：PC 端采用 3:1 区域（标签:票数），移动端上下布局 */
 .rank-item { display: grid; grid-template-columns: 28px 1fr; gap: 8px; align-items: center; }
 .rank-item.first .bar-fill { background: linear-gradient(90deg, var(--primary) 0%, #a77bff 100%); }
 .rank-item.second .bar-fill { background: linear-gradient(90deg, #6aa9ff, #7cc3ff); }
@@ -276,9 +277,15 @@ function toggleDeleteMode() {
 .order { color: var(--text-secondary); font-weight: 700; }
 .bar { position: relative; background: color-mix(in srgb, var(--panel-bg, #0f0f14) 80%, transparent); border: 1px solid var(--divider-color, #333); border-radius: 10px; overflow: hidden; }
 .bar-fill { position: absolute; inset: 0; width: 0%; background: color-mix(in srgb, var(--primary) 26%, transparent); transition: width .35s ease; }
-.bar-label { position: relative; display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; }
-.bar-label .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-label { position: relative; display: grid; grid-template-columns: 3fr 1fr; align-items: center; padding: 6px 10px; column-gap: 8px; }
+.bar-label .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.bar-label .votes { justify-self: end; }
 .bar-label .pct { color: var(--text-secondary); margin-left: 2px; font-size: 12px; }
+@media (max-width: 768px) {
+  .rank-item { grid-template-columns: 22px 1fr; align-items: stretch; }
+  .bar-label { grid-template-columns: 1fr; row-gap: 4px; }
+  .bar-label .votes { justify-self: start; }
+}
 
 /* 选项 */
 .option-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
