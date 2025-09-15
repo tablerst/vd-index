@@ -7,14 +7,10 @@
       </div>
       <div class="spacer" />
       <div class="admin" v-if="isAuthenticated">
-        <input
-          class="input small"
-          v-model="newOption"
-          placeholder="新增选项标签"
-          :disabled="!isAuthenticated"
-          @keyup.enter="addOption()"
-        />
-        <button class="btn small" @click="addOption" :disabled="!newOption.trim() || !isAuthenticated" :title="(!isAdmin && !isCreator) ? '若无权限将提示' : ''">新增选项</button>
+        <input class="input small" v-model="newOption" placeholder="新增选项标签" :disabled="!isAuthenticated"
+          @keyup.enter="addOption()" />
+        <button class="btn small" @click="addOption" :disabled="!newOption.trim() || !isAuthenticated"
+          :title="(!isAdmin && !isCreator) ? '若无权限将提示' : ''">新增选项</button>
         <button class="btn small warn" @click="closeAct" v-if="isAdmin">关闭活动</button>
       </div>
     </header>
@@ -42,20 +38,23 @@
         </div>
 
         <ul v-else class="vote-list" role="list" ref="voteListRef">
-          <li v-for="opt in merged" :key="opt.id" class="vote-row" :class="{ selected: selectedOptionId === opt.id, locked: canManage && hasVotes(opt.id as number) }">
+          <li v-for="opt in merged" :key="opt.id" class="vote-row"
+            :class="{ selected: selectedOptionId === opt.id, locked: canManage && hasVotes(opt.id as number) }">
             <label class="row-main">
               <span class="radio">
-                <input type="radio" :name="radioName" :value="opt.id" v-model="selectedOptionId" :disabled="!isAuthenticated" />
+                <input type="radio" :name="radioName" :value="opt.id" v-model="selectedOptionId"
+                  :disabled="!isAuthenticated" />
                 <span class="dot" aria-hidden="true" />
               </span>
               <div class="row-top">
                 <span class="name">{{ opt.label }}</span>
                 <span class="counts">{{ opt.votes }}<span class="pct">（{{ opt.pct }}%）</span></span>
               </div>
-              <div class="bar"><div class="bar-fill" :style="{ width: `${opt.pct}%` }"></div></div>
+              <div class="bar">
+                <div class="bar-fill" :style="{ width: `${opt.pct}%` }"></div>
+              </div>
               <span class="badge" v-if="voteOfMe === opt.id">已投</span>
-              <span v-if="canManage && opt.id && typeof opt.id === 'number' && voteOfMe !== opt.id"
-                class="delete-right"
+              <span v-if="canManage && opt.id && typeof opt.id === 'number' && voteOfMe !== opt.id" class="delete-right"
                 :class="{ disabled: hasVotes(opt.id as number) }"
                 :title="hasVotes(opt.id as number) ? '该选项已有投票，无法删除' : '删除选项'"
                 @click.stop="confirmDelete(opt.id)">×</span>
@@ -66,7 +65,8 @@
 
         <div class="actions-bottom">
           <button class="btn small primary" @click="onVote(selectedOptionId as number)" :disabled="!canVote">投票</button>
-          <button class="btn small ghost" @click="onRevoke" :disabled="revokeLoading || voteOfMe === null">{{ revokeLoading ? '撤销中…' : '撤销投票' }}</button>
+          <button class="btn small ghost" @click="onRevoke" :disabled="revokeLoading || voteOfMe === null">{{
+            revokeLoading ? '撤销中…' : '撤销投票' }}</button>
         </div>
       </div>
 
@@ -75,7 +75,8 @@
         <div class="panel-title">
           <span>讨论区</span>
           <div class="seg">
-            <button class="seg-btn" :class="{ active: commentSort === 'latest' }" @click="commentSort = 'latest'">最新</button>
+            <button class="seg-btn" :class="{ active: commentSort === 'latest' }"
+              @click="commentSort = 'latest'">最新</button>
             <button class="seg-btn" :class="{ active: commentSort === 'hot' }" @click="commentSort = 'hot'">最热</button>
           </div>
         </div>
@@ -88,7 +89,7 @@
       </div>
     </section>
   </div>
-  
+
 </template>
 
 <script setup lang="ts">
@@ -149,15 +150,15 @@ function hasVotes(optionId: number): boolean {
 }
 
 function ensureInit() {
-  store.fetchRankingTop(props.activity.id).catch(() => {})
-  store.fetchOptions(props.activity.id).catch(() => {})
-  store.fetchMyVote(props.activity.id).catch(() => {})
+  store.fetchRankingTop(props.activity.id).catch(() => { })
+  store.fetchOptions(props.activity.id).catch(() => { })
+  store.fetchMyVote(props.activity.id).catch(() => { })
 }
 
 onMounted(async () => {
   if (props.active) ensureInit()
 
-  try { if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return } catch {}
+  try { if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return } catch { }
   if (rootRef.value) {
     const rank = rootRef.value.querySelectorAll('.rank-item')
     if (rank?.length) gsap.from(rank, { opacity: 0, y: 8, duration: 0.4, ease: 'power2.out', stagger: 0.04 })
@@ -180,11 +181,11 @@ onUnmounted(() => {
 
 function onVote(optionId: number) {
   if (!optionId) return
-  store.submitVote(props.activity.id, optionId, store.anonymousPreference).catch(() => {})
+  store.submitVote(props.activity.id, optionId, store.anonymousPreference).catch(() => { })
 }
 
 function onRevoke() {
-  store.revokeVote(props.activity.id).catch(() => {})
+  store.revokeVote(props.activity.id).catch(() => { })
 }
 
 function onCreatePost(payload: { content: string; display_anonymous: boolean }) {
@@ -312,101 +313,586 @@ watch(commentsWrapRef, (el, prev) => { if (prev) detachScrollableGuards(prev); a
 </script>
 
 <style scoped lang="scss">
-.act-vote { display: grid; gap: 16px; padding: 14px 18px 22px; color: var(--text-primary); height: 100%; min-height: 0; grid-template-rows: auto 1fr; /* 子屏高度与左右列表占比可调整 */ --vote-panel-max-h: clamp(460px, 68vh, 760px); --vote-list-max-pct: 70%; --comment-list-max-pct: 100%; }
-.head { display: flex; align-items: center; gap: 10px; }
-.titles { display: grid; gap: 4px; }
-.title { font-size: 18px; font-weight: 700; }
-.desc { color: var(--text-secondary); font-size: 12px; }
-.spacer { flex: 1; }
-.admin { display: flex; align-items: center; gap: 6px; }
-.input.small { padding: 6px 8px; width: 160px; background: transparent; color: var(--text-primary); border: 1px solid var(--divider-color, #444); border-radius: 8px; }
-.btn.small { padding: 6px 8px; border: 1px solid var(--primary-6, var(--primary)); color: var(--primary-6, var(--primary)); background: color-mix(in srgb, var(--primary) 6%, transparent); border-radius: 8px; }
-.btn.small.warn { border-color: var(--accent-red, #f7768e); color: var(--accent-red, #f7768e); }
-.btn.small.warn.outline { background: transparent; }
-.btn.small.warn.outline[aria-pressed="true"] { background: color-mix(in srgb, var(--accent-red, #f7768e) 22%, transparent); color: #fff; box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-red, #f7768e) 35%, transparent) inset; }
+.act-vote {
+  display: grid;
+  gap: 16px;
+  padding: 14px 18px 22px;
+  color: var(--text-primary);
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: auto 1fr;
+  /* 子屏高度与左右列表占比可调整 */
+  --vote-panel-max-h: clamp(460px, 68vh, 760px);
+  /* 移动端：投票列表按视口高度自适应上限，避免过长 */
+  --vote-list-max-pct: clamp(220px, 52vh, 560px);
+  --comment-list-max-pct: 100%;
+  overflow-x: hidden;
+}
 
-.grid { display: grid; gap: 12px; grid-template-columns: 1fr; align-items: stretch; height: 100%; min-height: 0; grid-template-rows: 1fr; }
-@media (min-width: 960px) { .grid { grid-template-columns: 1.4fr 1fr; align-items: stretch; } }
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 
-.panel { background: color-mix(in srgb, var(--base-dark) 85%, rgba(0,0,0,0.2)); border: 1px solid color-mix(in srgb, var(--divider-color, #3a3a3a) 60%, rgba(255,255,255,0.08)); border-radius: 14px; padding: 12px; box-shadow: 0 6px 24px rgba(0,0,0,.35); height: 100%; max-height: var(--vote-panel-max-h); overflow: hidden; }
-.panel.options.managing { border-color: var(--error-alert, #f7768e); box-shadow: 0 0 0 2px color-mix(in srgb, var(--error-alert, #f7768e) 30%, transparent) inset, 0 6px 24px rgba(0,0,0,.35); }
-.panel-title { display: flex; align-items: center; justify-content: space-between; color: var(--text-secondary); font-size: 12px; margin-bottom: 8px; }
-.anon { display: inline-flex; align-items: center; gap: 6px; }
-.hint { color: var(--text-secondary); font-size: 12px; margin-left: 8px; }
-.chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--text-secondary); margin-right: 8px; }
-.chip.danger { background: color-mix(in srgb, var(--error-alert, #f7768e) 25%, transparent); color: #fff; box-shadow: 0 0 0 1px color-mix(in srgb, var(--error-alert, #f7768e) 50%, transparent) inset; }
+.titles {
+  display: grid;
+  gap: 4px;
+}
 
-.buttons-gap { display: inline-flex; align-items: center; gap: 8px; }
+.title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.desc {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.admin {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.input.small {
+  padding: 6px 8px;
+  width: 160px;
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--divider-color, #444);
+  border-radius: 8px;
+}
+
+/* 移动端：登录后管理控件换行，避免撑破宽度 */
+@media (max-width: 959px) {
+  .head .admin {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  .head .titles {
+    min-width: 0;
+  }
+
+  .head .spacer {
+    display: none;
+  }
+
+  .head .admin .input.small {
+    width: auto;
+    flex: 1 1 180px;
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+.btn.small {
+  padding: 6px 8px;
+  border: 1px solid var(--primary-6, var(--primary));
+  color: var(--primary-6, var(--primary));
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+  border-radius: 8px;
+}
+
+.btn.small.warn {
+  border-color: var(--accent-red, #f7768e);
+  color: var(--accent-red, #f7768e);
+}
+
+.btn.small.warn.outline {
+  background: transparent;
+}
+
+.btn.small.warn.outline[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--accent-red, #f7768e) 22%, transparent);
+  color: #fff;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-red, #f7768e) 35%, transparent) inset;
+}
+
+.grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
+  align-items: stretch;
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: 1fr;
+}
+
+@media (min-width: 960px) {
+  .grid {
+    grid-template-columns: 1.4fr 1fr;
+    align-items: stretch;
+  }
+}
+
+@media (min-width: 960px) {
+  .act-vote {
+    /* 桌面端：列表占满面板可用空间 */
+    --vote-list-max-pct: 100%;
+  }
+}
+
+.panel {
+  background: color-mix(in srgb, var(--base-dark) 85%, rgba(0, 0, 0, 0.2));
+  border: 1px solid color-mix(in srgb, var(--divider-color, #3a3a3a) 60%, rgba(255, 255, 255, 0.08));
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .35);
+  height: 100%;
+  max-height: var(--vote-panel-max-h);
+  overflow: hidden;
+}
+
+@media (max-width: 959px) {
+  .panel {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+
+.panel.options.managing {
+  border-color: var(--error-alert, #f7768e);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--error-alert, #f7768e) 30%, transparent) inset, 0 6px 24px rgba(0, 0, 0, .35);
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.anon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hint {
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--text-secondary);
+  margin-right: 8px;
+}
+
+.chip.danger {
+  background: color-mix(in srgb, var(--error-alert, #f7768e) 25%, transparent);
+  color: #fff;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--error-alert, #f7768e) 50%, transparent) inset;
+}
+
+.buttons-gap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
 
 /* 左侧合并面板 */
-.vote-combined { display: grid; grid-template-rows: auto 1fr auto; min-height: 0; }
-.panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; color: var(--text-secondary); font-size: 12px; }
-.chips { display: inline-flex; align-items: center; gap: 8px; }
-.switch { position: relative; display: inline-flex; align-items: center; gap: 6px; }
-.switch input { width: 0; height: 0; opacity: 0; position: absolute; }
-.switch .slider { width: 34px; height: 18px; background: color-mix(in srgb, var(--base-dark) 70%, rgba(0,0,0,0.2)); border-radius: 999px; border: 1px solid var(--divider-color, #444); position: relative; transition: background .2s ease, border-color .2s ease; }
-.switch .slider::after { content: ''; position: absolute; top: 50%; left: 2px; transform: translateY(-50%); width: 14px; height: 14px; background: #fff; border-radius: 50%; transition: left .2s ease; }
-.switch input:checked + .slider { background: var(--primary); border-color: var(--primary); }
-.switch input:checked + .slider::after { left: 18px; }
-.switch .label { white-space: nowrap; }
+.vote-combined {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 0;
+}
 
-.vote-list { list-style: none; padding: 6px 0 0; margin: 0; display: flex; flex-direction: column; gap: 6px; overflow: auto; min-height: 0; align-content: flex-start; max-height: var(--vote-list-max-pct); }
-.vote-row { position: relative; }
-.row-main { width: 100%; text-align: left; background: color-mix(in srgb, var(--base-dark) 82%, rgba(0,0,0,0.15)); border: 1px solid var(--divider-color, #3a3a3a); border-radius: 12px; padding: 10px 48px 10px 10px; color: var(--text-primary); transition: transform .15s ease, background .2s ease, border-color .2s ease; display: grid; grid-template-columns: auto 1fr; column-gap: 8px; position: relative; }
-.row-main:hover { transform: translateY(-1px); background: color-mix(in srgb, var(--primary) 8%, transparent); border-color: var(--primary); }
-.row-main:disabled { opacity: .55; cursor: not-allowed; }
-.row-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-.radio { display: inline-grid; width: 18px; height: 18px; place-items: center; }
-.radio input { appearance: none; width: 0; height: 0; opacity: 0; position: absolute; }
-.radio .dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--divider-color, #555); background: transparent; transition: all .2s ease; }
-.vote-row.selected .radio .dot, .radio input:checked + .dot { border-color: var(--primary); background: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent) inset; }
-.vote-row.selected .row-main { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 22%, transparent); }
-.actions-bottom { display: flex; gap: 8px; justify-content: flex-end; padding-top: 8px; }
-.btn.primary { border-color: var(--primary); background: var(--primary); color: #fff; }
-.row-top .name { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.row-top .counts { color: var(--text-secondary); }
-.row-top .pct { margin-left: 2px; font-size: 12px; }
-.bar { position: relative; margin-top: 6px; height: 12px; background: color-mix(in srgb, var(--secondary-light) 55%, rgba(0,0,0,0.25)); border: 1px solid color-mix(in srgb, var(--secondary) 25%, rgba(255,255,255,0.1)); border-radius: 999px; overflow: hidden; grid-column: 1 / -1; }
-.bar-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: linear-gradient(90deg, var(--secondary) 0%, var(--primary) 100%); box-shadow: 0 0 8px color-mix(in srgb, var(--primary) 45%, transparent); transition: width .35s var(--ease-hover); }
-.vote-row .badge { position: absolute; top: 8px; right: 8px; padding: 2px 6px; font-size: 12px; border-radius: 999px; background: var(--primary); color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.3); }
-.vote-row .delete-right { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; display: grid; place-items: center; border-radius: 6px; background: color-mix(in srgb, var(--error-alert, #f7768e) 30%, transparent); color: #fff; font-weight: 700; cursor: pointer; opacity: .9; transition: background .2s ease; }
-.vote-row .delete-right:hover { background: var(--error-alert, #f7768e); }
-.vote-row .delete-right.disabled { opacity: .45; cursor: not-allowed; filter: grayscale(0.35); }
-.vote-row.locked .row-main { border-color: color-mix(in srgb, var(--divider-color, #3a3a3a) 80%, rgba(255,255,255,0.08)); background: color-mix(in srgb, #444 12%, transparent); }
-.empty { color: var(--text-secondary); padding: 6px 0; }
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+@media (max-width: 959px) {
+  .panel-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+.chips {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.switch input {
+  width: 0;
+  height: 0;
+  opacity: 0;
+  position: absolute;
+}
+
+.switch .slider {
+  width: 34px;
+  height: 18px;
+  background: color-mix(in srgb, var(--base-dark) 70%, rgba(0, 0, 0, 0.2));
+  border-radius: 999px;
+  border: 1px solid var(--divider-color, #444);
+  position: relative;
+  transition: background .2s ease, border-color .2s ease;
+}
+
+.switch .slider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  transition: left .2s ease;
+}
+
+.switch input:checked+.slider {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.switch input:checked+.slider::after {
+  left: 18px;
+}
+
+.switch .label {
+  white-space: nowrap;
+}
+
+.vote-list {
+  list-style: none;
+  padding: 6px 0 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: auto;
+  min-height: 0;
+  align-content: flex-start;
+  max-height: var(--vote-list-max-pct);
+}
+
+.vote-row {
+  position: relative;
+}
+
+.row-main {
+  width: 100%;
+  text-align: left;
+  background: color-mix(in srgb, var(--base-dark) 82%, rgba(0, 0, 0, 0.15));
+  border: 1px solid var(--divider-color, #3a3a3a);
+  border-radius: 12px;
+  padding: 10px 48px 10px 10px;
+  color: var(--text-primary);
+  transition: transform .15s ease, background .2s ease, border-color .2s ease;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 8px;
+  position: relative;
+}
+
+.row-main:hover {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  border-color: var(--primary);
+}
+
+.row-main:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.row-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.radio {
+  display: inline-grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+}
+
+.radio input {
+  appearance: none;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  position: absolute;
+}
+
+.radio .dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--divider-color, #555);
+  background: transparent;
+  transition: all .2s ease;
+}
+
+.vote-row.selected .radio .dot,
+.radio input:checked+.dot {
+  border-color: var(--primary);
+  background: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent) inset;
+}
+
+.vote-row.selected .row-main {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+.actions-bottom {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 8px;
+}
+
+.btn.primary {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+
+.row-top .name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.row-top .counts {
+  color: var(--text-secondary);
+}
+
+.row-top .pct {
+  margin-left: 2px;
+  font-size: 12px;
+}
+
+.bar {
+  position: relative;
+  margin-top: 6px;
+  height: 12px;
+  background: color-mix(in srgb, var(--secondary-light) 55%, rgba(0, 0, 0, 0.25));
+  border: 1px solid color-mix(in srgb, var(--secondary) 25%, rgba(255, 255, 255, 0.1));
+  border-radius: 999px;
+  overflow: hidden;
+  grid-column: 1 / -1;
+}
+
+.bar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0%;
+  background: linear-gradient(90deg, var(--secondary) 0%, var(--primary) 100%);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--primary) 45%, transparent);
+  transition: width .35s var(--ease-hover);
+}
+
+.vote-row .badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 2px 6px;
+  font-size: 12px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .3);
+}
+
+.vote-row .delete-right {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--error-alert, #f7768e) 30%, transparent);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  opacity: .9;
+  transition: background .2s ease;
+}
+
+.vote-row .delete-right:hover {
+  background: var(--error-alert, #f7768e);
+}
+
+.vote-row .delete-right.disabled {
+  opacity: .45;
+  cursor: not-allowed;
+  filter: grayscale(0.35);
+}
+
+.vote-row.locked .row-main {
+  border-color: color-mix(in srgb, var(--divider-color, #3a3a3a) 80%, rgba(255, 255, 255, 0.08));
+  background: color-mix(in srgb, #444 12%, transparent);
+}
+
+.empty {
+  color: var(--text-secondary);
+  padding: 6px 0;
+}
 
 /* 状态 Chip */
-.chip-ongoing { background: color-mix(in srgb, var(--primary) 18%, transparent); color: var(--text-secondary); }
-.chip-draft { background: color-mix(in srgb, #ffd166 30%, transparent); color: #111; }
-.chip-closed { background: color-mix(in srgb, var(--error-alert, #f7768e) 25%, transparent); color: #fff; }
+.chip-ongoing {
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
+  color: var(--text-secondary);
+}
+
+.chip-draft {
+  background: color-mix(in srgb, #ffd166 30%, transparent);
+  color: #111;
+}
+
+.chip-closed {
+  background: color-mix(in srgb, var(--error-alert, #f7768e) 25%, transparent);
+  color: #fff;
+}
 
 /* 评论区布局：占满剩余高度并内部滚动 */
-.panel.comments { display: grid; grid-template-rows: auto 1fr; min-height: 0; }
-.panel.comments .panel-title { margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
-.comments-body { display: grid; gap: 8px; grid-template-rows: auto 1fr; min-height: 0; }
-.list-wrap { overflow: auto; min-height: 0; max-height: var(--comment-list-max-pct); }
-.seg { display: inline-flex; background: color-mix(in srgb, var(--base-dark) 82%, rgba(0,0,0,0.15)); border: 1px solid var(--divider-color, #3a3a3a); border-radius: 8px; overflow: hidden; }
-.seg-btn { padding: 4px 10px; font-size: 12px; color: var(--text-secondary); background: transparent; border: none; cursor: pointer; transition: background .2s ease, color .2s ease; }
-.seg-btn:hover { background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--text-primary); }
-.seg-btn.active { color: #fff; background: var(--primary); box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 35%, transparent) inset; }
+.panel.comments {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 0;
+}
+
+.panel.comments .panel-title {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.comments-body {
+  display: grid;
+  gap: 8px;
+  grid-template-rows: auto 1fr;
+  min-height: 0;
+}
+
+.list-wrap {
+  overflow: auto;
+  min-height: 0;
+  max-height: var(--comment-list-max-pct);
+}
+
+.seg {
+  display: inline-flex;
+  background: color-mix(in srgb, var(--base-dark) 82%, rgba(0, 0, 0, 0.15));
+  border: 1px solid var(--divider-color, #3a3a3a);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.seg-btn {
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease;
+}
+
+.seg-btn:hover {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--text-primary);
+}
+
+.seg-btn.active {
+  color: #fff;
+  background: var(--primary);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 35%, transparent) inset;
+}
 
 /* 独立加载样式，避免文字跟着旋转 */
-.loading-wrap { display: inline-flex; align-items: center; gap: 8px; color: var(--text-secondary); }
-.spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.25); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+.loading-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, .25);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* 选项面板无感刷新：右上角小圆圈，不遮挡内容 */
-.vote-combined { position: relative; }
+.vote-combined {
+  position: relative;
+}
+
 .vote-combined[data-refreshing="true"]::before {
   content: '';
-  position: absolute; top: 10px; right: 10px; width: 14px; height: 14px;
-  border: 2px solid rgba(255,255,255,.25); border-top-color: var(--primary); border-radius: 50%;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, .25);
+  border-top-color: var(--primary);
+  border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 /* 评论区布局微调 */
-.panel.comments { padding-top: 10px; }
-.panel.comments .panel-title { margin-bottom: 8px; }
+.panel.comments {
+  padding-top: 10px;
+}
+
+.panel.comments .panel-title {
+  margin-bottom: 8px;
+}
 </style>
-
-
