@@ -295,8 +295,8 @@ export function useSnapScroll(sectionRefs: Array<{ value: HTMLElement | null }>,
 
         console.log(`Scroll to section ${index} completed - wheel block released`)
 
-        // 刷新ScrollTrigger
-        ScrollTrigger.refresh()
+        // 刷新ScrollTrigger（去抖：避免频繁刷新导致警告放大）
+        debounce(() => ScrollTrigger.refresh())
       },
       onInterrupt: () => {
         // 动画被中断时也要解除阻止和恢复动画

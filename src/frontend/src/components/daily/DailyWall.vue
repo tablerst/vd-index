@@ -251,67 +251,65 @@ function handleResize() {
   }, 150)
 }
 
-// 进入视差/下移动画，参考 MembersCircle 的进入节奏（放入 gsap.context 以统一管理）
+// 进入视差/下移动画，参考 MembersCircle 的进入节奏
 function setupEnterAnimations() {
   if (!sectionRef.value) return
 
-  gsap.context(() => {
-    // 整体区块淡入+下移
-    gsap.fromTo(sectionRef.value!,
-      { opacity: 0, y: 60, scale: 0.98 },
+  // 整体区块淡入+下移
+  gsap.fromTo(sectionRef.value!,
+    { opacity: 0, y: 60, scale: 0.98 },
+    {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      duration: 0.9,
+      ease: 'power3.out',
+      scrollTrigger: {
+        trigger: sectionRef.value!,
+        start: 'top 80%',
+        end: 'top 20%',
+        toggleActions: 'play none none reverse'
+      }
+    }
+  )
+
+  // 顶部标题的轻微下移
+  if (titleBarRef.value) {
+    gsap.fromTo(titleBarRef.value,
+      { y: -20, opacity: 0 },
       {
-        opacity: 1,
         y: 0,
-        scale: 1,
-        duration: 0.9,
-        ease: 'power3.out',
+        opacity: 1,
+        duration: 0.6,
+        ease: 'power2.out',
         scrollTrigger: {
           trigger: sectionRef.value!,
-          start: 'top 80%',
-          end: 'top 20%',
+          start: 'top 75%',
+          end: 'top 40%',
           toggleActions: 'play none none reverse'
         }
       }
     )
+  }
 
-    // 顶部标题的轻微下移
-    if (titleBarRef.value) {
-      gsap.fromTo(titleBarRef.value,
-        { y: -20, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.6,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: sectionRef.value!,
-            start: 'top 75%',
-            end: 'top 40%',
-            toggleActions: 'play none none reverse'
-          }
+  // 底部按钮的轻微上移
+  if (moreBarRef.value) {
+    gsap.fromTo(moreBarRef.value,
+      { y: 20, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.6,
+        ease: 'power2.out',
+        scrollTrigger: {
+          trigger: sectionRef.value!,
+          start: 'top 70%',
+          end: 'top 30%',
+          toggleActions: 'play none none reverse'
         }
-      )
-    }
-
-    // 底部按钮的轻微上移
-    if (moreBarRef.value) {
-      gsap.fromTo(moreBarRef.value,
-        { y: 20, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.6,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: sectionRef.value!,
-            start: 'top 70%',
-            end: 'top 30%',
-            toggleActions: 'play none none reverse'
-          }
-        }
-      )
-    }
-  }, sectionRef)
+      }
+    )
+  }
 }
 
 // 页面可见性：隐藏页签/切走时暂停动画，返回时恢复
@@ -499,7 +497,7 @@ onMounted(async () => {
       setupEnterAnimations()
       setupTitleAnimation()
       setupButtonAnimations()
-    }, sectionRef)
+    }, sectionRef.value!)
 
 
     window.addEventListener('resize', handleResize)
