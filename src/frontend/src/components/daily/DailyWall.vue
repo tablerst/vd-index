@@ -35,13 +35,40 @@
       </div>
     </div>
 
-    <!-- SVG 滤镜：柔和 Gooey 融合效果（性能友好，stdDeviation 控制强度） -->
+    <!-- SVG 滤镜：柔和 Gooey 融合效果（性能友好，stdDeviation 控制强度） + 边缘形状扰动 -->
     <svg class="visually-hidden" width="0" height="0" aria-hidden="true" focusable="false">
       <defs>
         <filter id="gooey-soft">
           <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
           <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo" />
           <feBlend in="SourceGraphic" in2="goo" />
+        </filter>
+        <!-- 边缘形状扰动：fractalNoise + DisplacementMap。稍微放大过滤器区域避免裁剪 -->
+        <filter id="gooey-warp" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+          <!-- 生成低频分形噪声（围绕 0.5），作为位移源 -->
+          <feTurbulence id="gooey-warp-turb" type="fractalNoise" baseFrequency="0.06" numOctaves="1" seed="2" result="noise" />
+
+          <!-- 提取边缘环带（只在边缘附近发生形变） -->
+          <feMorphology in="SourceAlpha" operator="dilate" radius="1.2" result="outer" />
+          <feMorphology in="SourceAlpha" operator="erode" radius="1.2" result="inner" />
+          <feComposite in="outer" in2="inner" operator="xor" result="edgeBand" />
+          <feGaussianBlur in="edgeBand" stdDeviation="0.8" result="edgeSoft" />
+
+          <!-- 将噪声中心化到 [-0.5,0.5] 并用边缘掩膜衰减，然后再平移回 [0,1]，
+               这样非边缘区域为 0.5（无位移），边缘带内含平滑波动。 -->
+          <feComponentTransfer in="noise" result="noiseCentered">
+            <feFuncR type="linear" slope="1" intercept="-0.5" />
+            <feFuncG type="linear" slope="1" intercept="-0.5" />
+          </feComponentTransfer>
+          <feComposite in="noiseCentered" in2="edgeSoft" operator="arithmetic" k4="1" result="maskedDev" />
+          <feComponentTransfer in="maskedDev" result="dispMap">
+            <feFuncR type="linear" slope="1" intercept="0.5" />
+            <feFuncG type="linear" slope="1" intercept="0.5" />
+            <feFuncB type="table" tableValues="0.5 0.5" />
+          </feComponentTransfer>
+
+          <!-- 仅在边缘带进行位移，得到平滑的波浪起伏 -->
+          <feDisplacementMap id="gooey-warp-disp" in="SourceGraphic" in2="dispMap" scale="4" xChannelSelector="R" yChannelSelector="G" />
         </filter>
       </defs>
     </svg>
@@ -363,6 +390,11 @@ function setupButtonAnimations() {
   gsap.set([base, follow, pulse], { transformOrigin: '50% 50% 0.1px' })
   gsap.set(follow, { scale: 0.9 })
 
+  // 设备能力检测：粗指针一般为触屏设备，用于启用自动游走
+  const isCoarsePointer = typeof window !== 'undefined' && !!window.matchMedia
+    ? window.matchMedia('(pointer: coarse)').matches
+    : false
+
   // 轻微的 label 交互反馈（不改变布局）
   label.addEventListener('mouseenter', () => {
     gsap.to(label, { duration: 0.2, scale: 1.02, ease: 'power2.out' })
@@ -389,22 +421,135 @@ function setupButtonAnimations() {
     gsap.to(pulse, { x: 7, y: -7, duration: 2.0, ease: 'sine.inOut', repeat: -1, yoyo: true })
   }
 
-  // 添加细微的随机波动（小波浪扰动）
-  const noise = () => (Math.random() * 2 - 1) // [-1,1]
-  const jitter = () => {
-    gsap.to(base, {
-      x: noise() * 1.2,
-      y: noise() * 1.2,
-      duration: 0.8 + Math.random() * 0.6,
-      ease: 'sine.inOut',
-      onComplete: jitter
+  // 绕主圆 360° 的边缘波浪起伏（clip-path 动态路径）
+  const supportsPathClip = typeof CSS !== 'undefined' && (CSS as any).supports?.('clip-path', 'path("M0,0 L1,1")')
+  if (supportsPathClip) {
+    // 振幅使用“涨落曲线”驱动，避免突变：A(t)=A0 + A1*(0.5-0.5*cos(2πt))（0→1→0）
+    const ampState = { t: 0 } // 0..1
+    const ampCurve = () => {
+      const t = ampState.t
+      return 0.55 - 0.45 * Math.cos(t * Math.PI * 2) // 0.1..1 的缓变
+    }
+
+    // 固定波浪数，并按二进制掩码随机选择要显示的波形（最多 waves/2 个）
+    const waves = 6
+    const maxActive = Math.max(1, Math.floor(waves / 2))
+    let mask = Math.floor(Math.random() * Math.pow(2, waves))
+    // 统计位数并裁剪
+    const idxs: number[] = []
+    for (let i = 0; i < waves; i++) if ((mask >> i) & 1) idxs.push(i)
+    while (idxs.length > maxActive) {
+      idxs.splice(Math.floor(Math.random() * idxs.length), 1)
+    }
+    if (idxs.length === 0) idxs.push(Math.floor(Math.random() * waves))
+
+    // 角度归一 + 平滑窗权重（余弦窗）；窗口半宽控制波形占比
+    const PI2 = Math.PI * 2
+    const winHalf = (PI2 / waves) * 0.45
+    const wrap = (a: number) => {
+      let x = (a + Math.PI) % (PI2)
+      if (x < 0) x += PI2
+      return x - Math.PI
+    }
+    const maskWeight = (theta: number, phase: number) => {
+      const th = theta + phase // 随相位一起旋转
+      let w = 0
+      for (let k = 0; k < idxs.length; k++) {
+        const center = (idxs[k] / waves) * PI2
+        const d = Math.abs(wrap(th - center))
+        if (d <= winHalf) {
+          // 余弦窗：边界趋近 0，中心为 1，连续可导
+          const x = d / winHalf
+          w = Math.max(w, 0.5 * (1 + Math.cos(Math.PI * x)))
+        }
+      }
+      return Math.min(1, w)
+    }
+
+    const genPath = (phase: number) => {
+      const rect = (base as HTMLElement).getBoundingClientRect()
+      const cx = rect.width / 2
+      const cy = rect.height / 2
+      const r = Math.min(cx, cy)
+      const ampMax = Math.min(6, Math.max(3, r * 0.13))
+      const steps = 64
+      let d = ''
+      for (let i = 0; i < steps; i++) {
+        const theta = i / steps * Math.PI * 2
+        const weight = maskWeight(theta, phase)
+        const amp = ampMax * ampCurve() * weight
+        const rr = r + amp * Math.sin(waves * theta + phase)
+        const x = cx + rr * Math.cos(theta)
+        const y = cy + rr * Math.sin(theta)
+        d += (i === 0 ? 'M' : 'L') + x.toFixed(2) + ' ' + y.toFixed(2) + ' '
+      }
+      d += 'Z'
+      return `path('${d}')`
+    }
+
+    // 初始设定 & 动画推进相位，实现绕圈传播
+    ;(base as HTMLElement).style.clipPath = genPath(0)
+    const phaseObj = { t: 0 }
+    gsap.to(phaseObj, {
+      t: Math.PI * 2,
+      duration: 3.8,
+      ease: 'none',
+      repeat: -1,
+      onUpdate: () => { (base as HTMLElement).style.clipPath = genPath(phaseObj.t) }
     })
+
+    // 驱动“涨落”曲线（与相位解耦）：使用更慢的呼吸节奏
+    gsap.to(ampState, {
+      t: 1,
+      duration: 2.6,
+      ease: 'sine.inOut',
+      repeat: -1,
+      yoyo: true
+    })
+
+    // 响应尺寸变化，保持几何精度
+    try {
+      const ro = new ResizeObserver(() => { (base as HTMLElement).style.clipPath = genPath(phaseObj.t) })
+      ro.observe(base as HTMLElement)
+      onUnmounted(() => ro.disconnect())
+    } catch {}
   }
-  jitter()
+
+  // 取消中心位置的随机抖动，避免与边缘波浪的“涨落”节奏冲突
 
   // 鼠标追踪 & 悬停融合
   const R = 24 // 60px 主圆对应更大的跟随半径
   const threshold = 0.18 // 悬停融合阈值（相对容器的归一化距离）
+
+  // 计算当前允许的最大跟随半径（与元素尺寸自洽）
+  const calcFollowMaxLen = () => {
+    const mainRadius = (base as HTMLElement).offsetWidth / 2
+    const followRadius = (follow as HTMLElement).offsetWidth / 2
+    const clampR = Math.max(0, mainRadius + 10 - followRadius)
+    return Math.min(R, clampR)
+  }
+
+  // 移动端自动随机游走（没有鼠标事件时），随可见性启停
+  let wanderTl: gsap.core.Timeline | null = null
+  const startWander = () => {
+    const maxLen = calcFollowMaxLen()
+    if (maxLen <= 0) return
+    stopWander()
+    wanderTl = gsap.timeline({ repeat: -1, repeatRefresh: true, defaults: { ease: 'sine.inOut' } })
+      .to(follow, {
+        x: () => gsap.utils.random(-maxLen, maxLen),
+        y: () => gsap.utils.random(-maxLen, maxLen),
+        scale: () => gsap.utils.random(0.88, 1.04),
+        duration: () => gsap.utils.random(0.35, 0.65)
+      })
+      .to(follow, {
+        x: () => gsap.utils.random(-maxLen, maxLen),
+        y: () => gsap.utils.random(-maxLen, maxLen),
+        scale: () => gsap.utils.random(0.9, 1.05),
+        duration: () => gsap.utils.random(0.35, 0.65)
+      })
+  }
+  const stopWander = () => { wanderTl?.kill(); wanderTl = null }
 
   const onMove = (e: MouseEvent) => {
     const rect = wrap.getBoundingClientRect()
@@ -437,6 +582,9 @@ function setupButtonAnimations() {
 
     gsap.to(follow, { x: tx, y: ty, duration: 0.25, ease: 'sine.out' })
 
+    // 一旦有真实鼠标交互，关闭自动游走
+    stopWander()
+
     if (dist < threshold) {
       gsap.to(follow, { x: 0, y: 0, scale: 0.82, duration: 0.3, ease: 'sine.out' })
       gsap.to(base, { scale: 1.04, duration: 0.3, ease: 'sine.out' })
@@ -459,10 +607,13 @@ function setupButtonAnimations() {
   const io = new IntersectionObserver((entries) => {
     const visible = entries.some(e => e.isIntersecting)
     if (visible && !listenWin) {
-      window.addEventListener('mousemove', onMove)
+      // 触屏设备默认启用随机游走；桌面则监听鼠标
+      if (isCoarsePointer) startWander()
+      else window.addEventListener('mousemove', onMove)
       listenWin = true
     } else if (!visible && listenWin) {
-      window.removeEventListener('mousemove', onMove)
+      if (isCoarsePointer) stopWander()
+      else window.removeEventListener('mousemove', onMove)
       listenWin = false
     }
   }, { root: null, threshold: 0.1 })
@@ -476,6 +627,7 @@ function setupButtonAnimations() {
     wrap.removeEventListener('mouseenter', onEnter)
     wrap.removeEventListener('mouseleave', onLeave)
     io.disconnect()
+    stopWander()
   })
 }
 
