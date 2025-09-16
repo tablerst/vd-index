@@ -199,7 +199,7 @@ function avatarUrl(p: ActThreadPost) {
 
 .list {
   list-style: none;
-  padding: 10px 0;
+  padding: 10px 0 20px 0;
   margin: 0;
   display: grid;
   gap: 10px;

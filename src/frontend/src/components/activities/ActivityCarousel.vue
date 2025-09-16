@@ -200,7 +200,11 @@ function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n))
 }
 
-function onSwiperInit(swiper: any) { swiperRef.value = swiper }
+function onSwiperInit(swiper: any) { 
+  swiperRef.value = swiper 
+  // 初始化时立即同步一次自适应高度，避免初始为 0 导致空白
+  nextTick(() => { try { swiperRef.value?.updateAutoHeight?.(0) } catch {} })
+}
 function onSlideChange(swiper: any) {
   const previous = store.currentIndex
   store.setCurrentIndex(swiper.activeIndex)
@@ -398,7 +402,8 @@ onUnmounted(() => { stopActivePolling() })
 
 /* 兜底覆盖：防止某些情况下 Swiper wrapper 未应用 flex 导致 slide 堆叠、内容不可见 */
 :deep(.activity-swiper) {
-  .swiper-wrapper { display: flex !important; align-items: stretch; }
+  /* 让包裹高度随当前 slide 内容自适应，避免初始 0 高度导致空白 */
+  .swiper-wrapper { display: flex !important; align-items: flex-start; }
   .swiper-slide { width: 100% !important; height: auto !important; display: block; }
 }
 </style>
