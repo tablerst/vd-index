@@ -39,15 +39,9 @@
 
         <!-- 回复输入框（复用全站 CommentInput，含匿名开关） -->
         <div v-if="replyParentId === p.id" class="reply-input">
-          <CommentInput
-            :member-id="0"
-            :loading="submitting"
-            title="回复"
-            :show-anonymous-option="true"
-            :anonymous-default="true"
-            @submit="(text, isAnon) => submitReply(p.id, text, !!isAnon)"
-            @cancel="replyParentId = null"
-          />
+          <CommentInput :member-id="0" :loading="submitting" title="回复" :show-anonymous-option="true"
+            :anonymous-default="true" @submit="(text, isAnon) => submitReply(p.id, text, !!isAnon)"
+            @cancel="replyParentId = null" />
         </div>
       </li>
       <li v-if="topPosts.length === 0 && !loading" class="empty">还没有帖子</li>
@@ -56,7 +50,7 @@
       <button class="load" @click="loadMore" :disabled="loading">加载更多</button>
     </div>
   </div>
-  
+
 
 </template>
 
@@ -95,12 +89,12 @@ const submitting = ref(false)
 const rootRef = ref<HTMLElement | null>(null)
 
 function ensureInit() {
-  if (!items.value.length) store.fetchThreadPosts(props.activityId).catch(() => {})
+  if (!items.value.length) store.fetchThreadPosts(props.activityId).catch(() => { })
 }
 
 onMounted(() => {
   if (props.active) ensureInit()
-  try { if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return } catch {}
+  try { if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return } catch { }
   if (rootRef.value) {
     const listItems = rootRef.value.querySelectorAll('.list-item')
     if (listItems?.length) gsap.from(listItems, { opacity: 0, y: 8, duration: 0.4, ease: 'power2.out', stagger: 0.03 })
@@ -110,7 +104,7 @@ onMounted(() => {
 watch(() => props.active, (v) => { if (v) ensureInit() })
 
 function loadMore() {
-  store.fetchThreadPosts(props.activityId, entry.value.cursor || null).catch(() => {})
+  store.fetchThreadPosts(props.activityId, entry.value.cursor || null).catch(() => { })
 }
 
 function formatTime(iso: string) {
@@ -155,39 +149,186 @@ function avatarUrl(p: ActThreadPost) {
 </script>
 
 <style scoped lang="scss">
-.loading-skeleton { display: grid; gap: 10px; }
-.sk-row { display: grid; grid-template-columns: 32px 1fr; gap: 10px; align-items: center; }
-.sk-avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.12), rgba(255,255,255,0.06)); animation: shimmer 1.2s infinite; background-size: 200% 100%; }
-.sk-lines { display: grid; gap: 6px; }
-.sk-line { height: 12px; border-radius: 6px; background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.12), rgba(255,255,255,0.06)); animation: shimmer 1.2s infinite; background-size: 200% 100%; }
-.sk-line.short { width: 30%; }
-@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-.list { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
-.row { background: color-mix(in srgb, var(--base-dark) 82%, rgba(0,0,0,0.15)); border: 1px solid var(--divider-color, #444); border-radius: 10px; padding: 10px; transition: transform .15s ease, background .2s ease; }
-.row:hover { transform: translateY(-1px); background: color-mix(in srgb, var(--primary) 8%, transparent); border-color: var(--primary); }
-.meta { color: var(--text-secondary); font-size: 12px; display: flex; gap: 8px; align-items: center; justify-content: space-between; }
-.author-info { display: inline-flex; align-items: center; gap: 8px; }
-.author-info .avatar { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.15); }
-.content { margin-top: 6px; white-space: pre-wrap; line-height: 1.6; }
-.ops { margin-top: 6px; display: flex; gap: 8px; }
-.reply-btn { padding: 4px 8px; border: 1px solid var(--divider-color, #444); background: transparent; color: var(--text-secondary); border-radius: 8px; }
-.reply-btn:hover { color: var(--primary); border-color: var(--primary); }
-.children { list-style: none; padding-left: 12px; margin-top: 8px; display: grid; gap: 8px; border-left: 2px dashed rgba(255,255,255,0.08); }
-.child { background: color-mix(in srgb, var(--base-dark) 88%, rgba(0,0,0,0.12)); }
-.reply-input { margin-top: 8px; }
-.loading, .empty { color: var(--text-secondary); }
-.more { margin-top: 10px; display: flex; justify-content: center; }
-.load { padding: 6px 12px; border: 1px solid var(--primary-6, var(--primary)); color: var(--primary-6, var(--primary)); background: transparent; border-radius: 8px; }
+.loading-skeleton {
+  display: grid;
+  gap: 10px;
+}
+
+.sk-row {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.sk-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
+  animation: shimmer 1.2s infinite;
+  background-size: 200% 100%;
+}
+
+.sk-lines {
+  display: grid;
+  gap: 6px;
+}
+
+.sk-line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
+  animation: shimmer 1.2s infinite;
+  background-size: 200% 100%;
+}
+
+.sk-line.short {
+  width: 30%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.list {
+  list-style: none;
+  padding: 10px 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.row {
+  background: color-mix(in srgb, var(--base-dark) 82%, rgba(0, 0, 0, 0.15));
+  border: none;
+  border-radius: 10px;
+  padding: 10px;
+  transition: transform .15s ease, background .2s ease, box-shadow .2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .28), 0 6px 14px rgba(0, 0, 0, .20), inset 0 0 0 1px rgba(255, 255, 255, .04);
+
+  width: min(98%, 1120px);
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+.row:hover {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .32), 0 10px 22px rgba(0, 0, 0, .24), inset 0 0 0 1px color-mix(in srgb, var(--primary) 28%, transparent);
+}
+
+.meta {
+  color: var(--text-secondary);
+  font-size: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.author-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.author-info .avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.content {
+  margin-top: 6px;
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+.ops {
+  margin-top: 6px;
+  display: flex;
+  gap: 8px;
+}
+
+.reply-btn {
+  padding: 4px 8px;
+  border: 1px solid var(--divider-color, #444);
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: 8px;
+}
+
+.reply-btn:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.children {
+  list-style: none;
+  padding-left: 12px;
+  margin-top: 8px;
+  display: grid;
+  gap: 8px;
+  border-left: 2px dashed rgba(255, 255, 255, 0.08);
+}
+
+.child {
+  background: color-mix(in srgb, var(--base-dark) 88%, rgba(0, 0, 0, 0.12));
+}
+
+.reply-input {
+  margin-top: 8px;
+}
+
+.loading,
+.empty {
+  color: var(--text-secondary);
+}
+
+.more {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+}
+
+.load {
+  padding: 6px 12px;
+  border: 1px solid var(--primary-6, var(--primary));
+  color: var(--primary-6, var(--primary));
+  background: transparent;
+  border-radius: 8px;
+}
 
 /* 顶部右上角无感刷新提示（不遮挡内容） */
-.post-list { position: relative; }
+.post-list {
+  position: relative;
+}
+
 .post-list[data-refreshing="true"]::before {
   content: '';
-  position: absolute; top: 8px; right: 8px; width: 14px; height: 14px;
-  border: 2px solid rgba(255,255,255,.25); border-top-color: var(--primary); border-radius: 50%;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, .25);
+  border-top-color: var(--primary);
+  border-radius: 50%;
   animation: spin 1s linear infinite;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 </style>
-
-

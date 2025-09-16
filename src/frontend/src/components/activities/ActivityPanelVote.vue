@@ -318,9 +318,9 @@ watch(commentsWrapRef, (el, prev) => { if (prev) detachScrollableGuards(prev); a
   gap: 16px;
   padding: 14px 18px 22px;
   color: var(--text-primary);
-  height: 100%;
+  /* 让面板根据内容自适应高度，避免被父级强行拉伸 */
   min-height: 0;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto auto;
   /* 子屏高度与左右列表占比可调整 */
   --vote-panel-max-h: clamp(460px, 68vh, 760px);
   /* 移动端：投票列表按视口高度自适应上限，避免过长 */
@@ -422,10 +422,9 @@ watch(commentsWrapRef, (el, prev) => { if (prev) detachScrollableGuards(prev); a
   display: grid;
   gap: 12px;
   grid-template-columns: 1fr;
-  align-items: stretch;
-  height: 100%;
+  /* 让子卡片根据内容自高，不再强制拉满 */
+  align-items: start;
   min-height: 0;
-  grid-template-rows: 1fr;
 }
 
 @media (min-width: 960px) {
@@ -444,11 +443,16 @@ watch(commentsWrapRef, (el, prev) => { if (prev) detachScrollableGuards(prev); a
 
 .panel {
   background: color-mix(in srgb, var(--base-dark) 85%, rgba(0, 0, 0, 0.2));
-  border: 1px solid color-mix(in srgb, var(--divider-color, #3a3a3a) 60%, rgba(255, 255, 255, 0.08));
+  /* 移除外部大边框，保持卡片化阴影 */
+  border: none;
   border-radius: 14px;
   padding: 12px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, .35);
-  height: 100%;
+  /* 收紧并分层阴影，避免大片弥漫 */
+  box-shadow:
+    0 1px 2px rgba(0,0,0,.28),
+    0 6px 14px rgba(0,0,0,.20),
+    inset 0 0 0 1px rgba(255,255,255,.04);
+  /* 让容器高度自适应，同时限定最大高度 */
   max-height: var(--vote-panel-max-h);
   overflow: hidden;
 }
@@ -603,17 +607,27 @@ watch(commentsWrapRef, (el, prev) => { if (prev) detachScrollableGuards(prev); a
 
 .vote-row {
   position: relative;
+  /* 缩窄整体视觉宽度并居中 */
+  width: min(98%, 1120px);
+  max-width: 100%;
+  margin-inline: auto;
 }
 
 .row-main {
   width: 100%;
   text-align: left;
   background: color-mix(in srgb, var(--base-dark) 82%, rgba(0, 0, 0, 0.15));
-  border: 1px solid var(--divider-color, #3a3a3a);
+  /* 去掉描边，使用卡片阴影提升层次 */
+  border: none;
   border-radius: 12px;
   padding: 10px 48px 10px 10px;
   color: var(--text-primary);
-  transition: transform .15s ease, background .2s ease, border-color .2s ease;
+  /* 更聚焦的多层阴影，减小模糊半径，避免“弥漫感” */
+  box-shadow:
+    0 1px 2px rgba(0,0,0,.28),
+    0 4px 8px rgba(0,0,0,.18),
+    inset 0 0 0 1px rgba(255,255,255,.04);
+  transition: transform .15s ease, background .2s ease, box-shadow .2s ease;
   display: grid;
   grid-template-columns: auto 1fr;
   column-gap: 8px;
@@ -623,7 +637,10 @@ watch(commentsWrapRef, (el, prev) => { if (prev) detachScrollableGuards(prev); a
 .row-main:hover {
   transform: translateY(-1px);
   background: color-mix(in srgb, var(--primary) 8%, transparent);
-  border-color: var(--primary);
+  box-shadow:
+    0 2px 6px rgba(0,0,0,.32),
+    0 8px 20px rgba(0,0,0,.22),
+    inset 0 0 0 1px color-mix(in srgb, var(--primary) 28%, transparent);
 }
 
 .row-main:disabled {
@@ -670,8 +687,11 @@ watch(commentsWrapRef, (el, prev) => { if (prev) detachScrollableGuards(prev); a
 }
 
 .vote-row.selected .row-main {
-  border-color: var(--primary);
   background: color-mix(in srgb, var(--primary) 22%, transparent);
+  box-shadow:
+    0 2px 8px rgba(0,0,0,.28),
+    0 10px 22px rgba(0,0,0,.24),
+    0 0 0 2px color-mix(in srgb, var(--primary) 30%, transparent) inset;
 }
 
 .actions-bottom {
@@ -707,7 +727,8 @@ watch(commentsWrapRef, (el, prev) => { if (prev) detachScrollableGuards(prev); a
   margin-top: 6px;
   height: 12px;
   background: color-mix(in srgb, var(--secondary-light) 55%, rgba(0, 0, 0, 0.25));
-  border: 1px solid color-mix(in srgb, var(--secondary) 25%, rgba(255, 255, 255, 0.1));
+  /* 去掉描边，靠背景与圆角区分层次 */
+  border: none;
   border-radius: 999px;
   overflow: hidden;
   grid-column: 1 / -1;
@@ -765,7 +786,6 @@ watch(commentsWrapRef, (el, prev) => { if (prev) detachScrollableGuards(prev); a
 }
 
 .vote-row.locked .row-main {
-  border-color: color-mix(in srgb, var(--divider-color, #3a3a3a) 80%, rgba(255, 255, 255, 0.08));
   background: color-mix(in srgb, #444 12%, transparent);
 }
 

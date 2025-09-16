@@ -30,6 +30,7 @@
         :space-between="0"
         :keyboard="{ enabled: true }"
         :speed="700"
+        :auto-height="true"
         :allow-touch-move="true"
         :observer="true"
         :observe-parents="true"
@@ -206,6 +207,8 @@ function onSlideChange(swiper: any) {
   // 避免切换时目标 slide 尚未渲染导致内容闪退
   nextTick(() => {
     try { animateSlideTransition(previous, swiper.activeIndex) } catch {}
+    // 同步更新容器高度，避免沿用上一页的“最大高度”
+    try { swiperRef.value?.updateAutoHeight?.(250) } catch {}
   })
 }
 
@@ -239,6 +242,19 @@ onMounted(() => {
   }
   // 供帖子编辑器触发登录弹窗
   window.addEventListener('open-login-modal', openLogin as any)
+
+  // 监听内容区域尺寸变化，动态刷新 Swiper 的自适应高度
+  try {
+    const el = rootRef.value?.querySelector('.activity-swiper') as HTMLElement | null
+    if (el && 'ResizeObserver' in window) {
+      const ro = new ResizeObserver(() => {
+        try { swiperRef.value?.updateAutoHeight?.(0) } catch {}
+      })
+      ro.observe(el)
+      // 在组件卸载时断开
+      onUnmounted(() => ro.disconnect())
+    }
+  } catch {}
 })
 
 onUnmounted(() => {
@@ -251,7 +267,7 @@ watch(() => activities.value.length, (len) => {
   const idx = clamp(store.currentIndex, 0, Math.max(0, len - 1))
   if (idx !== store.currentIndex) store.setCurrentIndex(idx)
   // 确保 Swiper 已完成挂载后再导航，避免位置错乱 -> 空白
-  nextTick(() => goTo(idx))
+  nextTick(() => { goTo(idx); try { swiperRef.value?.updateAutoHeight?.(0) } catch {} })
 })
 
 watch(() => store.currentIndex, (idx) => {
@@ -343,10 +359,10 @@ onUnmounted(() => { stopActivePolling() })
 .btn.warn { border-color: var(--accent-red, #f7768e); color: var(--accent-red, #f7768e); }
 .btn.warn.outline { background: transparent; }
 
-.carousel { height: 100%; min-height: 0; }
-.activity-swiper { width: 100%; height: 100%; }
-.activity-slide { width: 100%; height: 100%; }
-.slide-inner { padding: 0 8px; height: 100%; display: grid; grid-auto-rows: 1fr; }
+.carousel { min-height: 0; }
+.activity-swiper { width: 100%; }
+.activity-slide { width: 100%; height: auto; }
+.slide-inner { padding: 0 8px; height: auto; display: block; }
 @media (min-width: 1024px) {
   /* 中文注释：仅为左右分页箭头预留安全边距（按钮60px+少量间距），避免覆盖主内容 */
   .slide-inner { padding-left: clamp(60px, 4vw, 84px); padding-right: clamp(60px, 4vw, 84px); }
@@ -383,7 +399,7 @@ onUnmounted(() => { stopActivePolling() })
 /* 兜底覆盖：防止某些情况下 Swiper wrapper 未应用 flex 导致 slide 堆叠、内容不可见 */
 :deep(.activity-swiper) {
   .swiper-wrapper { display: flex !important; align-items: stretch; }
-  .swiper-slide { width: 100% !important; height: 100% !important; display: block; }
+  .swiper-slide { width: 100% !important; height: auto !important; display: block; }
 }
 </style>
 
