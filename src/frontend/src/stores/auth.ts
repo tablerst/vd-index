@@ -72,9 +72,27 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await api.post<LoginResponse>('/api/v1/auth/login', credentials)
       setAuth(response.data)
       
-      // 登录成功后跳转
-      const redirect = router.currentRoute.value.query.redirect as string
-      await router.push(redirect || '/settings')
+      // 登录成功后跳转（基于来源场景与角色）
+      const current = router.currentRoute.value
+      const redirect = current.query.redirect as string | undefined
+
+      // 如果有 redirect 参数
+      if (redirect) {
+        // 非 admin 不允许跳到 /settings（含子路由）
+        if (redirect.startsWith('/settings') && user.value?.role !== 'admin') {
+          await router.push('/')
+        } else {
+          await router.push(redirect)
+        }
+        return true
+      }
+
+      // 没有 redirect：若是从 /login 进入，则按角色分流；否则保持在当前页面（如页面内 Modal 登录）
+      if (current.path === '/login') {
+        await router.push(user.value?.role === 'admin' ? '/settings' : '/')
+      } else {
+        // 无导航：停留在当前页面
+      }
       
       return true
     } catch (err: any) {

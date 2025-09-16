@@ -13,6 +13,17 @@ export function setupRouterGuards(router: Router) {
   router.beforeEach(async (to, _from, next) => {
     const authStore = useAuthStore()
     
+    // Special handling for /login route: redirect authenticated users by role
+    // Admin -> /settings; Non-admin -> /
+    if (to.path === '/login') {
+      if (authStore.isAuthenticated) {
+        next(authStore.user?.role === 'admin' ? '/settings' : '/')
+        return
+      }
+      next()
+      return
+    }
+
     // 检查是否需要认证
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
     
