@@ -23,6 +23,7 @@ from services.auth.factory import AuthServiceFactory
 from services.config.factory import ConfigServiceFactory
 from services.crypto.factory import CryptoServiceFactory
 from services.cache.factory import CacheServiceFactory
+from services.cache.cashews_init import CashewsCache
 from services.deps import set_database_service, set_auth_service, set_config_service, set_crypto_service, set_cache_service
 from services.auth.utils import create_super_user
 from services.database.models.user import User
@@ -153,6 +154,15 @@ async def lifespan(app: FastAPI):
     logger.info(f"调试模式: {settings.debug}")
     logger.info(f"数据库URL: {settings.database_url}")
     logger.info(f"头像根目录: {settings.avatar_root}")
+
+    # 初始化 cashews 两级缓存（L1 本地 + L2 Redis）
+    CashewsCache.setup(
+        redis_url=settings.redis_url,
+        l1_size=settings.cache_max_size,
+        l1_prefix="l1:",
+    )
+    # 注册 SQLAlchemy 事务事件（导入即注册）
+    import services.database.events_cache  # noqa: F401
 
     # 初始化缓存服务
     cache_factory = CacheServiceFactory()

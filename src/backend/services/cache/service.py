@@ -11,7 +11,8 @@ from typing import TypeVar, Callable, Awaitable, Optional, Any, Dict, List, Unio
 from functools import wraps
 from datetime import datetime, timedelta
 
-from cachetools import TTLCache
+from cashews import cache as C
+from services.cache.keys import L1_PREFIX
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -36,19 +37,20 @@ class CacheStats(BaseModel):
 
 
 class CacheService:
-    """通用缓存服务"""
+    """通用缓存服务（cashews 两级：L1 本地 + L2 Redis）"""
     
-    def __init__(self, max_size: int = DEFAULT_MAX_SIZE, default_ttl: int = DEFAULT_TTL):
+    def __init__(self, max_size: int = DEFAULT_MAX_SIZE, default_ttl: int = DEFAULT_TTL, negative_ttl: int = 30):
         """初始化缓存服务
         
         Args:
-            max_size: 缓存最大容量
+            max_size: 缓存最大容量（用于统计显示）
             default_ttl: 默认TTL（秒）
+            negative_ttl: 负面缓存TTL（秒），当结果为空时使用
         """
-        self._cache = TTLCache(maxsize=max_size, ttl=default_ttl)
         self._lock = asyncio.Lock()
         self._stats = CacheStats(max_size=max_size, last_updated=datetime.now())
         self._default_ttl = default_ttl
+        self._negative_ttl = negative_ttl
         
         logger.info(f"CacheService initialized with max_size={max_size}, default_ttl={default_ttl}")
     
@@ -87,94 +89,53 @@ class CacheService:
         return ":".join(key_parts)
     
     async def get(self, key: str) -> Optional[T]:
-        """获取缓存值
-
-        Args:
-            key: 缓存键
-
-        Returns:
-            缓存值或None
-        """
-        async with self._lock:
-            raw_value = self._cache.get(key)
-
-            # 处理包装的数据（自定义TTL时）
-            value = None
-            if raw_value is not None:
-                if isinstance(raw_value, dict) and "value" in raw_value and "expire_time" in raw_value:
-                    # 检查是否过期
-                    if datetime.now() < raw_value["expire_time"]:
-                        value = raw_value["value"]
-                    else:
-                        # 已过期，删除缓存项
-                        del self._cache[key]
-                        raw_value = None
-                else:
-                    # 普通缓存项
-                    value = raw_value
-
-            # 更新统计
-            self._stats.total_requests += 1
+        """获取缓存值（优先 L1，本地 miss 则查 L2，并回填 L1）"""
+        # 先读 L1（本地内存）
+        value = await C.get(f"{L1_PREFIX}{key}")
+        if value is None:
+            # 再读 L2（Redis）
+            value = await C.get(key)
+            # 命中 L2 时回填 L1
             if value is not None:
-                self._stats.hits += 1
-                logger.debug(f"Cache hit for key: {key}")
-            else:
-                self._stats.misses += 1
-                logger.debug(f"Cache miss for key: {key}")
+                await C.set(f"{L1_PREFIX}{key}", value, expire=self._default_ttl)
 
-            # 更新命中率
-            self._stats.hit_rate = self._stats.hits / self._stats.total_requests if self._stats.total_requests > 0 else 0.0
-            self._stats.cache_size = len(self._cache)
-            self._stats.last_updated = datetime.now()
+        # 更新统计
+        self._stats.total_requests += 1
+        if value is not None:
+            self._stats.hits += 1
+            logger.debug(f"Cache hit for key: {key}")
+        else:
+            self._stats.misses += 1
+            logger.debug(f"Cache miss for key: {key}")
 
-            return value
+        # 更新命中率/时间
+        self._stats.hit_rate = self._stats.hits / self._stats.total_requests if self._stats.total_requests > 0 else 0.0
+        self._stats.last_updated = datetime.now()
+
+        return value
     
     async def set(self, key: str, value: T, ttl: Optional[int] = None) -> None:
-        """设置缓存值
-        
-        Args:
-            key: 缓存键
-            value: 缓存值
-            ttl: 生存时间（秒），None使用默认TTL
-        """
-        async with self._lock:
-            if ttl is not None and ttl != self._default_ttl:
-                # 如果需要自定义TTL，创建临时缓存实例
-                # 注意：cachetools的TTL是全局的，这里我们用过期时间标记
-                expire_time = datetime.now() + timedelta(seconds=ttl)
-                self._cache[key] = {"value": value, "expire_time": expire_time}
-            else:
-                self._cache[key] = value
-            
-            self._stats.cache_size = len(self._cache)
-            self._stats.last_updated = datetime.now()
-            logger.debug(f"Cache set for key: {key}, ttl: {ttl or self._default_ttl}")
+        """设置缓存值（双写：先 L2，再 L1）"""
+        expire = ttl if ttl is not None else self._default_ttl
+        await C.set(key, value, expire=expire)
+        await C.set(f"{L1_PREFIX}{key}", value, expire=min(expire, self._default_ttl))
+        self._stats.last_updated = datetime.now()
+        logger.debug(f"Cache set for key: {key}, ttl: {expire}")
     
     async def delete(self, key: str) -> bool:
-        """删除缓存值
-        
-        Args:
-            key: 缓存键
-            
-        Returns:
-            是否成功删除
-        """
-        async with self._lock:
-            if key in self._cache:
-                del self._cache[key]
-                self._stats.cache_size = len(self._cache)
-                self._stats.last_updated = datetime.now()
-                logger.debug(f"Cache deleted for key: {key}")
-                return True
-            return False
+        """删除缓存值（双删：L1 与 L2）"""
+        await C.delete(f"{L1_PREFIX}{key}")
+        await C.delete(key)
+        self._stats.last_updated = datetime.now()
+        logger.debug(f"Cache deleted for key: {key}")
+        return True
     
     async def clear(self) -> None:
-        """清空缓存"""
-        async with self._lock:
-            self._cache.clear()
-            self._stats.cache_size = 0
-            self._stats.last_updated = datetime.now()
-            logger.info("Cache cleared")
+        """清空缓存（所有已配置后端）"""
+        await C.clear()
+        self._stats.cache_size = 0
+        self._stats.last_updated = datetime.now()
+        logger.info("Cache cleared")
     
     async def get_stats(self) -> CacheStats:
         """获取缓存统计信息"""
@@ -205,12 +166,13 @@ class CacheService:
         for key, value in items.items():
             await self.set(key, value, ttl)
     
-    def cached(self, ttl: int = DEFAULT_TTL, key_prefix: str = ""):
+    def cached(self, ttl: int = DEFAULT_TTL, key_prefix: str = "", *, lock: bool = False):
         """缓存装饰器
         
         Args:
             ttl: 缓存生存时间（秒）
             key_prefix: 缓存键前缀
+            lock: 是否启用并发锁防击穿
             
         Returns:
             装饰器函数
@@ -222,18 +184,21 @@ class CacheService:
                 prefix = key_prefix or fn.__name__
                 cache_key = self._generate_key(prefix, *args, **kwargs)
                 
-                # 尝试从缓存获取
+                # 两级读取
                 cached_value = await self.get(cache_key)
                 if cached_value is not None:
                     return cached_value
-                
-                # 执行原函数
-                result = await fn(*args, **kwargs)
-                
-                # 存入缓存
-                await self.set(cache_key, result, ttl)
-                
-                return result
+
+                async def _compute_and_fill():
+                    result = await fn(*args, **kwargs)
+                    expire = ttl if result is not None else self._negative_ttl
+                    await self.set(cache_key, result, ttl=expire)
+                    return result
+
+                if lock:
+                    locked_compute = C.locked(ttl="30s")(_compute_and_fill)
+                    return await locked_compute()
+                return await _compute_and_fill()
             return wrapper
         return decorator
 

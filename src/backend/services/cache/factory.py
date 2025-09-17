@@ -34,4 +34,13 @@ class CacheServiceFactory:
             max_size = max_size or DEFAULT_MAX_SIZE
             default_ttl = default_ttl or DEFAULT_TTL
 
-        return CacheService(max_size=max_size, default_ttl=default_ttl)
+        # 传递负面缓存 TTL（如存在）
+        negative_ttl = None
+        if config_service is not None and hasattr(settings, "cache_negative_ttl"):
+            negative_ttl = settings.cache_negative_ttl
+
+        return CacheService(
+            max_size=max_size,
+            default_ttl=default_ttl,
+            **({"negative_ttl": negative_ttl} if negative_ttl is not None else {})
+        )

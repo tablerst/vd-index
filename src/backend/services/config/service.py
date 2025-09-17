@@ -64,6 +64,7 @@ class Settings(BaseSettings):
     cache_stats_ttl: int = 60     # 统计数据缓存1分钟
     cache_member_ttl: int = 300   # 成员数据缓存5分钟
     cache_activity_ttl: int = 300 # 活动数据缓存5分钟
+    cache_negative_ttl: int = 30  # 负面缓存TTL（秒）
 
     # 超级用户配置
     super_user_username: str = "admin"
