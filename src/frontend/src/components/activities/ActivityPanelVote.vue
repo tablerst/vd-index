@@ -320,6 +320,7 @@ watch(commentsWrapRef, (el, prev) => { if (prev) detachScrollableGuards(prev); a
   color: var(--text-primary);
   /* 让面板根据内容自适应高度，避免被父级强行拉伸 */
   min-height: 0;
+  max-width: 100vw;
   grid-template-rows: auto auto;
   /* 子屏高度与左右列表占比可调整 */
   --vote-panel-max-h: clamp(460px, 68vh, 760px);

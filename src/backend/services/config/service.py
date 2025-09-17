@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     
     # 数据库配置
     database_url: str = "postgresql+asyncpg://username:password@localhost:5432/vd_index"
+
+    # Redis配置
+    redis_url: str = "redis://127.0.0.1:6379/0"
     
     # 头像文件存储
     avatar_root: str = "./static/avatars/mems"
