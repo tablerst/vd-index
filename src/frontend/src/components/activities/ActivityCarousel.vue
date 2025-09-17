@@ -345,6 +345,7 @@ onUnmounted(() => { stopActivePolling() })
 }
 .header {
   display: flex;
+  max-width: 100vw;
   align-items: center;
   gap: 12px;
   padding: 64px 24px 12px;
