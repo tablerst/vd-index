@@ -46,9 +46,9 @@ export const useActivitiesStore = defineStore('activities', {
       }
     },
 
-    async fetchRankingTop(activityId: number, top = 10) {
-      // 允许并发去重：若已有请求在进行中则跳过
-      if (this.loading.ranking[activityId]) return
+    async fetchRankingTop(activityId: number, top = 10, force = false) {
+      // 允许并发去重：若已有请求在进行中则跳过；用户动作触发可 force 强制拉取
+      if (!force && this.loading.ranking[activityId]) return
       this.loading.ranking[activityId] = true
       try {
         const res = await actApi.ranking(activityId, top, true)
@@ -81,17 +81,59 @@ export const useActivitiesStore = defineStore('activities', {
     },
 
     async submitVote(activityId: number, optionId: number, displayAnonymous: boolean) {
+      const previousOptionId = this.myVotes[activityId] ?? null
       await actApi.vote(activityId, { option_id: optionId, display_anonymous: displayAnonymous })
       this.myVotes[activityId] = optionId
-      await this.fetchRankingTop(activityId)
+
+      // Optimistic ranking update for snappy UI
+      try {
+        const currentEntries = [...(this.ranking[activityId] || [])]
+        const ensureLabel = (id: number) => {
+          const opts = this.options[activityId]?.items || []
+          return opts.find(o => o.id === id)?.label || String(id)
+        }
+        const adjust = (id: number | null, delta: number) => {
+          if (!id || delta === 0) return
+          const idx = currentEntries.findIndex(e => e.option_id === id)
+          if (idx >= 0) {
+            const nextVotes = Math.max(0, (currentEntries[idx].votes || 0) + delta)
+            currentEntries[idx] = { ...currentEntries[idx], votes: nextVotes }
+          } else if (delta > 0) {
+            currentEntries.push({ option_id: id, label: ensureLabel(id), votes: delta })
+          }
+        }
+        if (previousOptionId && previousOptionId !== optionId) adjust(previousOptionId, -1)
+        adjust(optionId, +1)
+        currentEntries.sort((a, b) => b.votes - a.votes)
+        this.ranking[activityId] = currentEntries
+      } catch {}
+
+      // Force refresh from server; widen top to include all options (capped to 100)
+      const optionCount = this.options[activityId]?.items?.length || 10
+      const top = Math.min(100, Math.max(10, optionCount))
+      await this.fetchRankingTop(activityId, top, true)
     },
 
     async revokeVote(activityId: number) {
       this.loading.revoke![activityId] = true
       try {
+        const previousOptionId = this.myVotes[activityId] ?? null
         await actApi.revoke(activityId)
         this.myVotes[activityId] = null
-        await this.fetchRankingTop(activityId)
+
+        // Optimistic ranking update: decrement previous vote
+        try {
+          const currentEntries = [...(this.ranking[activityId] || [])]
+          const idx = previousOptionId ? currentEntries.findIndex(e => e.option_id === previousOptionId) : -1
+          if (idx >= 0) {
+            const nextVotes = Math.max(0, (currentEntries[idx].votes || 0) - 1)
+            currentEntries[idx] = { ...currentEntries[idx], votes: nextVotes }
+            currentEntries.sort((a, b) => b.votes - a.votes)
+            this.ranking[activityId] = currentEntries
+          }
+        } catch {}
+
+        await this.fetchRankingTop(activityId, 10, true)
       } finally {
         this.loading.revoke![activityId] = false
       }
@@ -153,7 +195,7 @@ export const useActivitiesStore = defineStore('activities', {
       } finally {
         // 以服务端为准刷新一次列表与排行
         await this.fetchOptions(activityId)
-        await this.fetchRankingTop(activityId)
+        await this.fetchRankingTop(activityId, 10, true)
       }
     },
 
@@ -161,7 +203,7 @@ export const useActivitiesStore = defineStore('activities', {
       await actApi.deleteOption(activityId, optionId)
       // 列表/排行均会受影响，刷新
       await this.fetchOptions(activityId)
-      await this.fetchRankingTop(activityId)
+      await this.fetchRankingTop(activityId, 10, true)
     },
 
     async fetchMyVote(activityId: number) {

@@ -10,7 +10,7 @@
         <input class="input small" v-model="newOption" placeholder="新增选项标签" :disabled="!isAuthenticated"
           @keyup.enter="addOption()" />
         <button class="btn small" @click="addOption" :disabled="!newOption.trim() || !isAuthenticated"
-          :title="(!isAdmin && !isCreator) ? '若无权限将提示' : ''">新增选项</button>
+          title="新增选项">新增选项</button>
         <button class="btn small warn" @click="closeAct" v-if="isAdmin">关闭活动</button>
       </div>
     </header>

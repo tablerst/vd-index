@@ -192,9 +192,7 @@ async def create_option(
     if not a or a.type != "vote":
         raise HTTPException(status_code=404, detail="Vote activity not found")
 
-    # 权限：管理员或活动发起者可新增选项
-    if not (getattr(current_user, "role", None) == "admin" or getattr(a, "creator_id", 0) == current_user.id):
-        raise HTTPException(status_code=403, detail="Not enough permissions to add options")
+    # 放宽权限：任何已登录用户均可新增选项（小社区策略）
 
     # create option
     created = ActVoteOption(activity_id=activity_id, label=option.label, member_id=option.member_id)
