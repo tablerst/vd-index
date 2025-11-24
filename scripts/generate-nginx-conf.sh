@@ -13,7 +13,7 @@ DEFAULT_ROOT_PATH="$PROJECT_ROOT"
 
 # === 硬编码：第二个项目配置 ===
 SECOND_PROJECT_ROOT="/root/workspace/evening-gowm"
-SECOND_DOMAIN_PREFIX="gown" # 二级域名前缀，最终效果为 gown.tomo-loop.icu
+SECOND_DOMAIN_PREFIX="evening-gown" # 默认通过路径 /gown/ 暴露，同时可用于二级域名
 
 # 获取参数
 DOMAIN="${1:-$DEFAULT_DOMAIN}"
@@ -26,6 +26,7 @@ echo "主域名: $DOMAIN"
 echo "--------------------------------"
 echo "新项目路径: $SECOND_PROJECT_ROOT"
 echo "新域名: $SECOND_DOMAIN_PREFIX.$DOMAIN"
+echo "新项目挂载路径: /$SECOND_DOMAIN_PREFIX/"
 echo "--------------------------------"
 echo "配置文件: $NGINX_CONF"
 
@@ -132,6 +133,15 @@ http {
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto \$scheme;
 
+            expires 7d;
+            add_header Cache-Control "public, immutable";
+        }
+
+        # 新项目通过路径挂载，避免额外的 DNS 配置
+        location ^~ /$SECOND_DOMAIN_PREFIX/ {
+            rewrite ^/$SECOND_DOMAIN_PREFIX/(.*)$ /$1 break;
+            root $SECOND_PROJECT_ROOT/dist;
+            try_files \$uri \$uri/ /index.html;
             expires 7d;
             add_header Cache-Control "public, immutable";
         }
