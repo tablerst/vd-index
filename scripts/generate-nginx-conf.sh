@@ -7,44 +7,45 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 NGINX_CONF="$PROJECT_ROOT/nginx.conf"
 
-# 默认配置 (主项目)
-DEFAULT_DOMAIN="tomo-loop.icu"
+# 默认配置
+DEFAULT_DOMAIN="vrchat-division.cn"
 DEFAULT_ROOT_PATH="$PROJECT_ROOT"
-
-# === 硬编码：第二个项目配置 ===
-SECOND_PROJECT_ROOT="/root/workspace/evening-gowm"
-SECOND_DOMAIN_PREFIX="evening-gown" # 默认通过路径 /gown/ 暴露，同时可用于二级域名
+DEFAULT_SECONDARY_DOMAIN="tomo-loop.icu"
+DEFAULT_SECONDARY_ROOT="/root/workspace/evening-gowm/dist"
 
 # 获取参数
 DOMAIN="${1:-$DEFAULT_DOMAIN}"
 ROOT_PATH="${2:-$DEFAULT_ROOT_PATH}"
+SECONDARY_DOMAIN="${3:-$DEFAULT_SECONDARY_DOMAIN}"
+SECONDARY_ROOT="${4:-$DEFAULT_SECONDARY_ROOT}"
 
 echo "生成 nginx 配置文件..."
-echo "--------------------------------"
-echo "主项目路径: $ROOT_PATH"
-echo "主域名: $DOMAIN"
-echo "--------------------------------"
-echo "新项目路径: $SECOND_PROJECT_ROOT"
-echo "新域名: $SECOND_DOMAIN_PREFIX.$DOMAIN"
-echo "新项目挂载路径: /$SECOND_DOMAIN_PREFIX/"
-echo "--------------------------------"
+echo "项目路径: $ROOT_PATH"
+echo "域名: $DOMAIN"
+echo "二级域名: $SECONDARY_DOMAIN"
+echo "二级项目静态目录: $SECONDARY_ROOT"
 echo "配置文件: $NGINX_CONF"
 
 # 创建日志目录
 mkdir -p "$ROOT_PATH/logs"
 
+# 检查二级项目静态目录
+if [ ! -d "$SECONDARY_ROOT" ]; then
+    echo "⚠️  注意: 二级项目静态目录 $SECONDARY_ROOT 暂不存在，请确认二级项目已构建。"
+fi
+
 # 生成配置文件
 cat > "$NGINX_CONF" << EOF
 # 独立的项目级别 nginx 配置文件
-# 该文件由 generate-nginx-conf.sh 生成，包含双项目配置
+# 可以直接使用此配置启动 nginx，不依赖系统配置
 
-# 设置运行用户为 root
+# 设置运行用户为 root（解决 /root 目录访问权限问题）
 user root;
 
 # 设置工作进程数
 worker_processes auto;
 
-# 错误日志 (共用主项目的 logs 目录)
+# 错误日志
 error_log $ROOT_PATH/logs/error.log;
 
 # PID 文件
@@ -90,9 +91,7 @@ http {
         application/xml+rss
         application/json;
     
-    # =========================================================
-    # 🟢 主项目 Server (后端+前端): $DOMAIN
-    # =========================================================
+    # 主项目服务器配置 ($DOMAIN)
     server {
         listen 80;
         listen [::]:80;
@@ -133,15 +132,7 @@ http {
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto \$scheme;
 
-            expires 7d;
-            add_header Cache-Control "public, immutable";
-        }
-
-        # 新项目通过路径挂载，避免额外的 DNS 配置
-        location ^~ /$SECOND_DOMAIN_PREFIX/ {
-            rewrite ^/$SECOND_DOMAIN_PREFIX/(.*)$ /$1 break;
-            root $SECOND_PROJECT_ROOT/dist;
-            try_files \$uri \$uri/ /index.html;
+            # 头像缓存设置
             expires 7d;
             add_header Cache-Control "public, immutable";
         }
@@ -165,40 +156,44 @@ http {
             log_not_found off;
         }
         
+        # 添加安全头
         add_header X-Frame-Options "SAMEORIGIN" always;
         add_header X-XSS-Protection "1; mode=block" always;
         add_header X-Content-Type-Options "nosniff" always;
-        # ✅ 已补回原有的安全头
         add_header Referrer-Policy "no-referrer-when-downgrade" always;
         add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
     }
 
-    # =========================================================
-    # 🔵 新项目 Server (纯前端): $SECOND_DOMAIN_PREFIX.$DOMAIN
-    # =========================================================
+    # 二级项目服务器配置 ($SECONDARY_DOMAIN)
     server {
         listen 80;
-        server_name $SECOND_DOMAIN_PREFIX.$DOMAIN;
+        listen [::]:80;
+        server_name $SECONDARY_DOMAIN www.$SECONDARY_DOMAIN;
 
-        # 指向新项目的 dist 目录
-        root $SECOND_PROJECT_ROOT/dist;
-        index index.html;
+        root $SECONDARY_ROOT;
+        index index.html index.htm;
 
-        # SPA 路由支持 (解决刷新 404)
         location / {
-            try_files \$uri \$uri/ /index.html;
+            try_files $uri $uri/ /index.html;
         }
 
-        # 静态资源缓存
-        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)\$ {
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
             expires 1y;
             add_header Cache-Control "public, immutable";
             access_log off;
         }
 
-        # 简单的安全头
+        location ~ /\. {
+            deny all;
+            access_log off;
+            log_not_found off;
+        }
+
         add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-XSS-Protection "1; mode=block" always;
         add_header X-Content-Type-Options "nosniff" always;
+        add_header Referrer-Policy "no-referrer-when-downgrade" always;
+        add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
     }
 }
 EOF
@@ -207,6 +202,6 @@ echo "✅ nginx 配置文件生成完成: $NGINX_CONF"
 echo ""
 echo "使用方法:"
 echo "  测试配置: sudo nginx -t -c $NGINX_CONF"
-echo "  重载配置: sudo nginx -s reload -c $NGINX_CONF"
-echo "  (如果 Nginx 未启动) 启动服务: sudo nginx -c $NGINX_CONF"
-echo ""#!/bin/bash
+echo "  启动服务: sudo nginx -c $NGINX_CONF"
+echo "  停止服务: sudo nginx -s quit"
+echo ""

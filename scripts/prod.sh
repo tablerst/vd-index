@@ -7,6 +7,9 @@ echo "========================================"
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+PRIMARY_DOMAIN="vrchat-division.cn"
+SECONDARY_DOMAIN="tomo-loop.icu"
+SECONDARY_STATIC_ROOT="/root/workspace/evening-gowm/dist"
 
 echo ""
 echo "[1/6] Installing Dependencies..."
@@ -63,7 +66,7 @@ fi
 # 生成 nginx 配置文件
 echo "Generating nginx configuration..."
 chmod +x "$SCRIPT_DIR/generate-nginx-conf.sh"
-"$SCRIPT_DIR/generate-nginx-conf.sh" "tomo-loop.icu" "$PROJECT_ROOT"
+"$SCRIPT_DIR/generate-nginx-conf.sh" "$PRIMARY_DOMAIN" "$PROJECT_ROOT" "$SECONDARY_DOMAIN" "$SECONDARY_STATIC_ROOT"
 
 echo "Nginx configuration ready."
 
@@ -136,10 +139,11 @@ echo "Production Deployment Completed!"
 echo "========================================"
 echo "Frontend: Built and deployed to static files"
 echo "Backend: Running on http://localhost:8000 (PID: $BACKEND_PID)"
-echo "Nginx: Running on http://tomo-loop.icu"
+echo "Nginx: Running on http://$PRIMARY_DOMAIN (primary) and http://$SECONDARY_DOMAIN (static)"
 echo "========================================"
 echo ""
-echo "Access your application at: https://tomo-loop.icu"
+echo "Access your application at: https://$PRIMARY_DOMAIN"
+echo "Static mirror available at: https://$SECONDARY_DOMAIN"
 echo ""
 echo "To stop services:"
 echo "  Backend: kill $BACKEND_PID"

@@ -7,6 +7,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 NGINX_CONF="$PROJECT_ROOT/nginx.conf"
 LOGS_DIR="$PROJECT_ROOT/logs"
+PRIMARY_DOMAIN="vrchat-division.cn"
+SECONDARY_DOMAIN="tomo-loop.icu"
+SECONDARY_STATIC_ROOT="/root/workspace/evening-gowm/dist"
 
 # 创建日志目录
 mkdir -p "$LOGS_DIR"
@@ -131,7 +134,7 @@ start_nginx() {
     # 生成 nginx 配置文件
     echo "生成 nginx 配置文件..."
     chmod +x "$SCRIPT_DIR/generate-nginx-conf.sh"
-    "$SCRIPT_DIR/generate-nginx-conf.sh" "tomo-loop.icu" "$PROJECT_ROOT"
+    "$SCRIPT_DIR/generate-nginx-conf.sh" "$PRIMARY_DOMAIN" "$PROJECT_ROOT" "$SECONDARY_DOMAIN" "$SECONDARY_STATIC_ROOT"
 
     check_config
 
@@ -155,7 +158,7 @@ start_nginx() {
         if pgrep nginx > /dev/null; then
             echo "✅ nginx 启动成功"
             echo "nginx 进程 PID: $(pgrep nginx | tr '\n' ' ')"
-            echo "访问地址: http://tomo-loop.icu"
+            echo "访问地址: http://$PRIMARY_DOMAIN (主服务), http://$SECONDARY_DOMAIN (静态服务)"
 
             # 检查端口监听
             if netstat -tuln 2>/dev/null | grep -q ":80 " || ss -tuln 2>/dev/null | grep -q ":80 "; then
@@ -244,10 +247,16 @@ status_nginx() {
     echo ""
     
     # 检查域名访问
-    if curl -f -s -H "Host: tomo-loop.icu" http://localhost/ > /dev/null; then
-        echo "✅ 域名访问正常"
+    if curl -f -s -H "Host: $PRIMARY_DOMAIN" http://localhost/ > /dev/null; then
+        echo "✅ 主域名 ($PRIMARY_DOMAIN) 访问正常"
     else
-        echo "❌ 域名访问失败"
+        echo "❌ 主域名 ($PRIMARY_DOMAIN) 访问失败"
+    fi
+
+    if curl -f -s -H "Host: $SECONDARY_DOMAIN" http://localhost/ > /dev/null; then
+        echo "✅ 二级域名 ($SECONDARY_DOMAIN) 访问正常"
+    else
+        echo "❌ 二级域名 ($SECONDARY_DOMAIN) 访问失败"
     fi
 }
 
